@@ -36,6 +36,7 @@ interface AnalysisResultsProps {
 export function AnalysisResults({ results, url }: AnalysisResultsProps) {
   const [implementationPlan, setImplementationPlan] = useState<ImplementationPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [implementationError, setImplementationError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("analysis");
   const { toast } = useToast();
 
@@ -45,6 +46,7 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
 
   const handleGenerateImplementation = async () => {
     setIsGenerating(true);
+    setImplementationError(null);
     try {
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-implementation-plan`,
@@ -56,6 +58,11 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
           },
           body: JSON.stringify({
             analysisResult: results,
+            extractedData: {
+              url,
+              title: results.seo?.recommendedTitle,
+              phone: results.conversion?.sampleButtons?.[0],
+            },
             url,
           }),
         }
@@ -75,9 +82,11 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
       });
     } catch (error) {
       console.error("Implementation generation error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      setImplementationError(errorMessage);
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -98,7 +107,7 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
           {isGenerating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
+              Generating implementation plan...
             </>
           ) : (
             <>
@@ -112,6 +121,13 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
           Export PDF Report
         </Button>
       </div>
+
+      {/* Error Message */}
+      {implementationError && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-destructive text-sm">
+          <strong>Error:</strong> {implementationError}
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
