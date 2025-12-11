@@ -6,14 +6,14 @@ import { LoadingState } from "@/components/LoadingState";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { AnalysisResult } from "@/types/analysis";
 import { useToast } from "@/hooks/use-toast";
-
 const Index = () => {
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const isValidUrl = (string: string) => {
     try {
       let testUrl = string;
@@ -26,75 +26,64 @@ const Index = () => {
       return false;
     }
   };
-
   const handleAnalyze = async () => {
     if (!url.trim()) {
       toast({
         title: "Please enter a URL",
         description: "Enter the website URL you want to analyze.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     if (!isValidUrl(url)) {
       toast({
         title: "Invalid URL",
         description: "Please enter a valid website URL (e.g., example.com).",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
     setIsLoading(true);
     setResults(null);
-
     try {
       // Format URL properly
       let formattedUrl = url.trim();
       if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
         formattedUrl = "https://" + formattedUrl;
       }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-website`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({ url: formattedUrl }),
-        }
-      );
-
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-website`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`
+        },
+        body: JSON.stringify({
+          url: formattedUrl
+        })
+      });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to analyze website");
       }
-
       const data = await response.json();
       setResults(data);
       setAnalyzedUrl(formattedUrl);
-      
       toast({
         title: "Analysis Complete",
-        description: "Your website analysis is ready. Scroll down to see the results.",
+        description: "Your website analysis is ready. Scroll down to see the results."
       });
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
         title: "Analysis Failed",
         description: error instanceof Error ? error.message : "Something went wrong. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero opacity-5" />
@@ -102,10 +91,7 @@ const Index = () => {
         
         <div className="container relative py-16 lg:py-24">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4" />
-              Free Website Analysis Tool
-            </div>
+            
             
             <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4 tracking-tight">
               Optimize My <span className="text-gradient">Biz</span>
@@ -124,24 +110,9 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="website-url"
-                    type="text"
-                    placeholder="yourcompany.com"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !isLoading && handleAnalyze()}
-                    className="pl-10 h-12 text-base"
-                    disabled={isLoading}
-                  />
+                  <Input id="website-url" type="text" placeholder="yourcompany.com" value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && !isLoading && handleAnalyze()} className="pl-10 h-12 text-base" disabled={isLoading} />
                 </div>
-                <Button
-                  variant="hero"
-                  size="lg"
-                  onClick={handleAnalyze}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
+                <Button variant="hero" size="lg" onClick={handleAnalyze} disabled={isLoading} className="w-full sm:w-auto">
                   {isLoading ? "Analyzing..." : "Analyze Website"}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
@@ -153,19 +124,19 @@ const Index = () => {
 
             {/* Feature Pills */}
             <div className="flex flex-wrap justify-center gap-3 mt-8">
-              {[
-                { icon: Target, text: "Lead Capture" },
-                { icon: Zap, text: "Performance" },
-                { icon: TrendingUp, text: "SEO" },
-              ].map((feature) => (
-                <div
-                  key={feature.text}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm"
-                >
+              {[{
+              icon: Target,
+              text: "Lead Capture"
+            }, {
+              icon: Zap,
+              text: "Performance"
+            }, {
+              icon: TrendingUp,
+              text: "SEO"
+            }].map(feature => <div key={feature.text} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm">
                   <feature.icon className="w-4 h-4" />
                   {feature.text}
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </div>
@@ -177,8 +148,7 @@ const Index = () => {
         {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} />}
         
         {/* Empty State with Benefits */}
-        {!isLoading && !results && (
-          <div className="max-w-4xl mx-auto">
+        {!isLoading && !results && <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-2xl font-semibold text-foreground mb-3">
                 What You'll Get
@@ -189,55 +159,39 @@ const Index = () => {
             </div>
             
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                {
-                  title: "Messaging & Clarity",
-                  description: "Is it clear what you do and where you operate?",
-                },
-                {
-                  title: "Lead Capture",
-                  description: "Are you making it easy for visitors to contact you?",
-                },
-                {
-                  title: "Design & UX",
-                  description: "Does your site look professional and trustworthy?",
-                },
-                {
-                  title: "Mobile Experience",
-                  description: "Does your site work well on phones and tablets?",
-                },
-                {
-                  title: "Page Speed",
-                  description: "Are slow images or scripts hurting your rankings?",
-                },
-                {
-                  title: "SEO & Local SEO",
-                  description: "Can Google find you when customers search locally?",
-                },
-                {
-                  title: "Trust Signals",
-                  description: "Do you showcase reviews, certifications, and guarantees?",
-                },
-                {
-                  title: "Technical Basics",
-                  description: "SSL, favicon, and other essential technical elements.",
-                },
-                {
-                  title: "AI-Powered Tips",
-                  description: "Specific copy and layout recommendations you can use today.",
-                },
-              ].map((item, index) => (
-                <div
-                  key={index}
-                  className="p-4 rounded-xl bg-card border border-border hover:shadow-card transition-shadow duration-300"
-                >
+              {[{
+            title: "Messaging & Clarity",
+            description: "Is it clear what you do and where you operate?"
+          }, {
+            title: "Lead Capture",
+            description: "Are you making it easy for visitors to contact you?"
+          }, {
+            title: "Design & UX",
+            description: "Does your site look professional and trustworthy?"
+          }, {
+            title: "Mobile Experience",
+            description: "Does your site work well on phones and tablets?"
+          }, {
+            title: "Page Speed",
+            description: "Are slow images or scripts hurting your rankings?"
+          }, {
+            title: "SEO & Local SEO",
+            description: "Can Google find you when customers search locally?"
+          }, {
+            title: "Trust Signals",
+            description: "Do you showcase reviews, certifications, and guarantees?"
+          }, {
+            title: "Technical Basics",
+            description: "SSL, favicon, and other essential technical elements."
+          }, {
+            title: "AI-Powered Tips",
+            description: "Specific copy and layout recommendations you can use today."
+          }].map((item, index) => <div key={index} className="p-4 rounded-xl bg-card border border-border hover:shadow-card transition-shadow duration-300">
                   <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
-                </div>
-              ))}
+                </div>)}
             </div>
-          </div>
-        )}
+          </div>}
       </main>
 
       {/* Footer */}
@@ -248,8 +202,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
