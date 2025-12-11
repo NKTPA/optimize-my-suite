@@ -24,6 +24,7 @@ const Index = () => {
   const [blueprintBusinessName, setBlueprintBusinessName] = useState("");
   const [blueprintPhone, setBlueprintPhone] = useState("");
   const [blueprintEmail, setBlueprintEmail] = useState("");
+  const [blueprintIndustry, setBlueprintIndustry] = useState("");
   const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
   const [blueprintError, setBlueprintError] = useState("");
   const {
@@ -122,6 +123,7 @@ const Index = () => {
       setBlueprintBusinessName(formData.businessName);
       setBlueprintPhone(formData.mainPhone || "");
       setBlueprintEmail(formData.contactEmail || "");
+      setBlueprintIndustry(formData.industry || "");
       toast({
         title: "Blueprint Generated",
         description: "Your website blueprint is ready. Scroll down to see it."
@@ -259,7 +261,8 @@ const Index = () => {
                       blueprint, 
                       businessName: blueprintBusinessName,
                       phone: blueprintPhone,
-                      email: blueprintEmail
+                      email: blueprintEmail,
+                      industry: blueprintIndustry
                     } 
                   });
                 }}
