@@ -1,13 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Phone, Mail, MapPin, Star, CheckCircle, Shield, 
-  Clock, Award, Users, Wrench, Sparkles, Camera, MessageCircle,
-  ChevronRight, ExternalLink, Menu, X, Zap, Droplets, Flame,
-  Snowflake, Lightbulb, TreePine, Home as HomeIcon, Heart,
-  ThermometerSun, Fan, Plug, PipetteIcon, Leaf, Hammer,
-  Wind, Gauge, Settings, AlertTriangle, ThermometerSnowflake,
-  AirVent, CircleDot, BadgeCheck, CalendarCheck, Headphones,
-  Loader2
+  Clock, Award, Users, Sparkles, Camera, MessageCircle,
+  ChevronRight, Menu, X, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,8 +19,13 @@ import {
   fetchServiceImages, 
   inferServiceType, 
   ServiceImage,
-  ServiceImagesResponse 
 } from "@/lib/serviceImages";
+import { 
+  generateDesignSystem, 
+  getGoogleFontsUrl,
+  type DesignSystem,
+  type ColorTheme,
+} from "@/lib/designSystem";
 
 interface LocationState {
   blueprint: WebsiteBlueprint;
@@ -34,241 +34,6 @@ interface LocationState {
   email?: string;
   industry?: string;
 }
-
-// Industry-specific theme configurations
-const getThemeForIndustry = (industry: string) => {
-  const normalizedIndustry = industry?.toLowerCase() || 'hvac';
-  
-  const themes: Record<string, typeof hvacTheme> = {
-    hvac: {
-      primary: "#0A84FF",
-      primaryDark: "#0056D6",
-      primaryLight: "#E8F4FF",
-      primaryGlow: "rgba(10, 132, 255, 0.15)",
-      secondary: "#F8FAFC",
-      secondaryDark: "#E2E8F0",
-      accent: "#06B6D4",
-      accentLight: "#ECFEFF",
-      ctaOrange: "#F97316",
-      ctaOrangeLight: "#FFF7ED",
-      dark: "#0F172A",
-      gray: "#64748B",
-      grayLight: "#94A3B8",
-      heroGradient: "linear-gradient(135deg, #0A84FF 0%, #0056D6 50%, #06B6D4 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(10, 132, 255, 0.03) 0%, rgba(6, 182, 212, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
-      darkGradient: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
-      industryLabel: "HVAC Specialists",
-    },
-    plumbing: {
-      primary: "#2563EB",
-      primaryDark: "#1D4ED8",
-      primaryLight: "#DBEAFE",
-      primaryGlow: "rgba(37, 99, 235, 0.15)",
-      secondary: "#F8FAFC",
-      secondaryDark: "#E2E8F0",
-      accent: "#0EA5E9",
-      accentLight: "#E0F2FE",
-      ctaOrange: "#EF4444",
-      ctaOrangeLight: "#FEF2F2",
-      dark: "#0F172A",
-      gray: "#64748B",
-      grayLight: "#94A3B8",
-      heroGradient: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 50%, #0EA5E9 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(37, 99, 235, 0.03) 0%, rgba(14, 165, 233, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
-      darkGradient: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
-      industryLabel: "Plumbing Experts",
-    },
-    electrical: {
-      primary: "#F59E0B",
-      primaryDark: "#D97706",
-      primaryLight: "#FEF3C7",
-      primaryGlow: "rgba(245, 158, 11, 0.15)",
-      secondary: "#FFFBEB",
-      secondaryDark: "#FDE68A",
-      accent: "#EAB308",
-      accentLight: "#FEF9C3",
-      ctaOrange: "#EA580C",
-      ctaOrangeLight: "#FFF7ED",
-      dark: "#1C1917",
-      gray: "#57534E",
-      grayLight: "#A8A29E",
-      heroGradient: "linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #EAB308 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, rgba(234, 179, 8, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
-      darkGradient: "linear-gradient(180deg, #1C1917 0%, #292524 100%)",
-      industryLabel: "Electrical Pros",
-    },
-    roofing: {
-      primary: "#DC2626",
-      primaryDark: "#B91C1C",
-      primaryLight: "#FEE2E2",
-      primaryGlow: "rgba(220, 38, 38, 0.15)",
-      secondary: "#F8FAFC",
-      secondaryDark: "#E2E8F0",
-      accent: "#78716C",
-      accentLight: "#F5F5F4",
-      ctaOrange: "#EA580C",
-      ctaOrangeLight: "#FFF7ED",
-      dark: "#1C1917",
-      gray: "#57534E",
-      grayLight: "#A8A29E",
-      heroGradient: "linear-gradient(135deg, #DC2626 0%, #B91C1C 50%, #991B1B 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(220, 38, 38, 0.03) 0%, rgba(120, 113, 108, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
-      darkGradient: "linear-gradient(180deg, #1C1917 0%, #292524 100%)",
-      industryLabel: "Roofing Specialists",
-    },
-    landscaping: {
-      primary: "#16A34A",
-      primaryDark: "#15803D",
-      primaryLight: "#DCFCE7",
-      primaryGlow: "rgba(22, 163, 74, 0.15)",
-      secondary: "#F0FDF4",
-      secondaryDark: "#BBF7D0",
-      accent: "#84CC16",
-      accentLight: "#ECFCCB",
-      ctaOrange: "#EA580C",
-      ctaOrangeLight: "#FFF7ED",
-      dark: "#14532D",
-      gray: "#4D7C0F",
-      grayLight: "#65A30D",
-      heroGradient: "linear-gradient(135deg, #16A34A 0%, #15803D 50%, #84CC16 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F0FDF4 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(22, 163, 74, 0.03) 0%, rgba(132, 204, 22, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
-      darkGradient: "linear-gradient(180deg, #14532D 0%, #166534 100%)",
-      industryLabel: "Landscaping Pros",
-    },
-    dental: {
-      primary: "#0D9488",
-      primaryDark: "#0F766E",
-      primaryLight: "#CCFBF1",
-      primaryGlow: "rgba(13, 148, 136, 0.15)",
-      secondary: "#F0FDFA",
-      secondaryDark: "#99F6E4",
-      accent: "#14B8A6",
-      accentLight: "#CCFBF1",
-      ctaOrange: "#0891B2",
-      ctaOrangeLight: "#ECFEFF",
-      dark: "#134E4A",
-      gray: "#5EEAD4",
-      grayLight: "#2DD4BF",
-      heroGradient: "linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #14B8A6 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F0FDFA 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(13, 148, 136, 0.03) 0%, rgba(20, 184, 166, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #0891B2 0%, #0E7490 100%)",
-      darkGradient: "linear-gradient(180deg, #134E4A 0%, #115E59 100%)",
-      industryLabel: "Dental Care",
-    },
-    "med spa": {
-      primary: "#8B5CF6",
-      primaryDark: "#7C3AED",
-      primaryLight: "#EDE9FE",
-      primaryGlow: "rgba(139, 92, 246, 0.15)",
-      secondary: "#FAF5FF",
-      secondaryDark: "#E9D5FF",
-      accent: "#A855F7",
-      accentLight: "#F3E8FF",
-      ctaOrange: "#EC4899",
-      ctaOrangeLight: "#FCE7F3",
-      dark: "#3B0764",
-      gray: "#6B21A8",
-      grayLight: "#9333EA",
-      heroGradient: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #A855F7 100%)",
-      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 100%)",
-      overlayGradient: "linear-gradient(180deg, rgba(139, 92, 246, 0.03) 0%, rgba(168, 85, 247, 0.02) 100%)",
-      ctaGradient: "linear-gradient(135deg, #EC4899 0%, #DB2777 100%)",
-      darkGradient: "linear-gradient(180deg, #3B0764 0%, #581C87 100%)",
-      industryLabel: "Med Spa & Wellness",
-    },
-  };
-  
-  // Match industry to theme
-  for (const [key, theme] of Object.entries(themes)) {
-    if (normalizedIndustry.includes(key)) {
-      return theme;
-    }
-  }
-  
-  return themes.hvac; // Default fallback
-};
-
-// Default HVAC theme (fallback)
-const hvacTheme = {
-  primary: "#0A84FF",
-  primaryDark: "#0056D6",
-  primaryLight: "#E8F4FF",
-  primaryGlow: "rgba(10, 132, 255, 0.15)",
-  secondary: "#F8FAFC",
-  secondaryDark: "#E2E8F0",
-  accent: "#06B6D4",
-  accentLight: "#ECFEFF",
-  ctaOrange: "#F97316",
-  ctaOrangeLight: "#FFF7ED",
-  dark: "#0F172A",
-  gray: "#64748B",
-  grayLight: "#94A3B8",
-  heroGradient: "linear-gradient(135deg, #0A84FF 0%, #0056D6 50%, #06B6D4 100%)",
-  cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
-  overlayGradient: "linear-gradient(180deg, rgba(10, 132, 255, 0.03) 0%, rgba(6, 182, 212, 0.02) 100%)",
-  ctaGradient: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
-  darkGradient: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
-  industryLabel: "HVAC Specialists",
-};
-
-// Industry-specific icon sets
-const getIconsForIndustry = (industry: string) => {
-  const normalizedIndustry = industry?.toLowerCase() || 'hvac';
-  
-  if (normalizedIndustry.includes('plumbing') || normalizedIndustry.includes('plumber')) {
-    return {
-      primary: Droplets,
-      icons: [Droplets, Wrench, PipetteIcon, Settings, Gauge, Shield],
-    };
-  }
-  if (normalizedIndustry.includes('electrical') || normalizedIndustry.includes('electrician')) {
-    return {
-      primary: Zap,
-      icons: [Zap, Lightbulb, Plug, Settings, Shield, Wrench],
-    };
-  }
-  if (normalizedIndustry.includes('roofing') || normalizedIndustry.includes('roof')) {
-    return {
-      primary: HomeIcon,
-      icons: [HomeIcon, Hammer, Shield, Settings, Wrench, Award],
-    };
-  }
-  if (normalizedIndustry.includes('landscaping') || normalizedIndustry.includes('lawn')) {
-    return {
-      primary: Leaf,
-      icons: [Leaf, TreePine, Sparkles, Settings, Shield, Award],
-    };
-  }
-  if (normalizedIndustry.includes('dental') || normalizedIndustry.includes('dentist')) {
-    return {
-      primary: Heart,
-      icons: [Heart, Sparkles, Shield, Award, Clock, Users],
-    };
-  }
-  if (normalizedIndustry.includes('med spa') || normalizedIndustry.includes('spa')) {
-    return {
-      primary: Sparkles,
-      icons: [Sparkles, Heart, Shield, Award, Clock, Users],
-    };
-  }
-  
-  // Default HVAC
-  return {
-    primary: Snowflake,
-    icons: [Snowflake, Flame, Wrench, Settings, AirVent, Gauge],
-  };
-};
 
 const GeneratedSitePreview = () => {
   const location = useLocation();
@@ -290,10 +55,19 @@ const GeneratedSitePreview = () => {
     });
   }, [state]);
 
-  // Get theme based on industry
-  const theme = useMemo(() => getThemeForIndustry(inferredServiceType), [inferredServiceType]);
-  const industryIcons = useMemo(() => getIconsForIndustry(inferredServiceType), [inferredServiceType]);
-  const PrimaryIcon = industryIcons.primary;
+  // Generate unique design system for this client
+  const designSystem = useMemo(() => generateDesignSystem(inferredServiceType), [inferredServiceType]);
+  const { colors, icons, style, typography } = designSystem;
+  const PrimaryIcon = icons.primary;
+
+  // Load Google Fonts dynamically
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = getGoogleFontsUrl(designSystem);
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+    return () => { document.head.removeChild(link); };
+  }, [designSystem]);
 
   // Fetch dynamic images
   useEffect(() => {
@@ -330,7 +104,7 @@ const GeneratedSitePreview = () => {
   }
 
   const { blueprint, businessName, phone, email } = state;
-  const { hero, navigation, pages, technical } = blueprint;
+  const { hero, navigation, pages } = blueprint;
 
   const scrollToSection = (sectionId: string) => {
     setMobileMenuOpen(false);
@@ -354,20 +128,26 @@ const GeneratedSitePreview = () => {
     ? galleryContent.slice(0, 6)
     : serviceImages.slice(0, 6).map((img, i) => ({ name: `Project ${i + 1}`, content: img.alt || "Quality service completed" }));
 
+  // Dynamic styles based on design system
+  const fontStyles = {
+    heading: { fontFamily: typography.heading, fontWeight: typography.headingWeight },
+    body: { fontFamily: typography.body, fontWeight: typography.bodyWeight },
+  };
+
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="min-h-screen bg-white" style={{ fontFamily: typography.body }}>
       {/* Internal Preview Banner */}
       <div 
         className="py-2.5 px-4"
-        style={{ background: hvacTheme.ctaOrangeLight, borderBottom: `1px solid ${hvacTheme.ctaOrange}30` }}
+        style={{ background: colors.ctaLight, borderBottom: `1px solid ${colors.cta}30` }}
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div 
               className="w-2 h-2 rounded-full animate-pulse"
-              style={{ backgroundColor: hvacTheme.ctaOrange }}
+              style={{ backgroundColor: colors.cta }}
             />
-            <p className="text-xs sm:text-sm font-semibold" style={{ color: hvacTheme.ctaOrange }}>
+            <p className="text-xs sm:text-sm font-semibold" style={{ color: colors.cta }}>
               ✦ Internal Preview — Implementation Reference Only
             </p>
           </div>
@@ -375,8 +155,8 @@ const GeneratedSitePreview = () => {
             variant="ghost" 
             size="sm" 
             onClick={() => navigate("/")}
-            className="gap-1.5 text-xs sm:text-sm h-8 hover:bg-orange-100"
-            style={{ color: hvacTheme.ctaOrange }}
+            className="gap-1.5 text-xs sm:text-sm h-8"
+            style={{ color: colors.cta }}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Back to Builder</span>
@@ -386,13 +166,11 @@ const GeneratedSitePreview = () => {
 
       {/* Premium Sticky Navigation */}
       <nav 
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          isScrolled ? 'shadow-lg' : ''
-        }`}
+        className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'shadow-lg' : ''}`}
         style={{ 
           backgroundColor: isScrolled ? 'rgba(255, 255, 255, 0.98)' : 'white',
           backdropFilter: 'blur(20px)',
-          borderBottom: `1px solid ${hvacTheme.secondaryDark}`,
+          borderBottom: `1px solid ${colors.secondaryDark}`,
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -400,17 +178,17 @@ const GeneratedSitePreview = () => {
             {/* Logo */}
             <div className="flex items-center gap-3">
               <div 
-                className="relative w-11 h-11 lg:w-12 lg:h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg lg:text-xl overflow-hidden"
-                style={{ background: hvacTheme.heroGradient }}
+                className="relative w-11 h-11 lg:w-12 lg:h-12 flex items-center justify-center text-white font-bold text-lg lg:text-xl overflow-hidden"
+                style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
               >
-                <Snowflake className="w-6 h-6 absolute opacity-20 -top-1 -left-1" />
-                <span className="relative z-10">{businessName?.charAt(0) || "A"}</span>
+                <PrimaryIcon className="w-6 h-6 absolute opacity-20 -top-1 -left-1" />
+                <span className="relative z-10" style={fontStyles.heading}>{businessName?.charAt(0) || "A"}</span>
               </div>
               <div className="hidden sm:block">
-                <span className="text-lg lg:text-xl font-bold" style={{ color: hvacTheme.dark }}>
+                <span className="text-lg lg:text-xl font-bold" style={{ color: colors.dark, ...fontStyles.heading }}>
                   {businessName}
                 </span>
-                <p className="text-xs" style={{ color: hvacTheme.gray }}>HVAC Specialists</p>
+                <p className="text-xs" style={{ color: colors.gray }}>{colors.industryLabel}</p>
               </div>
             </div>
 
@@ -420,8 +198,10 @@ const GeneratedSitePreview = () => {
                 <button
                   key={idx}
                   onClick={() => scrollToSection(navItem.toLowerCase().replace(/\s+/g, "-"))}
-                  className="px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 hover:bg-blue-50"
-                  style={{ color: hvacTheme.dark }}
+                  className="px-4 py-2.5 text-sm font-medium transition-all duration-200"
+                  style={{ color: colors.dark, borderRadius: style.borderRadius.button }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.primaryLight}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   {navItem}
                 </button>
@@ -432,22 +212,26 @@ const GeneratedSitePreview = () => {
             <div className="flex items-center gap-3">
               <a 
                 href={`tel:${phone || "5551234567"}`}
-                className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl group"
-                style={{ background: hvacTheme.ctaGradient }}
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 text-white font-semibold shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl group"
+                style={{ 
+                  background: colors.ctaGradient,
+                  borderRadius: style.borderRadius.button,
+                  boxShadow: style.shadows.button,
+                }}
               >
                 <Phone className="w-4 h-4 group-hover:animate-pulse" />
-                <span className="text-sm">{hero?.primaryCTA || "Get Free Quote"}</span>
+                <span className="text-sm">{hero?.primaryCTA?.split(' ').slice(0, 3).join(' ') || "Get Free Quote"}</span>
               </a>
               
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2.5 rounded-xl transition-colors"
-                style={{ backgroundColor: hvacTheme.primaryLight }}
+                className="lg:hidden p-2.5 transition-colors"
+                style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.button }}
               >
                 {mobileMenuOpen ? (
-                  <X className="w-5 h-5" style={{ color: hvacTheme.primary }} />
+                  <X className="w-5 h-5" style={{ color: colors.primary }} />
                 ) : (
-                  <Menu className="w-5 h-5" style={{ color: hvacTheme.primary }} />
+                  <Menu className="w-5 h-5" style={{ color: colors.primary }} />
                 )}
               </button>
             </div>
@@ -457,15 +241,15 @@ const GeneratedSitePreview = () => {
           {mobileMenuOpen && (
             <div 
               className="lg:hidden py-4 border-t animate-fade-in"
-              style={{ backgroundColor: 'white', borderColor: hvacTheme.secondaryDark }}
+              style={{ backgroundColor: 'white', borderColor: colors.secondaryDark }}
             >
               <div className="space-y-1">
                 {navigation?.map((navItem, idx) => (
                   <button
                     key={idx}
                     onClick={() => scrollToSection(navItem.toLowerCase().replace(/\s+/g, "-"))}
-                    className="w-full text-left px-4 py-3.5 text-base font-medium rounded-xl transition-colors hover:bg-blue-50"
-                    style={{ color: hvacTheme.dark }}
+                    className="w-full text-left px-4 py-3.5 text-base font-medium transition-colors"
+                    style={{ color: colors.dark, borderRadius: style.borderRadius.button }}
                   >
                     {navItem}
                   </button>
@@ -474,8 +258,8 @@ const GeneratedSitePreview = () => {
               <div className="pt-4 px-4">
                 <a 
                   href={`tel:${phone || "5551234567"}`}
-                  className="flex items-center justify-center gap-2 w-full py-4 rounded-xl text-white font-bold shadow-lg"
-                  style={{ background: hvacTheme.ctaGradient }}
+                  className="flex items-center justify-center gap-2 w-full py-4 text-white font-bold shadow-lg"
+                  style={{ background: colors.ctaGradient, borderRadius: style.borderRadius.button }}
                 >
                   <Phone className="w-5 h-5" />
                   {phone || "(555) 123-4567"}
@@ -489,22 +273,23 @@ const GeneratedSitePreview = () => {
       {/* ========== PREMIUM HERO SECTION ========== */}
       <section id="home" className="relative overflow-hidden">
         {/* Layered Background */}
-        <div className="absolute inset-0" style={{ background: hvacTheme.overlayGradient }} />
+        <div className="absolute inset-0" style={{ background: colors.overlayGradient }} />
         <div 
           className="absolute top-0 right-0 w-1/2 h-full opacity-[0.03]"
           style={{ 
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230A84FF' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            backgroundImage: `radial-gradient(${colors.primary} 1px, transparent 1px)`,
+            backgroundSize: '20px 20px',
           }}
         />
         
         {/* Floating Decorative Elements */}
         <div 
           className="absolute top-20 left-10 w-64 h-64 rounded-full blur-3xl opacity-20"
-          style={{ backgroundColor: hvacTheme.primary }}
+          style={{ backgroundColor: colors.primary }}
         />
         <div 
           className="absolute bottom-20 right-10 w-96 h-96 rounded-full blur-3xl opacity-10"
-          style={{ backgroundColor: hvacTheme.accent }}
+          style={{ backgroundColor: colors.accent }}
         />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-20 xl:py-28">
@@ -514,14 +299,15 @@ const GeneratedSitePreview = () => {
               {/* Offer Badge with Glow Effect */}
               {hero?.offerBadge && (
                 <div 
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 animate-scale-in"
+                  className="inline-flex items-center gap-2 px-4 py-2 mb-6 animate-scale-in"
                   style={{ 
-                    background: `linear-gradient(135deg, ${hvacTheme.primaryLight} 0%, ${hvacTheme.accentLight} 100%)`,
-                    boxShadow: `0 0 20px ${hvacTheme.primaryGlow}`,
+                    background: `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.accentLight} 100%)`,
+                    boxShadow: `0 0 20px ${colors.primaryGlow}`,
+                    borderRadius: style.borderRadius.badge,
                   }}
                 >
-                  <Snowflake className="w-4 h-4 animate-spin" style={{ color: hvacTheme.primary, animationDuration: '3s' }} />
-                  <span className="text-sm font-bold" style={{ color: hvacTheme.primary }}>
+                  <PrimaryIcon className="w-4 h-4 animate-spin" style={{ color: colors.primary, animationDuration: '3s' }} />
+                  <span className="text-sm font-bold" style={{ color: colors.primary }}>
                     {hero.offerBadge}
                   </span>
                 </div>
@@ -529,26 +315,25 @@ const GeneratedSitePreview = () => {
               
               {/* Main Headline */}
               <h1 
-                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.1] mb-5 lg:mb-6 animate-fade-in"
-                style={{ color: hvacTheme.dark }}
+                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl leading-[1.1] mb-5 lg:mb-6 animate-fade-in"
+                style={{ color: colors.dark, ...fontStyles.heading }}
               >
-                {hero?.headline || `Expert HVAC Services for ${businessName}`}
+                {hero?.headline || `Expert ${colors.industryLabel} for Your Home`}
               </h1>
               
               {/* Subheadline */}
               <p 
                 className="text-lg lg:text-xl leading-relaxed mb-7 lg:mb-8 max-w-xl mx-auto lg:mx-0"
-                style={{ color: hvacTheme.gray }}
+                style={{ color: colors.gray }}
               >
-                {hero?.subheadline || "Professional heating, cooling & air quality solutions. Fast response, fair pricing, guaranteed satisfaction."}
+                {hero?.subheadline || "Professional service with fast response, fair pricing, and guaranteed satisfaction."}
               </p>
 
-              {/* Bullet Points with HVAC Icons */}
+              {/* Bullet Points with Industry Icons */}
               {hero?.bullets && hero.bullets.length > 0 && (
                 <ul className="space-y-3 mb-8 text-left max-w-md mx-auto lg:mx-0">
                   {hero.bullets.slice(0, 4).map((bullet, idx) => {
-                    const icons = [Snowflake, ThermometerSun, Shield, Clock];
-                    const Icon = icons[idx % icons.length];
+                    const IconComponent = icons.icons[idx % icons.icons.length];
                     return (
                       <li 
                         key={idx} 
@@ -556,26 +341,27 @@ const GeneratedSitePreview = () => {
                         style={{ animationDelay: `${idx * 100}ms` }}
                       >
                         <div 
-                          className="mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: hvacTheme.heroGradient }}
+                          className="mt-0.5 w-7 h-7 flex items-center justify-center shrink-0"
+                          style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                         >
-                          <Icon className="w-4 h-4 text-white" />
+                          <IconComponent className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-medium" style={{ color: hvacTheme.dark }}>{bullet}</span>
+                        <span className="font-medium" style={{ color: colors.dark }}>{bullet}</span>
                       </li>
                     );
                   })}
                 </ul>
               )}
 
-              {/* CTA Buttons with Hover Effects */}
+              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mb-8">
                 <a 
                   href={`tel:${phone || "5551234567"}`}
-                  className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                  className="group flex items-center justify-center gap-3 px-8 py-4 text-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                   style={{ 
-                    background: hvacTheme.ctaGradient,
-                    boxShadow: `0 10px 40px -10px ${hvacTheme.ctaOrange}80`,
+                    background: colors.ctaGradient,
+                    boxShadow: style.shadows.button,
+                    borderRadius: style.borderRadius.button,
                   }}
                 >
                   <Phone className="w-5 h-5 group-hover:animate-pulse" />
@@ -584,10 +370,11 @@ const GeneratedSitePreview = () => {
                 {hero?.secondaryCTA && (
                   <button 
                     onClick={() => scrollToSection("services")}
-                    className="px-8 py-4 rounded-xl font-semibold text-lg border-2 transition-all duration-300 hover:shadow-lg"
+                    className="px-8 py-4 font-semibold text-lg border-2 transition-all duration-300 hover:shadow-lg"
                     style={{ 
-                      borderColor: hvacTheme.primary,
-                      color: hvacTheme.primary,
+                      borderColor: colors.primary,
+                      color: colors.primary,
+                      borderRadius: style.borderRadius.button,
                     }}
                   >
                     {hero.secondaryCTA}
@@ -599,7 +386,7 @@ const GeneratedSitePreview = () => {
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-5 lg:gap-6">
                 {[
                   { icon: Shield, text: "Licensed & Insured" },
-                  { icon: Clock, text: "24/7 Emergency" },
+                  { icon: Clock, text: "Fast Response" },
                   { icon: Star, text: "5-Star Rated", isStar: true },
                 ].map((item, idx) => (
                   <div 
@@ -609,72 +396,81 @@ const GeneratedSitePreview = () => {
                   >
                     <item.icon 
                       className={`w-5 h-5 ${item.isStar ? 'fill-amber-400 text-amber-400' : ''}`}
-                      style={!item.isStar ? { color: hvacTheme.primary } : undefined}
+                      style={!item.isStar ? { color: colors.primary } : undefined}
                     />
-                    <span className="text-sm font-semibold" style={{ color: hvacTheme.dark }}>{item.text}</span>
+                    <span className="text-sm font-semibold" style={{ color: colors.dark }}>{item.text}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right - Premium Hero Image with Overlays */}
+            {/* Right - Premium Hero Image */}
             <div className="order-1 lg:order-2 relative">
               {/* Decorative Ring */}
               <div 
-                className="absolute -inset-4 lg:-inset-6 rounded-3xl opacity-30 blur-2xl"
-                style={{ background: hvacTheme.heroGradient }}
+                className="absolute -inset-4 lg:-inset-6 opacity-30 blur-2xl"
+                style={{ background: colors.heroGradient, borderRadius: style.borderRadius.image }}
               />
               
               {/* Main Image Container */}
-              <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                <img 
-                  src={getImage(0).url}
-                  alt={getImage(0).alt || `${businessName} Professional Service`}
-                  className="w-full h-72 sm:h-80 lg:h-[520px] object-cover"
-                />
+              <div 
+                className="relative overflow-hidden shadow-2xl border-4 border-white"
+                style={{ borderRadius: style.borderRadius.image }}
+              >
+                {imagesLoading ? (
+                  <div className="w-full h-72 sm:h-80 lg:h-[520px] flex items-center justify-center" style={{ background: colors.subtleGradient }}>
+                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: colors.primary }} />
+                  </div>
+                ) : (
+                  <img 
+                    src={getImage(0).url}
+                    alt={getImage(0).alt || `${businessName} Professional Service`}
+                    className="w-full h-72 sm:h-80 lg:h-[520px] object-cover"
+                  />
+                )}
                 {/* Gradient Overlay */}
                 <div 
                   className="absolute inset-0"
                   style={{ 
-                    background: 'linear-gradient(180deg, transparent 40%, rgba(10, 132, 255, 0.1) 70%, rgba(15, 23, 42, 0.6) 100%)',
+                    background: `linear-gradient(180deg, transparent 40%, ${colors.primary}10 70%, ${colors.dark}99 100%)`,
                   }}
                 />
                 
                 {/* Floating Stats Badge */}
                 <div 
-                  className="absolute top-4 right-4 lg:top-6 lg:right-6 px-4 py-3 rounded-xl backdrop-blur-md border border-white/20"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+                  className="absolute top-4 right-4 lg:top-6 lg:right-6 px-4 py-3 backdrop-blur-md border border-white/20"
+                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: style.borderRadius.button }}
                 >
                   <div className="flex items-center gap-2">
-                    <Snowflake className="w-5 h-5" style={{ color: hvacTheme.primary }} />
-                    <span className="text-sm font-bold" style={{ color: hvacTheme.dark }}>HVAC Experts</span>
+                    <PrimaryIcon className="w-5 h-5" style={{ color: colors.primary }} />
+                    <span className="text-sm font-bold" style={{ color: colors.dark }}>{colors.industryLabel}</span>
                   </div>
                 </div>
                 
                 {/* Floating Contact Card */}
                 <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-8 lg:left-8 lg:right-auto lg:max-w-sm">
                   <div 
-                    className="backdrop-blur-md rounded-xl p-4 lg:p-5 shadow-2xl border border-white/20"
-                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
+                    className="backdrop-blur-md p-4 lg:p-5 shadow-2xl border border-white/20"
+                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: style.borderRadius.card }}
                   >
-                    <p className="text-xs font-medium mb-1" style={{ color: hvacTheme.gray }}>
+                    <p className="text-xs font-medium mb-1" style={{ color: colors.gray }}>
                       Call now for a free estimate
                     </p>
                     <a 
                       href={`tel:${phone || "5551234567"}`}
                       className="flex items-center gap-2 text-xl font-bold transition-colors hover:opacity-80"
-                      style={{ color: hvacTheme.primary }}
+                      style={{ color: colors.primary }}
                     >
                       <Phone className="w-5 h-5" />
                       {phone || "(555) 123-4567"}
                     </a>
-                    <div className="flex items-center gap-1.5 mt-3 pt-3 border-t" style={{ borderColor: hvacTheme.secondaryDark }}>
+                    <div className="flex items-center gap-1.5 mt-3 pt-3 border-t" style={{ borderColor: colors.secondaryDark }}>
                       <div className="flex">
                         {[1,2,3,4,5].map(i => (
                           <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
                         ))}
                       </div>
-                      <span className="text-xs font-medium" style={{ color: hvacTheme.gray }}>200+ 5-Star Reviews</span>
+                      <span className="text-xs font-medium" style={{ color: colors.gray }}>200+ 5-Star Reviews</span>
                     </div>
                   </div>
                 </div>
@@ -687,25 +483,25 @@ const GeneratedSitePreview = () => {
       {/* ========== TRUST ROW ========== */}
       <section 
         className="py-6 lg:py-8 border-y"
-        style={{ backgroundColor: hvacTheme.secondary, borderColor: hvacTheme.secondaryDark }}
+        style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 lg:gap-x-14">
             {[
-              { icon: BadgeCheck, text: "Licensed & Insured", color: hvacTheme.primary },
-              { icon: Clock, text: "Same-Day Service", color: hvacTheme.accent },
-              { icon: Headphones, text: "24/7 Support", color: hvacTheme.ctaOrange },
-              { icon: Award, text: "Satisfaction Guaranteed", color: hvacTheme.primary },
-              { icon: CalendarCheck, text: "Free Estimates", color: hvacTheme.accent },
+              { icon: icons.trustIcons[0], text: "Licensed & Insured", color: colors.primary },
+              { icon: icons.trustIcons[1], text: "Same-Day Service", color: colors.accent },
+              { icon: icons.trustIcons[2], text: "24/7 Support", color: colors.cta },
+              { icon: icons.trustIcons[3], text: "Satisfaction Guaranteed", color: colors.primary },
+              { icon: icons.trustIcons[4], text: "Free Estimates", color: colors.accent },
             ].map((item, idx) => (
               <div key={idx} className="flex items-center gap-2.5">
                 <div 
-                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: `${item.color}15` }}
+                  className="w-10 h-10 flex items-center justify-center"
+                  style={{ backgroundColor: `${item.color}15`, borderRadius: style.borderRadius.button }}
                 >
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />
                 </div>
-                <span className="font-semibold text-sm" style={{ color: hvacTheme.dark }}>{item.text}</span>
+                <span className="font-semibold text-sm" style={{ color: colors.dark }}>{item.text}</span>
               </div>
             ))}
           </div>
@@ -718,7 +514,7 @@ const GeneratedSitePreview = () => {
         <div 
           className="absolute inset-0 opacity-[0.02]"
           style={{ 
-            backgroundImage: `radial-gradient(${hvacTheme.primary} 1px, transparent 1px)`,
+            backgroundImage: `radial-gradient(${colors.primary} 1px, transparent 1px)`,
             backgroundSize: '24px 24px',
           }}
         />
@@ -727,71 +523,72 @@ const GeneratedSitePreview = () => {
           {/* Section Header */}
           <div className="text-center mb-12 lg:mb-16">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-              style={{ backgroundColor: hvacTheme.primaryLight }}
+              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
+              style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
             >
-              <Settings className="w-4 h-4" style={{ color: hvacTheme.primary }} />
-              <span className="text-sm font-bold" style={{ color: hvacTheme.primary }}>Our Services</span>
+              <PrimaryIcon className="w-4 h-4" style={{ color: colors.primary }} />
+              <span className="text-sm font-bold" style={{ color: colors.primary }}>Our Services</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-4"
-              style={{ color: hvacTheme.dark }}
+              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
+              style={{ color: colors.dark, ...fontStyles.heading }}
             >
-              {pages?.services?.title || "Complete HVAC Solutions"}
+              {pages?.services?.title || `Complete ${colors.industryLabel} Solutions`}
             </h2>
             <p 
               className="text-lg max-w-2xl mx-auto"
-              style={{ color: hvacTheme.gray }}
+              style={{ color: colors.gray }}
             >
-              {pages?.services?.metaDescription || "From installation to repair, we handle all your heating and cooling needs with expertise and care."}
+              {pages?.services?.metaDescription || "Professional service solutions tailored to your needs."}
             </p>
           </div>
 
           {/* Services Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
             {getServicesContent().slice(0, 6).map((service, idx) => {
-              const IconComponent = industryIcons.icons[idx % industryIcons.icons.length];
+              const IconComponent = icons.icons[idx % icons.icons.length];
               return (
                 <div 
                   key={idx} 
-                  className="group relative bg-white rounded-2xl p-6 lg:p-8 border transition-all duration-300 hover:-translate-y-1"
+                  className="group relative bg-white p-6 lg:p-8 border transition-all duration-300 hover:-translate-y-1"
                   style={{ 
-                    borderColor: hvacTheme.secondaryDark,
-                    boxShadow: '0 4px 20px -4px rgba(0,0,0,0.05)',
+                    borderColor: colors.secondaryDark,
+                    boxShadow: style.shadows.card,
+                    borderRadius: style.borderRadius.card,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.boxShadow = `0 20px 40px -12px ${hvacTheme.primary}25`;
-                    e.currentTarget.style.borderColor = hvacTheme.primary;
+                    e.currentTarget.style.boxShadow = style.shadows.cardHover;
+                    e.currentTarget.style.borderColor = colors.primary;
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.boxShadow = '0 4px 20px -4px rgba(0,0,0,0.05)';
-                    e.currentTarget.style.borderColor = hvacTheme.secondaryDark;
+                    e.currentTarget.style.boxShadow = style.shadows.card;
+                    e.currentTarget.style.borderColor = colors.secondaryDark;
                   }}
                 >
                   {/* Icon Container */}
                   <div 
-                    className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                    style={{ background: hvacTheme.heroGradient }}
+                    className="w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
+                    style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                   >
                     <IconComponent className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
                   </div>
                   
                   <h3 
-                    className="text-xl lg:text-2xl font-bold mb-3"
-                    style={{ color: hvacTheme.dark }}
+                    className="text-xl lg:text-2xl mb-3"
+                    style={{ color: colors.dark, ...fontStyles.heading }}
                   >
                     {service.name}
                   </h3>
                   <p 
                     className="mb-5 leading-relaxed"
-                    style={{ color: hvacTheme.gray }}
+                    style={{ color: colors.gray }}
                   >
-                    {service.content}
+                    {service.content?.substring(0, 150)}...
                   </p>
                   
                   <button 
                     className="inline-flex items-center font-semibold transition-all duration-300 group-hover:gap-2"
-                    style={{ color: hvacTheme.primary }}
+                    style={{ color: colors.primary }}
                     onClick={() => scrollToSection("contact")}
                   >
                     Get a Quote 
@@ -808,28 +605,28 @@ const GeneratedSitePreview = () => {
       <section 
         id="why-choose-us" 
         className="py-16 lg:py-24"
-        style={{ backgroundColor: hvacTheme.secondary }}
+        style={{ backgroundColor: colors.secondary }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 lg:mb-16">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-              style={{ backgroundColor: hvacTheme.accentLight }}
+              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
+              style={{ backgroundColor: colors.accentLight, borderRadius: style.borderRadius.badge }}
             >
-              <Award className="w-4 h-4" style={{ color: hvacTheme.accent }} />
-              <span className="text-sm font-bold" style={{ color: hvacTheme.accent }}>Why Choose Us</span>
+              <Award className="w-4 h-4" style={{ color: colors.accent }} />
+              <span className="text-sm font-bold" style={{ color: colors.accent }}>Why Choose Us</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-4"
-              style={{ color: hvacTheme.dark }}
+              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
+              style={{ color: colors.dark, ...fontStyles.heading }}
             >
-              The HVAC Team You Can Trust
+              The Team You Can Trust
             </h2>
             <p 
               className="text-lg max-w-2xl mx-auto"
-              style={{ color: hvacTheme.gray }}
+              style={{ color: colors.gray }}
             >
-              Homeowners and businesses choose us for reliable, professional HVAC services
+              Homeowners and businesses choose us for reliable, professional services
             </p>
           </div>
 
@@ -838,27 +635,26 @@ const GeneratedSitePreview = () => {
             {[
               { icon: Shield, title: "Licensed & Insured", desc: "Fully certified professionals with comprehensive coverage" },
               { icon: Clock, title: "Fast Response", desc: "Same-day service with flexible scheduling options" },
-              { icon: ThermometerSun, title: "Expert Technicians", desc: "Factory-trained on all major HVAC brands" },
-              { icon: Users, title: "Family Owned", desc: "Local business serving our community since 2010" },
+              { icon: Award, title: "Quality Guaranteed", desc: "100% satisfaction guarantee on all services" },
+              { icon: Users, title: "Expert Team", desc: "Skilled technicians with years of experience" },
             ].map((item, idx) => (
               <div 
                 key={idx} 
-                className="text-center p-5 lg:p-8 bg-white rounded-2xl border transition-all duration-300 hover:shadow-lg"
-                style={{ borderColor: hvacTheme.secondaryDark }}
+                className="bg-white p-5 lg:p-6 border text-center transition-all duration-300 hover:-translate-y-1"
+                style={{ 
+                  borderColor: colors.secondaryDark,
+                  boxShadow: style.shadows.card,
+                  borderRadius: style.borderRadius.card,
+                }}
               >
                 <div 
-                  className="w-14 h-14 lg:w-18 lg:h-18 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                  style={{ background: hvacTheme.heroGradient }}
+                  className="w-12 h-12 mx-auto flex items-center justify-center mb-4"
+                  style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.button }}
                 >
-                  <item.icon className="w-7 h-7 lg:w-9 lg:h-9 text-white" />
+                  <item.icon className="w-6 h-6" style={{ color: colors.primary }} />
                 </div>
-                <h3 
-                  className="text-base lg:text-xl font-bold mb-2"
-                  style={{ color: hvacTheme.dark }}
-                >
-                  {item.title}
-                </h3>
-                <p className="text-sm" style={{ color: hvacTheme.gray }}>{item.desc}</p>
+                <h3 className="font-bold mb-2" style={{ color: colors.dark, ...fontStyles.heading }}>{item.title}</h3>
+                <p className="text-sm" style={{ color: colors.gray }}>{item.desc}</p>
               </div>
             ))}
           </div>
@@ -866,52 +662,50 @@ const GeneratedSitePreview = () => {
       </section>
 
       {/* ========== ABOUT SECTION ========== */}
-      <section id="about" className="py-16 lg:py-24 relative overflow-hidden">
+      <section id="about-us" className="py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             {/* Image */}
             <div className="relative">
-              {/* Glow Effect */}
               <div 
-                className="absolute -inset-4 rounded-3xl opacity-30 blur-2xl"
-                style={{ background: hvacTheme.heroGradient }}
+                className="absolute -inset-4 opacity-20 blur-2xl"
+                style={{ background: colors.subtleGradient, borderRadius: style.borderRadius.image }}
               />
-              
-              <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                <img 
-                  src={getImage(2).url}
-                  alt={getImage(2).alt || `${businessName} professional team`}
-                  className="w-full h-80 lg:h-[480px] object-cover"
-                />
+              <div 
+                className="relative overflow-hidden shadow-2xl"
+                style={{ borderRadius: style.borderRadius.image }}
+              >
+                {imagesLoading ? (
+                  <div className="w-full h-80 lg:h-[450px] flex items-center justify-center" style={{ background: colors.subtleGradient }}>
+                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: colors.primary }} />
+                  </div>
+                ) : (
+                  <img 
+                    src={getImage(2).url}
+                    alt={getImage(2).alt || `${businessName} team`}
+                    className="w-full h-80 lg:h-[450px] object-cover"
+                  />
+                )}
                 <div 
                   className="absolute inset-0"
-                  style={{ background: 'linear-gradient(180deg, transparent 60%, rgba(10, 132, 255, 0.2) 100%)' }}
+                  style={{ background: `linear-gradient(180deg, transparent 50%, ${colors.dark}40 100%)` }}
                 />
-              </div>
-              
-              {/* Experience Badge */}
-              <div 
-                className="absolute -bottom-4 -right-4 lg:-bottom-6 lg:-right-6 px-6 py-5 rounded-2xl shadow-2xl text-white border-4 border-white"
-                style={{ background: hvacTheme.heroGradient }}
-              >
-                <p className="text-4xl lg:text-5xl font-extrabold">10+</p>
-                <p className="text-sm font-medium opacity-90">Years Experience</p>
               </div>
             </div>
 
             {/* Content */}
             <div>
               <div 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-                style={{ backgroundColor: hvacTheme.primaryLight }}
+                className="inline-flex items-center gap-2 px-4 py-2 mb-5"
+                style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
               >
-                <Users className="w-4 h-4" style={{ color: hvacTheme.primary }} />
-                <span className="text-sm font-bold" style={{ color: hvacTheme.primary }}>About Us</span>
+                <Users className="w-4 h-4" style={{ color: colors.primary }} />
+                <span className="text-sm font-bold" style={{ color: colors.primary }}>About Us</span>
               </div>
               
               <h2 
-                className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-6"
-                style={{ color: hvacTheme.dark }}
+                className="text-3xl lg:text-4xl xl:text-5xl mb-6"
+                style={{ color: colors.dark, ...fontStyles.heading }}
               >
                 {pages?.about?.title || `About ${businessName}`}
               </h2>
@@ -921,15 +715,15 @@ const GeneratedSitePreview = () => {
                   <div key={idx}>
                     <h3 
                       className="text-lg font-bold mb-2"
-                      style={{ color: hvacTheme.dark }}
+                      style={{ color: colors.dark }}
                     >
                       {section.name}
                     </h3>
                     <p 
                       className="leading-relaxed"
-                      style={{ color: hvacTheme.gray }}
+                      style={{ color: colors.gray }}
                     >
-                      {section.content}
+                      {section.content?.substring(0, 200)}...
                     </p>
                   </div>
                 ))}
@@ -937,10 +731,11 @@ const GeneratedSitePreview = () => {
 
               <button 
                 onClick={() => scrollToSection("contact")}
-                className="inline-flex items-center px-7 py-4 rounded-xl font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                className="inline-flex items-center px-7 py-4 font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                 style={{ 
-                  background: hvacTheme.ctaGradient,
-                  boxShadow: `0 10px 40px -10px ${hvacTheme.ctaOrange}60`,
+                  background: colors.ctaGradient,
+                  boxShadow: style.shadows.button,
+                  borderRadius: style.borderRadius.button,
                 }}
               >
                 Get In Touch <ChevronRight className="w-5 h-5 ml-2" />
@@ -954,28 +749,28 @@ const GeneratedSitePreview = () => {
       <section 
         id="gallery" 
         className="py-16 lg:py-24"
-        style={{ backgroundColor: hvacTheme.secondary }}
+        style={{ backgroundColor: colors.secondary }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 lg:mb-16">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-              style={{ backgroundColor: hvacTheme.primaryLight }}
+              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
+              style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
             >
-              <Camera className="w-4 h-4" style={{ color: hvacTheme.primary }} />
-              <span className="text-sm font-bold" style={{ color: hvacTheme.primary }}>Our Work</span>
+              <Camera className="w-4 h-4" style={{ color: colors.primary }} />
+              <span className="text-sm font-bold" style={{ color: colors.primary }}>Our Work</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-4"
-              style={{ color: hvacTheme.dark }}
+              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
+              style={{ color: colors.dark, ...fontStyles.heading }}
             >
-              {pages?.gallery?.title || "Recent HVAC Projects"}
+              {pages?.gallery?.title || "Recent Projects"}
             </h2>
             <p 
               className="text-lg max-w-2xl mx-auto"
-              style={{ color: hvacTheme.gray }}
+              style={{ color: colors.gray }}
             >
-              {pages?.gallery?.metaDescription || "See examples of our professional installations and repairs"}
+              {pages?.gallery?.metaDescription || "See examples of our professional work"}
             </p>
           </div>
 
@@ -984,23 +779,27 @@ const GeneratedSitePreview = () => {
             {galleryImages.map((item, idx) => (
               <div 
                 key={idx} 
-                className={`group relative rounded-2xl overflow-hidden shadow-lg cursor-pointer ${
-                  idx === 0 ? 'row-span-2' : ''
-                }`}
-                style={{ aspectRatio: idx === 0 ? '3/4' : '4/3' }}
+                className={`group relative overflow-hidden shadow-lg cursor-pointer ${idx === 0 ? 'row-span-2' : ''}`}
+                style={{ aspectRatio: idx === 0 ? '3/4' : '4/3', borderRadius: style.borderRadius.image }}
               >
-                <img 
-                  src={getImage(idx).url}
-                  alt={getImage(idx).alt || item.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                />
+                {imagesLoading ? (
+                  <div className="w-full h-full flex items-center justify-center" style={{ background: colors.subtleGradient }}>
+                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: colors.primary }} />
+                  </div>
+                ) : (
+                  <img 
+                    src={getImage(idx).url}
+                    alt={getImage(idx).alt || item.name}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                )}
                 <div 
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ background: 'linear-gradient(180deg, transparent 30%, rgba(10, 132, 255, 0.9) 100%)' }}
+                  style={{ background: `linear-gradient(180deg, transparent 30%, ${colors.primary}ee 100%)` }}
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                   <div className="flex items-center gap-2 text-white mb-1">
-                    <Snowflake className="w-4 h-4" />
+                    <PrimaryIcon className="w-4 h-4" />
                     <span className="font-bold">{item.name}</span>
                   </div>
                   <p className="text-white/80 text-sm">{item.content}</p>
@@ -1016,20 +815,20 @@ const GeneratedSitePreview = () => {
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 lg:mb-16">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-              style={{ backgroundColor: hvacTheme.accentLight }}
+              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
+              style={{ backgroundColor: colors.accentLight, borderRadius: style.borderRadius.badge }}
             >
-              <MessageCircle className="w-4 h-4" style={{ color: hvacTheme.accent }} />
-              <span className="text-sm font-bold" style={{ color: hvacTheme.accent }}>FAQ</span>
+              <MessageCircle className="w-4 h-4" style={{ color: colors.accent }} />
+              <span className="text-sm font-bold" style={{ color: colors.accent }}>FAQ</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-4"
-              style={{ color: hvacTheme.dark }}
+              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
+              style={{ color: colors.dark, ...fontStyles.heading }}
             >
               {pages?.faq?.title || "Frequently Asked Questions"}
             </h2>
-            <p style={{ color: hvacTheme.gray }}>
-              Find answers to common HVAC questions
+            <p style={{ color: colors.gray }}>
+              Find answers to common questions
             </p>
           </div>
 
@@ -1038,18 +837,18 @@ const GeneratedSitePreview = () => {
               <AccordionItem 
                 key={idx} 
                 value={`faq-${idx}`}
-                className="bg-white rounded-xl border px-6 shadow-sm overflow-hidden transition-all duration-200"
-                style={{ borderColor: hvacTheme.secondaryDark }}
+                className="bg-white px-6 shadow-sm overflow-hidden transition-all duration-200"
+                style={{ borderColor: colors.secondaryDark, borderWidth: '1px', borderRadius: style.borderRadius.card }}
               >
                 <AccordionTrigger 
                   className="text-left font-bold hover:no-underline py-5"
-                  style={{ color: hvacTheme.dark }}
+                  style={{ color: colors.dark }}
                 >
                   {faq.name}
                 </AccordionTrigger>
                 <AccordionContent 
                   className="pb-5 leading-relaxed"
-                  style={{ color: hvacTheme.gray }}
+                  style={{ color: colors.gray }}
                 >
                   {faq.content}
                 </AccordionContent>
@@ -1058,11 +857,11 @@ const GeneratedSitePreview = () => {
           </Accordion>
 
           <div className="text-center mt-10">
-            <p className="mb-4" style={{ color: hvacTheme.gray }}>Still have questions?</p>
+            <p className="mb-4" style={{ color: colors.gray }}>Still have questions?</p>
             <button 
               onClick={() => scrollToSection("contact")}
-              className="inline-flex items-center px-6 py-3 rounded-xl font-bold text-white shadow-lg transition-all duration-300 hover:scale-105"
-              style={{ background: hvacTheme.heroGradient }}
+              className="inline-flex items-center px-6 py-3 font-bold text-white shadow-lg transition-all duration-300 hover:scale-105"
+              style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
             >
               <MessageCircle className="w-5 h-5 mr-2" />
               Contact Us
@@ -1074,7 +873,7 @@ const GeneratedSitePreview = () => {
       {/* ========== CTA BAND ========== */}
       <section 
         className="py-16 lg:py-20 relative overflow-hidden"
-        style={{ background: hvacTheme.heroGradient }}
+        style={{ background: colors.heroGradient }}
       >
         {/* Decorative Elements */}
         <div className="absolute inset-0 opacity-10">
@@ -1083,25 +882,26 @@ const GeneratedSitePreview = () => {
         </div>
         
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <Snowflake className="w-12 h-12 mx-auto text-white/30 mb-6 animate-spin" style={{ animationDuration: '10s' }} />
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-extrabold text-white mb-4">
-            Ready for Better Comfort?
+          <PrimaryIcon className="w-12 h-12 mx-auto text-white/30 mb-6 animate-spin" style={{ animationDuration: '10s' }} />
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-white mb-4" style={fontStyles.heading}>
+            Ready to Get Started?
           </h2>
           <p className="text-lg lg:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Contact us today for a free, no-obligation estimate. We're here to keep you comfortable year-round!
+            Contact us today for a free, no-obligation estimate. We're here to help!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a 
               href={`tel:${phone || "5551234567"}`}
-              className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
-              style={{ color: hvacTheme.primary }}
+              className="group flex items-center justify-center gap-3 px-8 py-4 bg-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              style={{ color: colors.primary, borderRadius: style.borderRadius.button }}
             >
               <Phone className="w-5 h-5 group-hover:animate-pulse" />
               {phone || "(555) 123-4567"}
             </a>
             <button 
               onClick={() => scrollToSection("contact")}
-              className="px-8 py-4 rounded-xl font-bold text-lg border-2 border-white/40 text-white hover:bg-white/10 transition-all duration-300"
+              className="px-8 py-4 font-bold text-lg border-2 border-white/40 text-white hover:bg-white/10 transition-all duration-300"
+              style={{ borderRadius: style.borderRadius.button }}
             >
               Request Online Quote
             </button>
@@ -1113,28 +913,28 @@ const GeneratedSitePreview = () => {
       <section 
         id="contact" 
         className="py-16 lg:py-24"
-        style={{ backgroundColor: hvacTheme.secondary }}
+        style={{ backgroundColor: colors.secondary }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-12 lg:mb-16">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5"
-              style={{ backgroundColor: hvacTheme.primaryLight }}
+              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
+              style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
             >
-              <Mail className="w-4 h-4" style={{ color: hvacTheme.primary }} />
-              <span className="text-sm font-bold" style={{ color: hvacTheme.primary }}>Contact Us</span>
+              <Mail className="w-4 h-4" style={{ color: colors.primary }} />
+              <span className="text-sm font-bold" style={{ color: colors.primary }}>Contact Us</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl font-extrabold mb-4"
-              style={{ color: hvacTheme.dark }}
+              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
+              style={{ color: colors.dark, ...fontStyles.heading }}
             >
               {pages?.contact?.title || "Get Your Free Estimate"}
             </h2>
             <p 
               className="text-lg max-w-2xl mx-auto"
-              style={{ color: hvacTheme.gray }}
+              style={{ color: colors.gray }}
             >
-              {pages?.contact?.metaDescription || "Ready to improve your home comfort? We're just a call away."}
+              {pages?.contact?.metaDescription || "Ready to get started? We're just a call away."}
             </p>
           </div>
 
@@ -1142,61 +942,61 @@ const GeneratedSitePreview = () => {
             {/* Contact Info */}
             <div className="lg:col-span-2 space-y-5">
               <div 
-                className="bg-white rounded-2xl p-6 lg:p-8 shadow-lg border"
-                style={{ borderColor: hvacTheme.secondaryDark }}
+                className="bg-white p-6 lg:p-8 shadow-lg"
+                style={{ borderColor: colors.secondaryDark, borderWidth: '1px', borderRadius: style.borderRadius.card }}
               >
                 <h3 
                   className="text-xl font-bold mb-6"
-                  style={{ color: hvacTheme.dark }}
+                  style={{ color: colors.dark }}
                 >
                   Contact Information
                 </h3>
                 
                 {getContactContent().slice(0, 1).map((section, idx) => (
-                  <p key={idx} className="mb-6" style={{ color: hvacTheme.gray }}>{section.content}</p>
+                  <p key={idx} className="mb-6" style={{ color: colors.gray }}>{section.content?.substring(0, 150)}...</p>
                 ))}
 
                 <div className="space-y-4">
                   {phone && (
-                    <a href={`tel:${phone}`} className="flex items-center gap-4 group p-3 rounded-xl transition-colors hover:bg-blue-50">
+                    <a href={`tel:${phone}`} className="flex items-center gap-4 group p-3 transition-colors" style={{ borderRadius: style.borderRadius.button }}>
                       <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ background: hvacTheme.heroGradient }}
+                        className="w-12 h-12 flex items-center justify-center"
+                        style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                       >
                         <Phone className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-xs font-medium" style={{ color: hvacTheme.gray }}>Phone</p>
-                        <p className="font-bold group-hover:underline" style={{ color: hvacTheme.dark }}>{phone}</p>
+                        <p className="text-xs font-medium" style={{ color: colors.gray }}>Phone</p>
+                        <p className="font-bold group-hover:underline" style={{ color: colors.dark }}>{phone}</p>
                       </div>
                     </a>
                   )}
                   
                   {email && (
-                    <a href={`mailto:${email}`} className="flex items-center gap-4 group p-3 rounded-xl transition-colors hover:bg-blue-50">
+                    <a href={`mailto:${email}`} className="flex items-center gap-4 group p-3 transition-colors" style={{ borderRadius: style.borderRadius.button }}>
                       <div 
-                        className="w-12 h-12 rounded-xl flex items-center justify-center"
-                        style={{ background: hvacTheme.heroGradient }}
+                        className="w-12 h-12 flex items-center justify-center"
+                        style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                       >
                         <Mail className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <p className="text-xs font-medium" style={{ color: hvacTheme.gray }}>Email</p>
-                        <p className="font-bold group-hover:underline" style={{ color: hvacTheme.dark }}>{email}</p>
+                        <p className="text-xs font-medium" style={{ color: colors.gray }}>Email</p>
+                        <p className="font-bold group-hover:underline" style={{ color: colors.dark }}>{email}</p>
                       </div>
                     </a>
                   )}
 
                   <div className="flex items-center gap-4 p-3">
                     <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ background: hvacTheme.heroGradient }}
+                      className="w-12 h-12 flex items-center justify-center"
+                      style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                     >
                       <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-xs font-medium" style={{ color: hvacTheme.gray }}>Service Area</p>
-                      <p className="font-bold" style={{ color: hvacTheme.dark }}>{businessName} Metro Area</p>
+                      <p className="text-xs font-medium" style={{ color: colors.gray }}>Service Area</p>
+                      <p className="font-bold" style={{ color: colors.dark }}>{businessName} Metro Area</p>
                     </div>
                   </div>
                 </div>
@@ -1204,8 +1004,8 @@ const GeneratedSitePreview = () => {
 
               {/* Hours Card */}
               <div 
-                className="rounded-2xl p-6"
-                style={{ background: hvacTheme.heroGradient }}
+                className="p-6"
+                style={{ background: colors.heroGradient, borderRadius: style.borderRadius.card }}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <Clock className="w-5 h-5 text-white" />
@@ -1231,19 +1031,19 @@ const GeneratedSitePreview = () => {
             {/* Contact Form */}
             <div className="lg:col-span-3">
               <div 
-                className="bg-white rounded-2xl p-6 lg:p-10 shadow-xl border"
-                style={{ borderColor: hvacTheme.secondaryDark }}
+                className="bg-white p-6 lg:p-10 shadow-xl"
+                style={{ borderColor: colors.secondaryDark, borderWidth: '1px', borderRadius: style.borderRadius.card }}
               >
                 <div className="flex items-center justify-between mb-6">
                   <h3 
                     className="text-xl lg:text-2xl font-bold"
-                    style={{ color: hvacTheme.dark }}
+                    style={{ color: colors.dark }}
                   >
                     Request a Free Quote
                   </h3>
                   <span 
-                    className="text-xs px-3 py-1.5 rounded-full font-semibold"
-                    style={{ backgroundColor: hvacTheme.ctaOrangeLight, color: hvacTheme.ctaOrange }}
+                    className="text-xs px-3 py-1.5 font-semibold"
+                    style={{ backgroundColor: colors.ctaLight, color: colors.cta, borderRadius: style.borderRadius.badge }}
                   >
                     Demo Form
                   </span>
@@ -1254,28 +1054,28 @@ const GeneratedSitePreview = () => {
                     <div>
                       <label 
                         className="block text-sm font-semibold mb-2"
-                        style={{ color: hvacTheme.dark }}
+                        style={{ color: colors.dark }}
                       >
                         Full Name *
                       </label>
                       <Input 
                         placeholder="John Smith" 
-                        className="h-12 border-2 transition-colors focus:border-blue-500" 
-                        style={{ backgroundColor: hvacTheme.secondary, borderColor: hvacTheme.secondaryDark }}
+                        className="h-12 border-2 transition-colors" 
+                        style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark, borderRadius: style.borderRadius.button }}
                         disabled 
                       />
                     </div>
                     <div>
                       <label 
                         className="block text-sm font-semibold mb-2"
-                        style={{ color: hvacTheme.dark }}
+                        style={{ color: colors.dark }}
                       >
                         Phone Number *
                       </label>
                       <Input 
                         placeholder="(555) 123-4567" 
-                        className="h-12 border-2 transition-colors focus:border-blue-500" 
-                        style={{ backgroundColor: hvacTheme.secondary, borderColor: hvacTheme.secondaryDark }}
+                        className="h-12 border-2 transition-colors" 
+                        style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark, borderRadius: style.borderRadius.button }}
                         disabled 
                       />
                     </div>
@@ -1284,65 +1084,63 @@ const GeneratedSitePreview = () => {
                   <div>
                     <label 
                       className="block text-sm font-semibold mb-2"
-                      style={{ color: hvacTheme.dark }}
+                      style={{ color: colors.dark }}
                     >
                       Email Address
                     </label>
                     <Input 
                       placeholder="john@example.com" 
-                      className="h-12 border-2 transition-colors focus:border-blue-500" 
-                      style={{ backgroundColor: hvacTheme.secondary, borderColor: hvacTheme.secondaryDark }}
+                      className="h-12 border-2 transition-colors" 
+                      style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark, borderRadius: style.borderRadius.button }}
                       disabled 
                     />
                   </div>
-                  
+
                   <div>
                     <label 
                       className="block text-sm font-semibold mb-2"
-                      style={{ color: hvacTheme.dark }}
+                      style={{ color: colors.dark }}
                     >
-                      Service Needed *
+                      Service Needed
                     </label>
                     <Input 
-                      placeholder="AC Repair, Installation, Maintenance..." 
-                      className="h-12 border-2 transition-colors focus:border-blue-500" 
-                      style={{ backgroundColor: hvacTheme.secondary, borderColor: hvacTheme.secondaryDark }}
+                      placeholder={`Select ${colors.industryLabel} Service`}
+                      className="h-12 border-2 transition-colors" 
+                      style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark, borderRadius: style.borderRadius.button }}
                       disabled 
                     />
                   </div>
-                  
+
                   <div>
                     <label 
                       className="block text-sm font-semibold mb-2"
-                      style={{ color: hvacTheme.dark }}
+                      style={{ color: colors.dark }}
                     >
-                      Project Details
+                      Message
                     </label>
                     <Textarea 
-                      placeholder="Tell us about your HVAC needs..." 
-                      rows={4} 
-                      className="border-2 transition-colors focus:border-blue-500"
-                      style={{ backgroundColor: hvacTheme.secondary, borderColor: hvacTheme.secondaryDark }}
+                      placeholder="Tell us about your project or issue..." 
+                      className="min-h-[120px] border-2 transition-colors resize-none" 
+                      style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark, borderRadius: style.borderRadius.button }}
                       disabled 
                     />
                   </div>
-                  
+
                   <button 
-                    className="w-full py-4 rounded-xl text-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-50"
+                    type="submit"
+                    className="w-full flex items-center justify-center gap-2 py-4 font-bold text-lg text-white shadow-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl disabled:opacity-70"
                     style={{ 
-                      background: hvacTheme.ctaGradient,
-                      boxShadow: `0 10px 30px -10px ${hvacTheme.ctaOrange}60`,
+                      background: colors.ctaGradient,
+                      boxShadow: style.shadows.button,
+                      borderRadius: style.borderRadius.button,
                     }}
                     disabled
                   >
-                    {hero?.primaryCTA || "Get My Free Quote"}
+                    <CheckCircle className="w-5 h-5" />
+                    Submit Request (Demo)
                   </button>
-
-                  <p 
-                    className="text-center text-xs"
-                    style={{ color: hvacTheme.gray }}
-                  >
-                    By submitting, you agree to our terms and privacy policy.
+                  <p className="text-center text-xs" style={{ color: colors.gray }}>
+                    We respond to all inquiries within 24 hours
                   </p>
                 </form>
               </div>
@@ -1351,204 +1149,125 @@ const GeneratedSitePreview = () => {
         </div>
       </section>
 
-      {/* ========== PREMIUM FOOTER ========== */}
-      <footer 
-        className="py-14 lg:py-20"
-        style={{ background: hvacTheme.darkGradient }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12 mb-12">
-            {/* Brand */}
-            <div className="lg:col-span-2">
+      {/* ========== FOOTER ========== */}
+      <footer style={{ background: colors.darkGradient }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+            {/* Company Info */}
+            <div className="sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-3 mb-5">
                 <div 
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl"
-                  style={{ background: hvacTheme.heroGradient }}
+                  className="w-10 h-10 flex items-center justify-center text-white font-bold"
+                  style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                 >
-                  <Snowflake className="w-6 h-6" />
+                  {businessName?.charAt(0) || "A"}
                 </div>
-                <div>
-                  <span className="text-xl font-bold text-white">{businessName}</span>
-                  <p className="text-xs text-gray-400">HVAC Specialists</p>
-                </div>
+                <span className="text-lg font-bold text-white" style={fontStyles.heading}>{businessName}</span>
               </div>
-              <p className="text-gray-400 max-w-sm mb-6 leading-relaxed">
-                Your trusted local HVAC experts. Professional heating, cooling, and air quality solutions with guaranteed satisfaction.
+              <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+                Your trusted {colors.industryLabel.toLowerCase()} in the area. Professional service with quality results.
               </p>
-              {phone && (
-                <a 
-                  href={`tel:${phone}`}
-                  className="inline-flex items-center gap-2 text-lg font-bold transition-colors hover:opacity-80"
-                  style={{ color: hvacTheme.accent }}
-                >
-                  <Phone className="w-5 h-5" />
-                  {phone}
-                </a>
-              )}
+              <div className="flex gap-1">
+                {[1,2,3,4,5].map(i => (
+                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
             </div>
-            
+
             {/* Quick Links */}
             <div>
-              <h4 className="text-sm font-bold mb-5 uppercase tracking-wider text-gray-400">Quick Links</h4>
-              <ul className="space-y-3">
-                {navigation?.slice(0, 6).map((navItem, idx) => (
+              <h4 className="text-white font-bold mb-4" style={fontStyles.heading}>Quick Links</h4>
+              <ul className="space-y-2">
+                {navigation?.slice(0, 5).map((item, idx) => (
                   <li key={idx}>
                     <button 
-                      onClick={() => scrollToSection(navItem.toLowerCase().replace(/\s+/g, "-"))}
-                      className="text-gray-400 hover:text-white transition-colors"
+                      onClick={() => scrollToSection(item.toLowerCase().replace(/\s+/g, "-"))}
+                      className="text-gray-400 hover:text-white text-sm transition-colors"
                     >
-                      {navItem}
+                      {item}
                     </button>
                   </li>
                 ))}
               </ul>
             </div>
-            
-            {/* Contact & Hours */}
+
+            {/* Contact */}
             <div>
-              <h4 className="text-sm font-bold mb-5 uppercase tracking-wider text-gray-400">Contact & Hours</h4>
-              <div className="space-y-3 text-gray-400 text-sm">
-                {phone && <p className="flex items-center gap-2"><Phone className="w-4 h-4" /> {phone}</p>}
-                {email && <p className="flex items-center gap-2"><Mail className="w-4 h-4" /> {email}</p>}
-                <div className="pt-2">
-                  <p className="font-medium text-white mb-1">Business Hours</p>
-                  <p>Mon-Fri: 8am-6pm</p>
-                  <p>Sat: 9am-4pm</p>
-                  <p>Emergency: 24/7</p>
-                </div>
+              <h4 className="text-white font-bold mb-4" style={fontStyles.heading}>Contact</h4>
+              <ul className="space-y-3">
+                {phone && (
+                  <li>
+                    <a href={`tel:${phone}`} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors">
+                      <Phone className="w-4 h-4" /> {phone}
+                    </a>
+                  </li>
+                )}
+                {email && (
+                  <li>
+                    <a href={`mailto:${email}`} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors">
+                      <Mail className="w-4 h-4" /> {email}
+                    </a>
+                  </li>
+                )}
+                <li className="flex items-center gap-2 text-gray-400 text-sm">
+                  <MapPin className="w-4 h-4" /> {businessName} Metro Area
+                </li>
+              </ul>
+            </div>
+
+            {/* Hours */}
+            <div>
+              <h4 className="text-white font-bold mb-4" style={fontStyles.heading}>Hours</h4>
+              <ul className="space-y-2 text-sm">
+                <li className="flex justify-between text-gray-400">
+                  <span>Mon - Fri</span>
+                  <span className="text-white">8AM - 6PM</span>
+                </li>
+                <li className="flex justify-between text-gray-400">
+                  <span>Saturday</span>
+                  <span className="text-white">9AM - 4PM</span>
+                </li>
+                <li className="flex justify-between text-gray-400">
+                  <span>Emergency</span>
+                  <span className="text-white">24/7</span>
+                </li>
+              </ul>
+              <div className="mt-4 flex items-center gap-2">
+                <Shield className="w-4 h-4" style={{ color: colors.primary }} />
+                <span className="text-gray-400 text-xs">Licensed & Insured</span>
               </div>
             </div>
           </div>
-          
-          {/* Footer Bottom */}
-          <div 
-            className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4"
-            style={{ borderColor: 'rgba(255,255,255,0.1)' }}
-          >
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-              <span>© {new Date().getFullYear()} {businessName}</span>
-              <span className="hidden sm:inline">•</span>
-              <span>Licensed & Insured</span>
-              <span className="hidden sm:inline">•</span>
-              <span>All Rights Reserved</span>
-            </div>
-            <div className="flex gap-6 text-sm text-gray-500">
-              <span className="hover:text-gray-300 cursor-pointer transition-colors">Privacy Policy</span>
-              <span className="hover:text-gray-300 cursor-pointer transition-colors">Terms of Service</span>
-            </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-gray-500 text-xs">
+              © {new Date().getFullYear()} {businessName}. All rights reserved.
+            </p>
+            <p className="text-gray-600 text-xs">
+              Preview generated for implementation reference
+            </p>
           </div>
         </div>
       </footer>
 
-      {/* Mobile Sticky CTA */}
+      {/* ========== STICKY MOBILE CTA ========== */}
       <div 
-        className="fixed bottom-0 left-0 right-0 p-3 sm:hidden z-40 border-t"
-        style={{ backgroundColor: 'white', borderColor: hvacTheme.secondaryDark }}
+        className="fixed bottom-0 left-0 right-0 lg:hidden p-3 border-t z-40"
+        style={{ backgroundColor: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(10px)', borderColor: colors.secondaryDark }}
       >
         <a 
           href={`tel:${phone || "5551234567"}`}
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-xl text-white font-bold text-lg shadow-lg"
-          style={{ background: hvacTheme.ctaGradient }}
+          className="flex items-center justify-center gap-2 w-full py-3.5 font-bold text-white shadow-lg"
+          style={{ background: colors.ctaGradient, borderRadius: style.borderRadius.button }}
         >
           <Phone className="w-5 h-5" />
-          Call Now - {phone || "(555) 123-4567"}
+          Call Now: {phone || "(555) 123-4567"}
         </a>
       </div>
 
-      {/* ========== INTERNAL TECHNICAL NOTES ========== */}
-      <div 
-        className="py-12 border-t-4"
-        style={{ backgroundColor: hvacTheme.ctaOrangeLight, borderColor: hvacTheme.ctaOrange }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div 
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: hvacTheme.ctaOrange }}
-            />
-            <h3 className="text-xl font-bold" style={{ color: hvacTheme.dark }}>
-              Internal Implementation Notes
-            </h3>
-            <span 
-              className="text-xs px-3 py-1 rounded-full font-semibold"
-              style={{ backgroundColor: `${hvacTheme.ctaOrange}20`, color: hvacTheme.ctaOrange }}
-            >
-              Not visible to clients
-            </span>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-5">
-            <div className="bg-white rounded-xl p-5 border shadow-sm" style={{ borderColor: hvacTheme.secondaryDark }}>
-              <h4 className="font-bold mb-3 flex items-center gap-2" style={{ color: hvacTheme.dark }}>
-                <ExternalLink className="w-4 h-4" style={{ color: hvacTheme.primary }} />
-                Layout Notes
-              </h4>
-              <p className="text-sm" style={{ color: hvacTheme.gray }}>
-                {technical?.layout || "Single page with anchor navigation, mobile-first design"}
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-xl p-5 border shadow-sm" style={{ borderColor: hvacTheme.secondaryDark }}>
-              <h4 className="font-bold mb-3" style={{ color: hvacTheme.dark }}>Performance</h4>
-              <ul className="text-sm space-y-1.5" style={{ color: hvacTheme.gray }}>
-                {technical?.performance?.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span style={{ color: hvacTheme.primary }}>•</span>
-                    {item}
-                  </li>
-                )) || <li>• Standard optimization applied</li>}
-              </ul>
-            </div>
-            
-            <div className="bg-white rounded-xl p-5 border shadow-sm" style={{ borderColor: hvacTheme.secondaryDark }}>
-              <h4 className="font-bold mb-3" style={{ color: hvacTheme.dark }}>Accessibility</h4>
-              <ul className="text-sm space-y-1.5" style={{ color: hvacTheme.gray }}>
-                {technical?.accessibility?.map((item, idx) => (
-                  <li key={idx} className="flex items-start gap-2">
-                    <span style={{ color: hvacTheme.primary }}>•</span>
-                    {item}
-                  </li>
-                )) || <li>• WCAG 2.1 AA compliance</li>}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-6 border-t" style={{ borderColor: `${hvacTheme.ctaOrange}30` }}>
-            <h4 className="font-bold mb-4" style={{ color: hvacTheme.dark }}>SEO Titles & Meta Descriptions</h4>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {pages && Object.entries(pages).map(([pageName, pageData]) => (
-                <div 
-                  key={pageName} 
-                  className="bg-white p-4 rounded-xl border shadow-sm"
-                  style={{ borderColor: hvacTheme.secondaryDark }}
-                >
-                  <p 
-                    className="text-xs font-bold uppercase tracking-wide mb-2"
-                    style={{ color: hvacTheme.primary }}
-                  >
-                    {pageName}
-                  </p>
-                  <p 
-                    className="font-medium text-sm mb-1 line-clamp-1"
-                    style={{ color: hvacTheme.dark }}
-                  >
-                    {pageData?.seoTitle || "N/A"}
-                  </p>
-                  <p 
-                    className="text-xs line-clamp-2"
-                    style={{ color: hvacTheme.gray }}
-                  >
-                    {pageData?.metaDescription || "N/A"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom padding for mobile sticky CTA */}
-      <div className="h-20 sm:hidden" />
+      {/* Bottom Padding for Mobile CTA */}
+      <div className="lg:hidden h-20" />
     </div>
   );
 };
