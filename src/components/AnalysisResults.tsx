@@ -10,6 +10,7 @@ import {
   Quote,
   Target,
   FileText,
+  Download,
 } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { OverallScore } from "./OverallScore";
@@ -17,14 +18,29 @@ import { AnalysisSection } from "./AnalysisSection";
 import { FindingsList } from "./FindingsList";
 import { RecommendationCard } from "./RecommendationCard";
 import { AIServicePitch } from "./AIServicePitch";
+import { Button } from "./ui/button";
+import { generateAnalysisPdf } from "@/lib/generatePdf";
 
 interface AnalysisResultsProps {
   results: AnalysisResult;
+  url: string;
 }
 
-export function AnalysisResults({ results }: AnalysisResultsProps) {
+export function AnalysisResults({ results, url }: AnalysisResultsProps) {
+  const handleExportPdf = () => {
+    generateAnalysisPdf(results, url);
+  };
+
   return (
     <div className="space-y-6 opacity-0 animate-fade-in">
+      {/* Export Button */}
+      <div className="flex justify-end">
+        <Button onClick={handleExportPdf} variant="outline" className="gap-2">
+          <Download className="w-4 h-4" />
+          Export PDF Report
+        </Button>
+      </div>
+
       {/* Overall Summary */}
       <OverallScore
         score={results.summary.overallScore}

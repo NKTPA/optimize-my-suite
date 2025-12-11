@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [url, setUrl] = useState("");
+  const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const { toast } = useToast();
@@ -74,6 +75,7 @@ const Index = () => {
 
       const data = await response.json();
       setResults(data);
+      setAnalyzedUrl(formattedUrl);
       
       toast({
         title: "Analysis Complete",
@@ -172,7 +174,7 @@ const Index = () => {
       {/* Results Section */}
       <main className="container py-8 lg:py-12">
         {isLoading && <LoadingState />}
-        {results && !isLoading && <AnalysisResults results={results} />}
+        {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} />}
         
         {/* Empty State with Benefits */}
         {!isLoading && !results && (
