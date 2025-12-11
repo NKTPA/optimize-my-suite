@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,7 +11,9 @@ import { BlueprintDisplay } from "@/components/BlueprintDisplay";
 import { AnalysisResult } from "@/types/analysis";
 import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
 import { useToast } from "@/hooks/use-toast";
+
 const Index = () => {
+  const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +22,8 @@ const Index = () => {
   // Blueprint state
   const [blueprint, setBlueprint] = useState<WebsiteBlueprint | null>(null);
   const [blueprintBusinessName, setBlueprintBusinessName] = useState("");
+  const [blueprintPhone, setBlueprintPhone] = useState("");
+  const [blueprintEmail, setBlueprintEmail] = useState("");
   const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
   const [blueprintError, setBlueprintError] = useState("");
   const {
@@ -116,6 +120,8 @@ const Index = () => {
       const data = await response.json();
       setBlueprint(data);
       setBlueprintBusinessName(formData.businessName);
+      setBlueprintPhone(formData.mainPhone || "");
+      setBlueprintEmail(formData.contactEmail || "");
       toast({
         title: "Blueprint Generated",
         description: "Your website blueprint is ready. Scroll down to see it."
@@ -200,15 +206,20 @@ const Index = () => {
             {/* Feature Pills */}
             <div className="flex flex-wrap justify-center gap-3 mt-8">
               {[{
-              icon: Target,
-              text: "Lead Capture"
-            }, {
-              icon: Zap,
-              text: "Performance"
-            }, {
-              icon: TrendingUp,
-              text: "SEO"
-            }].map((feature, idx) => {})}
+                icon: Target,
+                text: "Lead Capture"
+              }, {
+                icon: Zap,
+                text: "Performance"
+              }, {
+                icon: TrendingUp,
+                text: "SEO"
+              }].map((feature, idx) => (
+                <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm">
+                  <feature.icon className="w-4 h-4" />
+                  {feature.text}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -226,7 +237,40 @@ const Index = () => {
         
         {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} />}
         
-        {blueprint && !isGeneratingBlueprint && <BlueprintDisplay blueprint={blueprint} businessName={blueprintBusinessName} />}
+        {blueprint && !isGeneratingBlueprint && (
+          <>
+            {/* Build Website Layout Button */}
+            <div className="max-w-4xl mx-auto mb-8 flex justify-center">
+              <Button 
+                variant="hero" 
+                size="lg"
+                className="gap-2"
+                onClick={() => {
+                  if (!blueprint) {
+                    toast({
+                      title: "Generate a blueprint first",
+                      description: "You need to create a website blueprint before building a layout.",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  navigate("/preview", { 
+                    state: { 
+                      blueprint, 
+                      businessName: blueprintBusinessName,
+                      phone: blueprintPhone,
+                      email: blueprintEmail
+                    } 
+                  });
+                }}
+              >
+                <LayoutTemplate className="w-5 h-5" />
+                Build Website Layout from Blueprint
+              </Button>
+            </div>
+            <BlueprintDisplay blueprint={blueprint} businessName={blueprintBusinessName} />
+          </>
+        )}
         
         {/* Empty State with Benefits */}
         {!isLoading && !isGeneratingBlueprint && !results && !blueprint && <div className="max-w-4xl mx-auto">
