@@ -6,19 +6,26 @@ import {
   Snowflake, Lightbulb, TreePine, Home as HomeIcon, Heart,
   ThermometerSun, Fan, Plug, PipetteIcon, Leaf, Hammer,
   Wind, Gauge, Settings, AlertTriangle, ThermometerSnowflake,
-  AirVent, CircleDot, BadgeCheck, CalendarCheck, Headphones
+  AirVent, CircleDot, BadgeCheck, CalendarCheck, Headphones,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { WebsiteBlueprint } from "@/types/blueprint";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { 
+  fetchServiceImages, 
+  inferServiceType, 
+  ServiceImage,
+  ServiceImagesResponse 
+} from "@/lib/serviceImages";
 
 interface LocationState {
   blueprint: WebsiteBlueprint;
@@ -28,71 +35,239 @@ interface LocationState {
   industry?: string;
 }
 
-// Premium HVAC Color Palette
+// Industry-specific theme configurations
+const getThemeForIndustry = (industry: string) => {
+  const normalizedIndustry = industry?.toLowerCase() || 'hvac';
+  
+  const themes: Record<string, typeof hvacTheme> = {
+    hvac: {
+      primary: "#0A84FF",
+      primaryDark: "#0056D6",
+      primaryLight: "#E8F4FF",
+      primaryGlow: "rgba(10, 132, 255, 0.15)",
+      secondary: "#F8FAFC",
+      secondaryDark: "#E2E8F0",
+      accent: "#06B6D4",
+      accentLight: "#ECFEFF",
+      ctaOrange: "#F97316",
+      ctaOrangeLight: "#FFF7ED",
+      dark: "#0F172A",
+      gray: "#64748B",
+      grayLight: "#94A3B8",
+      heroGradient: "linear-gradient(135deg, #0A84FF 0%, #0056D6 50%, #06B6D4 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(10, 132, 255, 0.03) 0%, rgba(6, 182, 212, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
+      darkGradient: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
+      industryLabel: "HVAC Specialists",
+    },
+    plumbing: {
+      primary: "#2563EB",
+      primaryDark: "#1D4ED8",
+      primaryLight: "#DBEAFE",
+      primaryGlow: "rgba(37, 99, 235, 0.15)",
+      secondary: "#F8FAFC",
+      secondaryDark: "#E2E8F0",
+      accent: "#0EA5E9",
+      accentLight: "#E0F2FE",
+      ctaOrange: "#EF4444",
+      ctaOrangeLight: "#FEF2F2",
+      dark: "#0F172A",
+      gray: "#64748B",
+      grayLight: "#94A3B8",
+      heroGradient: "linear-gradient(135deg, #2563EB 0%, #1D4ED8 50%, #0EA5E9 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(37, 99, 235, 0.03) 0%, rgba(14, 165, 233, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+      darkGradient: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
+      industryLabel: "Plumbing Experts",
+    },
+    electrical: {
+      primary: "#F59E0B",
+      primaryDark: "#D97706",
+      primaryLight: "#FEF3C7",
+      primaryGlow: "rgba(245, 158, 11, 0.15)",
+      secondary: "#FFFBEB",
+      secondaryDark: "#FDE68A",
+      accent: "#EAB308",
+      accentLight: "#FEF9C3",
+      ctaOrange: "#EA580C",
+      ctaOrangeLight: "#FFF7ED",
+      dark: "#1C1917",
+      gray: "#57534E",
+      grayLight: "#A8A29E",
+      heroGradient: "linear-gradient(135deg, #F59E0B 0%, #D97706 50%, #EAB308 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #FFFBEB 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(245, 158, 11, 0.03) 0%, rgba(234, 179, 8, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+      darkGradient: "linear-gradient(180deg, #1C1917 0%, #292524 100%)",
+      industryLabel: "Electrical Pros",
+    },
+    roofing: {
+      primary: "#DC2626",
+      primaryDark: "#B91C1C",
+      primaryLight: "#FEE2E2",
+      primaryGlow: "rgba(220, 38, 38, 0.15)",
+      secondary: "#F8FAFC",
+      secondaryDark: "#E2E8F0",
+      accent: "#78716C",
+      accentLight: "#F5F5F4",
+      ctaOrange: "#EA580C",
+      ctaOrangeLight: "#FFF7ED",
+      dark: "#1C1917",
+      gray: "#57534E",
+      grayLight: "#A8A29E",
+      heroGradient: "linear-gradient(135deg, #DC2626 0%, #B91C1C 50%, #991B1B 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(220, 38, 38, 0.03) 0%, rgba(120, 113, 108, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+      darkGradient: "linear-gradient(180deg, #1C1917 0%, #292524 100%)",
+      industryLabel: "Roofing Specialists",
+    },
+    landscaping: {
+      primary: "#16A34A",
+      primaryDark: "#15803D",
+      primaryLight: "#DCFCE7",
+      primaryGlow: "rgba(22, 163, 74, 0.15)",
+      secondary: "#F0FDF4",
+      secondaryDark: "#BBF7D0",
+      accent: "#84CC16",
+      accentLight: "#ECFCCB",
+      ctaOrange: "#EA580C",
+      ctaOrangeLight: "#FFF7ED",
+      dark: "#14532D",
+      gray: "#4D7C0F",
+      grayLight: "#65A30D",
+      heroGradient: "linear-gradient(135deg, #16A34A 0%, #15803D 50%, #84CC16 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F0FDF4 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(22, 163, 74, 0.03) 0%, rgba(132, 204, 22, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #EA580C 0%, #C2410C 100%)",
+      darkGradient: "linear-gradient(180deg, #14532D 0%, #166534 100%)",
+      industryLabel: "Landscaping Pros",
+    },
+    dental: {
+      primary: "#0D9488",
+      primaryDark: "#0F766E",
+      primaryLight: "#CCFBF1",
+      primaryGlow: "rgba(13, 148, 136, 0.15)",
+      secondary: "#F0FDFA",
+      secondaryDark: "#99F6E4",
+      accent: "#14B8A6",
+      accentLight: "#CCFBF1",
+      ctaOrange: "#0891B2",
+      ctaOrangeLight: "#ECFEFF",
+      dark: "#134E4A",
+      gray: "#5EEAD4",
+      grayLight: "#2DD4BF",
+      heroGradient: "linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #14B8A6 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F0FDFA 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(13, 148, 136, 0.03) 0%, rgba(20, 184, 166, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #0891B2 0%, #0E7490 100%)",
+      darkGradient: "linear-gradient(180deg, #134E4A 0%, #115E59 100%)",
+      industryLabel: "Dental Care",
+    },
+    "med spa": {
+      primary: "#8B5CF6",
+      primaryDark: "#7C3AED",
+      primaryLight: "#EDE9FE",
+      primaryGlow: "rgba(139, 92, 246, 0.15)",
+      secondary: "#FAF5FF",
+      secondaryDark: "#E9D5FF",
+      accent: "#A855F7",
+      accentLight: "#F3E8FF",
+      ctaOrange: "#EC4899",
+      ctaOrangeLight: "#FCE7F3",
+      dark: "#3B0764",
+      gray: "#6B21A8",
+      grayLight: "#9333EA",
+      heroGradient: "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 50%, #A855F7 100%)",
+      cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #FAF5FF 100%)",
+      overlayGradient: "linear-gradient(180deg, rgba(139, 92, 246, 0.03) 0%, rgba(168, 85, 247, 0.02) 100%)",
+      ctaGradient: "linear-gradient(135deg, #EC4899 0%, #DB2777 100%)",
+      darkGradient: "linear-gradient(180deg, #3B0764 0%, #581C87 100%)",
+      industryLabel: "Med Spa & Wellness",
+    },
+  };
+  
+  // Match industry to theme
+  for (const [key, theme] of Object.entries(themes)) {
+    if (normalizedIndustry.includes(key)) {
+      return theme;
+    }
+  }
+  
+  return themes.hvac; // Default fallback
+};
+
+// Default HVAC theme (fallback)
 const hvacTheme = {
-  // Primary Cool Blue Gradient
   primary: "#0A84FF",
   primaryDark: "#0056D6",
   primaryLight: "#E8F4FF",
   primaryGlow: "rgba(10, 132, 255, 0.15)",
-  
-  // Secondary
   secondary: "#F8FAFC",
   secondaryDark: "#E2E8F0",
-  
-  // Accent - Electric Teal
   accent: "#06B6D4",
   accentLight: "#ECFEFF",
-  
-  // Safety Orange for CTAs
   ctaOrange: "#F97316",
   ctaOrangeLight: "#FFF7ED",
-  
-  // Neutrals
   dark: "#0F172A",
   gray: "#64748B",
   grayLight: "#94A3B8",
-  
-  // Gradients
   heroGradient: "linear-gradient(135deg, #0A84FF 0%, #0056D6 50%, #06B6D4 100%)",
   cardGradient: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
   overlayGradient: "linear-gradient(180deg, rgba(10, 132, 255, 0.03) 0%, rgba(6, 182, 212, 0.02) 100%)",
   ctaGradient: "linear-gradient(135deg, #F97316 0%, #EA580C 100%)",
   darkGradient: "linear-gradient(180deg, #0F172A 0%, #1E293B 100%)",
+  industryLabel: "HVAC Specialists",
 };
 
-// HVAC-Specific Custom Icons Component
-const HVACIcons = {
-  Thermostat: ThermometerSun,
-  Cooling: Snowflake,
-  Heating: Flame,
-  Fan: Fan,
-  Ventilation: Wind,
-  AirQuality: AirVent,
-  Diagnostics: Gauge,
-  Maintenance: Wrench,
-  Installation: Settings,
-  Emergency: AlertTriangle,
-  ACUnit: ThermometerSnowflake,
-  Ductwork: CircleDot,
-};
-
-// HVAC-Specific Unsplash Images - Only HVAC Related (verified working images)
-const hvacImages = {
-  hero: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1400&q=90", // Construction worker
-  heroAlt: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=1400&q=90", // AC outdoor unit
-  about: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=1000&q=85", // Worker with equipment
-  service1: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800&q=80", // AC outdoor unit
-  service2: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80", // Modern home interior
-  service3: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", // Technician at work
-  gallery: [
-    "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=700&q=85", // Technician working
-    "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=700&q=85", // AC outdoor unit
-    "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=700&q=85", // Worker with tools
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85", // Equipment work
-    "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&q=85", // Modern interior
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&q=85", // Modern home
-  ],
+// Industry-specific icon sets
+const getIconsForIndustry = (industry: string) => {
+  const normalizedIndustry = industry?.toLowerCase() || 'hvac';
+  
+  if (normalizedIndustry.includes('plumbing') || normalizedIndustry.includes('plumber')) {
+    return {
+      primary: Droplets,
+      icons: [Droplets, Wrench, PipetteIcon, Settings, Gauge, Shield],
+    };
+  }
+  if (normalizedIndustry.includes('electrical') || normalizedIndustry.includes('electrician')) {
+    return {
+      primary: Zap,
+      icons: [Zap, Lightbulb, Plug, Settings, Shield, Wrench],
+    };
+  }
+  if (normalizedIndustry.includes('roofing') || normalizedIndustry.includes('roof')) {
+    return {
+      primary: HomeIcon,
+      icons: [HomeIcon, Hammer, Shield, Settings, Wrench, Award],
+    };
+  }
+  if (normalizedIndustry.includes('landscaping') || normalizedIndustry.includes('lawn')) {
+    return {
+      primary: Leaf,
+      icons: [Leaf, TreePine, Sparkles, Settings, Shield, Award],
+    };
+  }
+  if (normalizedIndustry.includes('dental') || normalizedIndustry.includes('dentist')) {
+    return {
+      primary: Heart,
+      icons: [Heart, Sparkles, Shield, Award, Clock, Users],
+    };
+  }
+  if (normalizedIndustry.includes('med spa') || normalizedIndustry.includes('spa')) {
+    return {
+      primary: Sparkles,
+      icons: [Sparkles, Heart, Shield, Award, Clock, Users],
+    };
+  }
+  
+  // Default HVAC
+  return {
+    primary: Snowflake,
+    icons: [Snowflake, Flame, Wrench, Settings, AirVent, Gauge],
+  };
 };
 
 const GeneratedSitePreview = () => {
@@ -101,6 +276,40 @@ const GeneratedSitePreview = () => {
   const state = location.state as LocationState | null;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [serviceImages, setServiceImages] = useState<ServiceImage[]>([]);
+  const [imagesLoading, setImagesLoading] = useState(true);
+
+  // Infer service type from business content
+  const inferredServiceType = useMemo(() => {
+    if (!state) return 'home services';
+    return state.industry || inferServiceType({
+      businessName: state.businessName,
+      headline: state.blueprint?.hero?.headline,
+      services: state.blueprint?.pages?.services?.sections?.map(s => s.name) || [],
+      industry: state.industry,
+    });
+  }, [state]);
+
+  // Get theme based on industry
+  const theme = useMemo(() => getThemeForIndustry(inferredServiceType), [inferredServiceType]);
+  const industryIcons = useMemo(() => getIconsForIndustry(inferredServiceType), [inferredServiceType]);
+  const PrimaryIcon = industryIcons.primary;
+
+  // Fetch dynamic images
+  useEffect(() => {
+    const loadImages = async () => {
+      setImagesLoading(true);
+      try {
+        const result = await fetchServiceImages(inferredServiceType, 10);
+        setServiceImages(result.images);
+      } catch (error) {
+        console.error('Failed to load images:', error);
+      } finally {
+        setImagesLoading(false);
+      }
+    };
+    loadImages();
+  }, [inferredServiceType]);
 
   useEffect(() => {
     if (!state?.blueprint) {
@@ -137,19 +346,13 @@ const GeneratedSitePreview = () => {
   const getGalleryContent = () => pages?.gallery?.sections || [];
   const getContactContent = () => pages?.contact?.sections || [];
 
-  const hvacServiceIcons = [
-    HVACIcons.Cooling,
-    HVACIcons.Heating,
-    HVACIcons.Maintenance,
-    HVACIcons.Installation,
-    HVACIcons.AirQuality,
-    HVACIcons.Diagnostics,
-  ];
+  // Helper to get image by index
+  const getImage = (index: number) => serviceImages[index % serviceImages.length] || { url: '', alt: '' };
 
   const galleryContent = getGalleryContent();
   const galleryImages = galleryContent.length > 0 
     ? galleryContent.slice(0, 6)
-    : hvacImages.gallery.slice(0, 6).map((_, i) => ({ name: `HVAC Project ${i + 1}`, content: "Quality installation completed" }));
+    : serviceImages.slice(0, 6).map((img, i) => ({ name: `Project ${i + 1}`, content: img.alt || "Quality service completed" }));
 
   return (
     <div className="min-h-screen bg-white font-sans">
@@ -425,8 +628,8 @@ const GeneratedSitePreview = () => {
               {/* Main Image Container */}
               <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
                 <img 
-                  src={hvacImages.hero}
-                  alt={`${businessName} HVAC Professional Service`}
+                  src={getImage(0).url}
+                  alt={getImage(0).alt || `${businessName} Professional Service`}
                   className="w-full h-72 sm:h-80 lg:h-[520px] object-cover"
                 />
                 {/* Gradient Overlay */}
@@ -547,7 +750,7 @@ const GeneratedSitePreview = () => {
           {/* Services Grid */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
             {getServicesContent().slice(0, 6).map((service, idx) => {
-              const IconComponent = hvacServiceIcons[idx % hvacServiceIcons.length];
+              const IconComponent = industryIcons.icons[idx % industryIcons.icons.length];
               return (
                 <div 
                   key={idx} 
@@ -676,8 +879,8 @@ const GeneratedSitePreview = () => {
               
               <div className="relative rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
                 <img 
-                  src={hvacImages.about}
-                  alt={`${businessName} HVAC technician team`}
+                  src={getImage(2).url}
+                  alt={getImage(2).alt || `${businessName} professional team`}
                   className="w-full h-80 lg:h-[480px] object-cover"
                 />
                 <div 
@@ -787,8 +990,8 @@ const GeneratedSitePreview = () => {
                 style={{ aspectRatio: idx === 0 ? '3/4' : '4/3' }}
               >
                 <img 
-                  src={hvacImages.gallery[idx] || hvacImages.gallery[0]}
-                  alt={item.name}
+                  src={getImage(idx).url}
+                  alt={getImage(idx).alt || item.name}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div 
