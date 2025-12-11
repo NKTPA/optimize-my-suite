@@ -131,10 +131,7 @@ const Index = () => {
             }, {
               icon: TrendingUp,
               text: "SEO"
-            }].map(feature => <div key={feature.text} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm">
-                  <feature.icon className="w-4 h-4" />
-                  {feature.text}
-                </div>)}
+            }].map(feature => {})}
             </div>
           </div>
         </div>
