@@ -11,21 +11,20 @@ import { BlueprintDisplay } from "@/components/BlueprintDisplay";
 import { AnalysisResult } from "@/types/analysis";
 import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
 import { useToast } from "@/hooks/use-toast";
-
 const Index = () => {
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
-  
+
   // Blueprint state
   const [blueprint, setBlueprint] = useState<WebsiteBlueprint | null>(null);
   const [blueprintBusinessName, setBlueprintBusinessName] = useState("");
   const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
   const [blueprintError, setBlueprintError] = useState("");
-
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const isValidUrl = (string: string) => {
     try {
       let testUrl = string;
@@ -38,7 +37,6 @@ const Index = () => {
       return false;
     }
   };
-
   const handleAnalyze = async () => {
     if (!url.trim()) {
       toast({
@@ -97,13 +95,11 @@ const Index = () => {
       setIsLoading(false);
     }
   };
-
   const handleGenerateBlueprint = async (formData: BlueprintFormData) => {
     setIsGeneratingBlueprint(true);
     setBlueprintError("");
     setBlueprint(null);
     setResults(null);
-
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-website-blueprint`, {
         method: "POST",
@@ -113,12 +109,10 @@ const Index = () => {
         },
         body: JSON.stringify(formData)
       });
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || "Failed to generate blueprint");
       }
-
       const data = await response.json();
       setBlueprint(data);
       setBlueprintBusinessName(formData.businessName);
@@ -138,9 +132,7 @@ const Index = () => {
       setIsGeneratingBlueprint(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero opacity-5" />
@@ -170,12 +162,10 @@ const Index = () => {
             </p>
 
             {/* Blueprint Error Banner */}
-            {blueprintError && (
-              <Alert variant="destructive" className="max-w-xl mx-auto mb-6">
+            {blueprintError && <Alert variant="destructive" className="max-w-xl mx-auto mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{blueprintError}</AlertDescription>
-              </Alert>
-            )}
+              </Alert>}
 
             {/* URL Input Form */}
             <div className="bg-card rounded-2xl border border-border p-6 shadow-card max-w-xl mx-auto">
@@ -185,24 +175,9 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input 
-                    id="website-url" 
-                    type="text" 
-                    placeholder="yourcompany.com" 
-                    value={url} 
-                    onChange={e => setUrl(e.target.value)} 
-                    onKeyDown={e => e.key === "Enter" && !isLoading && handleAnalyze()} 
-                    className="pl-10 h-12 text-base" 
-                    disabled={isLoading || isGeneratingBlueprint} 
-                  />
+                  <Input id="website-url" type="text" placeholder="yourcompany.com" value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && !isLoading && handleAnalyze()} className="pl-10 h-12 text-base" disabled={isLoading || isGeneratingBlueprint} />
                 </div>
-                <Button 
-                  variant="hero" 
-                  size="lg" 
-                  onClick={handleAnalyze} 
-                  disabled={isLoading || isGeneratingBlueprint} 
-                  className="w-full sm:w-auto"
-                >
+                <Button variant="hero" size="lg" onClick={handleAnalyze} disabled={isLoading || isGeneratingBlueprint} className="w-full sm:w-auto">
                   {isLoading ? "Analyzing..." : "Analyze Website"}
                   <ArrowRight className="w-5 h-5" />
                 </Button>
@@ -224,19 +199,16 @@ const Index = () => {
 
             {/* Feature Pills */}
             <div className="flex flex-wrap justify-center gap-3 mt-8">
-              {[
-                { icon: Target, text: "Lead Capture" },
-                { icon: Zap, text: "Performance" },
-                { icon: TrendingUp, text: "SEO" }
-              ].map((feature, idx) => (
-                <span 
-                  key={idx} 
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 rounded-full text-sm text-muted-foreground"
-                >
-                  <feature.icon className="w-4 h-4" />
-                  {feature.text}
-                </span>
-              ))}
+              {[{
+              icon: Target,
+              text: "Lead Capture"
+            }, {
+              icon: Zap,
+              text: "Performance"
+            }, {
+              icon: TrendingUp,
+              text: "SEO"
+            }].map((feature, idx) => {})}
             </div>
           </div>
         </div>
@@ -246,23 +218,18 @@ const Index = () => {
       <main className="container py-8 lg:py-12">
         {isLoading && <LoadingState />}
         
-        {isGeneratingBlueprint && (
-          <div className="max-w-2xl mx-auto text-center py-12">
+        {isGeneratingBlueprint && <div className="max-w-2xl mx-auto text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
             <p className="text-lg text-muted-foreground">Generating your website blueprint...</p>
             <p className="text-sm text-muted-foreground mt-2">This may take 30-60 seconds</p>
-          </div>
-        )}
+          </div>}
         
         {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} />}
         
-        {blueprint && !isGeneratingBlueprint && (
-          <BlueprintDisplay blueprint={blueprint} businessName={blueprintBusinessName} />
-        )}
+        {blueprint && !isGeneratingBlueprint && <BlueprintDisplay blueprint={blueprint} businessName={blueprintBusinessName} />}
         
         {/* Empty State with Benefits */}
-        {!isLoading && !isGeneratingBlueprint && !results && !blueprint && (
-          <div className="max-w-4xl mx-auto">
+        {!isLoading && !isGeneratingBlueprint && !results && !blueprint && <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-2xl font-semibold text-foreground mb-3">
                 What You'll Get
@@ -273,28 +240,39 @@ const Index = () => {
             </div>
             
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[
-                { title: "Messaging & Clarity", description: "Is it clear what you do and where you operate?" },
-                { title: "Lead Capture", description: "Are you making it easy for visitors to contact you?" },
-                { title: "Design & UX", description: "Does your site look professional and trustworthy?" },
-                { title: "Mobile Experience", description: "Does your site work well on phones and tablets?" },
-                { title: "Page Speed", description: "Are slow images or scripts hurting your rankings?" },
-                { title: "SEO & Local SEO", description: "Can Google find you when customers search locally?" },
-                { title: "Trust Signals", description: "Do you showcase reviews, certifications, and guarantees?" },
-                { title: "Technical Basics", description: "SSL, favicon, and other essential technical elements." },
-                { title: "AI-Powered Tips", description: "Specific copy and layout recommendations you can use today." }
-              ].map((item, index) => (
-                <div 
-                  key={index} 
-                  className="p-4 rounded-xl bg-card border border-border hover:shadow-card transition-shadow duration-300"
-                >
+              {[{
+            title: "Messaging & Clarity",
+            description: "Is it clear what you do and where you operate?"
+          }, {
+            title: "Lead Capture",
+            description: "Are you making it easy for visitors to contact you?"
+          }, {
+            title: "Design & UX",
+            description: "Does your site look professional and trustworthy?"
+          }, {
+            title: "Mobile Experience",
+            description: "Does your site work well on phones and tablets?"
+          }, {
+            title: "Page Speed",
+            description: "Are slow images or scripts hurting your rankings?"
+          }, {
+            title: "SEO & Local SEO",
+            description: "Can Google find you when customers search locally?"
+          }, {
+            title: "Trust Signals",
+            description: "Do you showcase reviews, certifications, and guarantees?"
+          }, {
+            title: "Technical Basics",
+            description: "SSL, favicon, and other essential technical elements."
+          }, {
+            title: "AI-Powered Tips",
+            description: "Specific copy and layout recommendations you can use today."
+          }].map((item, index) => <div key={index} className="p-4 rounded-xl bg-card border border-border hover:shadow-card transition-shadow duration-300">
                   <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
                   <p className="text-sm text-muted-foreground">{item.description}</p>
-                </div>
-              ))}
+                </div>)}
             </div>
-          </div>
-        )}
+          </div>}
       </main>
 
       {/* Footer */}
@@ -305,8 +283,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
