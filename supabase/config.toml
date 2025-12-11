@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-implementation-plan]
 verify_jwt = false
+
+[functions.generate-website-blueprint]
+verify_jwt = false
