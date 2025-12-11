@@ -362,7 +362,7 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
         </TabsContent>
 
         <TabsContent value="implementation" className="mt-6">
-          {implementationPlan && <ImplementationPack plan={implementationPlan} />}
+          {implementationPlan && <ImplementationPack plan={implementationPlan} url={url} />}
         </TabsContent>
       </Tabs>
     </div>

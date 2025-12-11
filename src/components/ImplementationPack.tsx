@@ -10,12 +10,14 @@ import {
   CheckSquare,
   Copy,
   Check,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-
+import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
 interface ImplementationPackProps {
   plan: ImplementationPlan;
+  url: string;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -73,14 +75,22 @@ function Section({
   );
 }
 
-export function ImplementationPack({ plan }: ImplementationPackProps) {
+export function ImplementationPack({ plan, url }: ImplementationPackProps) {
+  const handleExportPdf = () => {
+    generateImplementationPdf(plan, url);
+  };
+
   return (
     <div className="space-y-6 opacity-0 animate-fade-in">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold text-foreground mb-2">Implementation Pack</h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground mb-4">
           Ready-to-apply copy and specifications. Click the copy icon to grab any section.
         </p>
+        <Button onClick={handleExportPdf} variant="outline" className="gap-2">
+          <Download className="w-4 h-4" />
+          Export Implementation PDF
+        </Button>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
