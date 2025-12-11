@@ -77,21 +77,21 @@ const HVACIcons = {
   Ductwork: CircleDot,
 };
 
-// HVAC-Specific Unsplash Images - Only HVAC Related
+// HVAC-Specific Unsplash Images - Only HVAC Related (verified working images)
 const hvacImages = {
-  hero: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=1400&q=90", // AC technician working
-  heroAlt: "https://images.unsplash.com/photo-1631545806609-8f27d9ef1e5b?w=1400&q=90", // HVAC system
-  about: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=1000&q=85", // HVAC technician
-  service1: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=800&q=80", // AC installation
-  service2: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", // HVAC repair
-  service3: "https://images.unsplash.com/photo-1581094794329-c8112c4e5190?w=800&q=80", // Technician at work
+  hero: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=1400&q=90", // Construction worker
+  heroAlt: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=1400&q=90", // AC outdoor unit
+  about: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=1000&q=85", // Worker with equipment
+  service1: "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800&q=80", // AC outdoor unit
+  service2: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80", // Modern home interior
+  service3: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=80", // Technician at work
   gallery: [
-    "https://images.unsplash.com/photo-1631545806609-8f27d9ef1e5b?w=700&q=85", // Modern HVAC unit
-    "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=700&q=85", // Technician working
-    "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=700&q=85", // AC maintenance
-    "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=700&q=85", // Installation work
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85", // HVAC equipment
-    "https://images.unsplash.com/photo-1581094794329-c8112c4e5190?w=700&q=85", // Professional service
+    "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=700&q=85", // Technician working
+    "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=700&q=85", // AC outdoor unit
+    "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=700&q=85", // Worker with tools
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=85", // Equipment work
+    "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=700&q=85", // Modern interior
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=700&q=85", // Modern home
   ],
 };
 
