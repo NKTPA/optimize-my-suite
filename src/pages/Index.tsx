@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Globe, ArrowRight, Sparkles, Zap, Target, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/LoadingState";
@@ -89,7 +90,19 @@ const Index = () => {
         <div className="absolute inset-0 gradient-hero opacity-5" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
         
-        <div className="container relative py-16 lg:py-24">
+        {/* Navigation */}
+        <nav className="container relative pt-4">
+          <div className="flex justify-end">
+            <Link to="/batch">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Layers className="w-4 h-4" />
+                Batch Mode
+              </Button>
+            </Link>
+          </div>
+        </nav>
+        
+        <div className="container relative py-12 lg:py-20">
           <div className="max-w-3xl mx-auto text-center">
             
             
@@ -131,7 +144,12 @@ const Index = () => {
             }, {
               icon: TrendingUp,
               text: "SEO"
-            }].map(feature => {})}
+            }].map((feature, idx) => (
+                <span key={idx} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary/50 rounded-full text-sm text-muted-foreground">
+                  <feature.icon className="w-4 h-4" />
+                  {feature.text}
+                </span>
+              ))}
             </div>
           </div>
         </div>
