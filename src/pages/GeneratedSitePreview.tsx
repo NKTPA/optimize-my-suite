@@ -272,109 +272,137 @@ const GeneratedSitePreview = () => {
 
       {/* ========== PREMIUM HERO SECTION ========== */}
       <section id="home" className="relative overflow-hidden">
-        {/* Layered Background */}
-        <div className="absolute inset-0" style={{ background: colors.overlayGradient }} />
+        {/* Enhanced Layered Background with Vignette */}
         <div 
-          className="absolute top-0 right-0 w-1/2 h-full opacity-[0.03]"
+          className="absolute inset-0" 
           style={{ 
-            backgroundImage: `radial-gradient(${colors.primary} 1px, transparent 1px)`,
-            backgroundSize: '20px 20px',
+            background: `
+              radial-gradient(ellipse 80% 50% at 50% -10%, ${colors.primary}15 0%, transparent 60%),
+              radial-gradient(ellipse 60% 40% at 100% 0%, ${colors.accent}10 0%, transparent 50%),
+              ${colors.overlayGradient}
+            `,
+          }} 
+        />
+        {/* Subtle Vignette Overlay */}
+        <div 
+          className="absolute inset-0 pointer-events-none"
+          style={{ 
+            background: `radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, ${colors.dark}08 100%)`,
+          }}
+        />
+        <div 
+          className="absolute top-0 right-0 w-1/2 h-full opacity-[0.04]"
+          style={{ 
+            backgroundImage: `radial-gradient(${colors.primary} 1.5px, transparent 1.5px)`,
+            backgroundSize: '24px 24px',
           }}
         />
         
-        {/* Floating Decorative Elements */}
+        {/* Enhanced Floating Decorative Elements */}
         <div 
-          className="absolute top-20 left-10 w-64 h-64 rounded-full blur-3xl opacity-20"
+          className="absolute top-10 left-5 w-80 h-80 rounded-full blur-[100px] opacity-25 animate-pulse-slow"
           style={{ backgroundColor: colors.primary }}
         />
         <div 
-          className="absolute bottom-20 right-10 w-96 h-96 rounded-full blur-3xl opacity-10"
+          className="absolute bottom-10 right-5 w-[500px] h-[500px] rounded-full blur-[120px] opacity-15"
           style={{ backgroundColor: colors.accent }}
         />
+        <div 
+          className="absolute top-1/2 left-1/3 w-64 h-64 rounded-full blur-[80px] opacity-10"
+          style={{ backgroundColor: colors.cta }}
+        />
         
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-20 xl:py-28">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-24 xl:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left Content - Mobile First */}
             <div className="order-2 lg:order-1 text-center lg:text-left">
-              {/* Offer Badge with Glow Effect */}
+              {/* Offer Badge with Enhanced Glow Effect */}
               {hero?.offerBadge && (
                 <div 
-                  className="inline-flex items-center gap-2 px-4 py-2 mb-6 animate-scale-in"
+                  className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-7 animate-scale-in"
                   style={{ 
                     background: `linear-gradient(135deg, ${colors.primaryLight} 0%, ${colors.accentLight} 100%)`,
-                    boxShadow: `0 0 20px ${colors.primaryGlow}`,
+                    boxShadow: `0 0 30px ${colors.primaryGlow}, inset 0 1px 0 rgba(255,255,255,0.5)`,
                     borderRadius: style.borderRadius.badge,
+                    border: `1px solid ${colors.primary}20`,
                   }}
                 >
                   <PrimaryIcon className="w-4 h-4 animate-spin" style={{ color: colors.primary, animationDuration: '3s' }} />
-                  <span className="text-sm font-bold" style={{ color: colors.primary }}>
+                  <span className="text-sm font-bold tracking-wide" style={{ color: colors.primary }}>
                     {hero.offerBadge}
                   </span>
                 </div>
               )}
               
-              {/* Main Headline */}
+              {/* Enhanced Main Headline - Larger & Tighter */}
               <h1 
-                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl leading-[1.1] mb-5 lg:mb-6 animate-fade-in"
+                className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl leading-[1.05] tracking-tight mb-6 lg:mb-7 animate-fade-in"
                 style={{ color: colors.dark, ...fontStyles.heading }}
               >
                 {hero?.headline || `Expert ${colors.industryLabel} for Your Home`}
               </h1>
               
-              {/* Subheadline */}
+              {/* Enhanced Subheadline - Improved Readability */}
               <p 
-                className="text-lg lg:text-xl leading-relaxed mb-7 lg:mb-8 max-w-xl mx-auto lg:mx-0"
-                style={{ color: colors.gray }}
+                className="text-lg lg:text-xl xl:text-2xl leading-relaxed mb-8 lg:mb-10 max-w-xl mx-auto lg:mx-0"
+                style={{ color: colors.gray, lineHeight: 1.7 }}
               >
                 {hero?.subheadline || "Professional service with fast response, fair pricing, and guaranteed satisfaction."}
               </p>
 
-              {/* Bullet Points with Industry Icons */}
+              {/* Enhanced Bullet Points with Industry Icons */}
               {hero?.bullets && hero.bullets.length > 0 && (
-                <ul className="space-y-3 mb-8 text-left max-w-md mx-auto lg:mx-0">
+                <ul className="space-y-4 mb-10 text-left max-w-md mx-auto lg:mx-0">
                   {hero.bullets.slice(0, 4).map((bullet, idx) => {
                     const IconComponent = icons.icons[idx % icons.icons.length];
                     return (
                       <li 
                         key={idx} 
-                        className="flex items-start gap-3 animate-fade-in"
-                        style={{ animationDelay: `${idx * 100}ms` }}
+                        className="flex items-start gap-4 animate-fade-in"
+                        style={{ animationDelay: `${idx * 120}ms` }}
                       >
                         <div 
-                          className="mt-0.5 w-7 h-7 flex items-center justify-center shrink-0"
-                          style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
+                          className="mt-0.5 w-8 h-8 flex items-center justify-center shrink-0 shadow-lg"
+                          style={{ 
+                            background: colors.heroGradient, 
+                            borderRadius: style.borderRadius.button,
+                            boxShadow: `0 4px 12px ${colors.primary}40`,
+                          }}
                         >
                           <IconComponent className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-medium" style={{ color: colors.dark }}>{bullet}</span>
+                        <span className="font-semibold text-base" style={{ color: colors.dark }}>{bullet}</span>
                       </li>
                     );
                   })}
                 </ul>
               )}
 
-              {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start mb-8">
+              {/* Enhanced CTA Buttons with Micro-animations */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
                 <a 
                   href={`tel:${phone || "5551234567"}`}
-                  className="group flex items-center justify-center gap-3 px-8 py-4 text-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                  className="group relative flex items-center justify-center gap-3 px-10 py-5 text-white font-bold text-lg shadow-2xl transition-all duration-300 hover:scale-[1.03] hover:brightness-110 hover:shadow-3xl active:scale-[0.98] overflow-hidden"
                   style={{ 
                     background: colors.ctaGradient,
-                    boxShadow: style.shadows.button,
+                    boxShadow: `0 20px 50px -12px ${colors.cta}60`,
                     borderRadius: style.borderRadius.button,
                   }}
                 >
-                  <Phone className="w-5 h-5 group-hover:animate-pulse" />
-                  {hero?.primaryCTA || "Get Free Estimate"}
+                  {/* Shine effect on hover */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                  <Phone className="w-5 h-5 relative z-10 group-hover:animate-pulse" />
+                  <span className="relative z-10">{hero?.primaryCTA || "Get Free Estimate"}</span>
                 </a>
                 {hero?.secondaryCTA && (
                   <button 
                     onClick={() => scrollToSection("services")}
-                    className="px-8 py-4 font-semibold text-lg border-2 transition-all duration-300 hover:shadow-lg"
+                    className="px-10 py-5 font-semibold text-lg border-2 transition-all duration-300 hover:shadow-xl hover:bg-opacity-5 hover:scale-[1.02] active:scale-[0.98]"
                     style={{ 
                       borderColor: colors.primary,
                       color: colors.primary,
                       borderRadius: style.borderRadius.button,
+                      backgroundColor: `${colors.primary}05`,
                     }}
                   >
                     {hero.secondaryCTA}
@@ -382,8 +410,8 @@ const GeneratedSitePreview = () => {
                 )}
               </div>
 
-              {/* Trust Badges Row */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-5 lg:gap-6">
+              {/* Enhanced Trust Badges Row */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 lg:gap-8">
                 {[
                   { icon: Shield, text: "Licensed & Insured" },
                   { icon: Clock, text: "Fast Response" },
@@ -391,86 +419,110 @@ const GeneratedSitePreview = () => {
                 ].map((item, idx) => (
                   <div 
                     key={idx} 
-                    className="flex items-center gap-2 animate-fade-in"
-                    style={{ animationDelay: `${(idx + 4) * 100}ms` }}
+                    className="flex items-center gap-2.5 animate-fade-in px-3 py-1.5 rounded-full"
+                    style={{ 
+                      animationDelay: `${(idx + 4) * 100}ms`,
+                      backgroundColor: `${colors.primary}08`,
+                    }}
                   >
                     <item.icon 
                       className={`w-5 h-5 ${item.isStar ? 'fill-amber-400 text-amber-400' : ''}`}
                       style={!item.isStar ? { color: colors.primary } : undefined}
                     />
-                    <span className="text-sm font-semibold" style={{ color: colors.dark }}>{item.text}</span>
+                    <span className="text-sm font-bold" style={{ color: colors.dark }}>{item.text}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Right - Premium Hero Image */}
+            {/* Right - Enhanced Premium Hero Image */}
             <div className="order-1 lg:order-2 relative">
-              {/* Decorative Ring */}
+              {/* Enhanced Decorative Ring with Animation */}
               <div 
-                className="absolute -inset-4 lg:-inset-6 opacity-30 blur-2xl"
+                className="absolute -inset-6 lg:-inset-8 opacity-40 blur-3xl animate-pulse-slow"
                 style={{ background: colors.heroGradient, borderRadius: style.borderRadius.image }}
               />
               
-              {/* Main Image Container */}
+              {/* Main Image Container with Premium Shadow */}
               <div 
-                className="relative overflow-hidden shadow-2xl border-4 border-white"
-                style={{ borderRadius: style.borderRadius.image }}
+                className="relative overflow-hidden border-4 border-white/90"
+                style={{ 
+                  borderRadius: style.borderRadius.image,
+                  boxShadow: `0 40px 80px -20px ${colors.dark}30, 0 20px 40px -15px ${colors.primary}20`,
+                }}
               >
                 {imagesLoading ? (
-                  <div className="w-full h-72 sm:h-80 lg:h-[520px] flex items-center justify-center" style={{ background: colors.subtleGradient }}>
-                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: colors.primary }} />
+                  <div className="w-full h-80 sm:h-96 lg:h-[560px] flex items-center justify-center" style={{ background: colors.subtleGradient }}>
+                    <Loader2 className="w-12 h-12 animate-spin" style={{ color: colors.primary }} />
                   </div>
                 ) : (
                   <img 
                     src={getImage(0).url}
                     alt={getImage(0).alt || `${businessName} Professional Service`}
-                    className="w-full h-72 sm:h-80 lg:h-[520px] object-cover"
+                    className="w-full h-80 sm:h-96 lg:h-[560px] object-cover"
                   />
                 )}
-                {/* Gradient Overlay */}
+                {/* Enhanced Gradient Overlay with Vignette */}
                 <div 
                   className="absolute inset-0"
                   style={{ 
-                    background: `linear-gradient(180deg, transparent 40%, ${colors.primary}10 70%, ${colors.dark}99 100%)`,
+                    background: `
+                      linear-gradient(180deg, transparent 30%, ${colors.primary}08 60%, ${colors.dark}90 100%),
+                      radial-gradient(ellipse at center, transparent 50%, ${colors.dark}20 100%)
+                    `,
                   }}
                 />
                 
-                {/* Floating Stats Badge */}
+                {/* Premium Badge Overlay - Top Right */}
                 <div 
-                  className="absolute top-4 right-4 lg:top-6 lg:right-6 px-4 py-3 backdrop-blur-md border border-white/20"
-                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: style.borderRadius.button }}
+                  className="absolute top-5 right-5 lg:top-6 lg:right-6 px-4 py-3 backdrop-blur-xl border shadow-xl"
+                  style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                    borderRadius: style.borderRadius.button,
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    boxShadow: `0 10px 40px -10px ${colors.dark}30`,
+                  }}
                 >
-                  <div className="flex items-center gap-2">
-                    <PrimaryIcon className="w-5 h-5" style={{ color: colors.primary }} />
+                  <div className="flex items-center gap-2.5">
+                    <div 
+                      className="w-8 h-8 flex items-center justify-center"
+                      style={{ background: colors.heroGradient, borderRadius: '50%' }}
+                    >
+                      <PrimaryIcon className="w-4 h-4 text-white" />
+                    </div>
                     <span className="text-sm font-bold" style={{ color: colors.dark }}>{colors.industryLabel}</span>
                   </div>
                 </div>
                 
-                {/* Floating Contact Card */}
-                <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-8 lg:left-8 lg:right-auto lg:max-w-sm">
+                {/* Enhanced Floating Contact Card */}
+                <div className="absolute bottom-5 left-5 right-5 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-8 lg:left-8 lg:right-auto lg:max-w-sm">
                   <div 
-                    className="backdrop-blur-md p-4 lg:p-5 shadow-2xl border border-white/20"
-                    style={{ backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: style.borderRadius.card }}
+                    className="backdrop-blur-xl p-5 lg:p-6 border"
+                    style={{ 
+                      backgroundColor: 'rgba(255, 255, 255, 0.97)', 
+                      borderRadius: style.borderRadius.card,
+                      borderColor: 'rgba(255,255,255,0.4)',
+                      boxShadow: `0 20px 60px -15px ${colors.dark}40`,
+                    }}
                   >
-                    <p className="text-xs font-medium mb-1" style={{ color: colors.gray }}>
+                    <p className="text-xs font-semibold mb-1.5 uppercase tracking-wider" style={{ color: colors.gray }}>
                       Call now for a free estimate
                     </p>
                     <a 
                       href={`tel:${phone || "5551234567"}`}
-                      className="flex items-center gap-2 text-xl font-bold transition-colors hover:opacity-80"
+                      className="flex items-center gap-2.5 text-xl lg:text-2xl font-bold transition-colors hover:opacity-80"
                       style={{ color: colors.primary }}
                     >
-                      <Phone className="w-5 h-5" />
+                      <Phone className="w-5 h-5 lg:w-6 lg:h-6" />
                       {phone || "(555) 123-4567"}
                     </a>
-                    <div className="flex items-center gap-1.5 mt-3 pt-3 border-t" style={{ borderColor: colors.secondaryDark }}>
+                    <div className="flex items-center gap-2 mt-4 pt-4 border-t" style={{ borderColor: colors.secondaryDark }}>
                       <div className="flex">
                         {[1,2,3,4,5].map(i => (
                           <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
                         ))}
                       </div>
-                      <span className="text-xs font-medium" style={{ color: colors.gray }}>200+ 5-Star Reviews</span>
+                      <span className="text-xs font-semibold" style={{ color: colors.gray }}>200+ 5-Star Reviews</span>
                     </div>
                   </div>
                 </div>
@@ -480,13 +532,21 @@ const GeneratedSitePreview = () => {
         </div>
       </section>
 
-      {/* ========== TRUST ROW ========== */}
+      {/* ========== ENHANCED TRUST ROW ========== */}
       <section 
-        className="py-6 lg:py-8 border-y"
+        className="py-8 lg:py-10 border-y relative overflow-hidden"
         style={{ backgroundColor: colors.secondary, borderColor: colors.secondaryDark }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 lg:gap-x-14">
+        {/* Subtle background pattern */}
+        <div 
+          className="absolute inset-0 opacity-[0.015]"
+          style={{ 
+            backgroundImage: `radial-gradient(${colors.primary} 1px, transparent 1px)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5 lg:gap-x-16">
             {[
               { icon: icons.trustIcons[0], text: "Licensed & Insured", color: colors.primary },
               { icon: icons.trustIcons[1], text: "Same-Day Service", color: colors.accent },
@@ -494,63 +554,81 @@ const GeneratedSitePreview = () => {
               { icon: icons.trustIcons[3], text: "Satisfaction Guaranteed", color: colors.primary },
               { icon: icons.trustIcons[4], text: "Free Estimates", color: colors.accent },
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2.5">
+              <div 
+                key={idx} 
+                className="flex items-center gap-3 group transition-transform duration-200 hover:scale-105"
+              >
                 <div 
-                  className="w-10 h-10 flex items-center justify-center"
-                  style={{ backgroundColor: `${item.color}15`, borderRadius: style.borderRadius.button }}
+                  className="w-12 h-12 flex items-center justify-center shadow-md transition-shadow duration-300 group-hover:shadow-lg"
+                  style={{ 
+                    backgroundColor: `${item.color}12`, 
+                    borderRadius: style.borderRadius.button,
+                    border: `1px solid ${item.color}20`,
+                  }}
                 >
                   <item.icon className="w-5 h-5" style={{ color: item.color }} />
                 </div>
-                <span className="font-semibold text-sm" style={{ color: colors.dark }}>{item.text}</span>
+                <span className="font-bold text-sm" style={{ color: colors.dark }}>{item.text}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ========== SERVICES SECTION ========== */}
-      <section id="services" className="py-16 lg:py-24 relative overflow-hidden">
-        {/* Background Pattern */}
+      {/* ========== ENHANCED SERVICES SECTION ========== */}
+      <section id="services" className="py-20 lg:py-28 relative overflow-hidden">
+        {/* Enhanced Background Pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.02]"
+          className="absolute inset-0 opacity-[0.025]"
           style={{ 
-            backgroundImage: `radial-gradient(${colors.primary} 1px, transparent 1px)`,
-            backgroundSize: '24px 24px',
+            backgroundImage: `radial-gradient(${colors.primary} 1.5px, transparent 1.5px)`,
+            backgroundSize: '32px 32px',
+          }}
+        />
+        {/* Subtle gradient overlay */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-40 opacity-50"
+          style={{ 
+            background: `linear-gradient(180deg, ${colors.secondary} 0%, transparent 100%)`,
           }}
         />
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-          {/* Section Header */}
-          <div className="text-center mb-12 lg:mb-16">
+          {/* Enhanced Section Header */}
+          <div className="text-center mb-14 lg:mb-20">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
-              style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-6 shadow-sm"
+              style={{ 
+                backgroundColor: colors.primaryLight, 
+                borderRadius: style.borderRadius.badge,
+                border: `1px solid ${colors.primary}15`,
+              }}
             >
               <PrimaryIcon className="w-4 h-4" style={{ color: colors.primary }} />
-              <span className="text-sm font-bold" style={{ color: colors.primary }}>Our Services</span>
+              <span className="text-sm font-bold tracking-wide" style={{ color: colors.primary }}>Our Services</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
-              style={{ color: colors.dark, ...fontStyles.heading }}
+              className="text-3xl lg:text-5xl xl:text-6xl mb-5 tracking-tight"
+              style={{ color: colors.dark, ...fontStyles.heading, lineHeight: 1.1 }}
             >
               {pages?.services?.title || `Complete ${colors.industryLabel} Solutions`}
             </h2>
             <p 
-              className="text-lg max-w-2xl mx-auto"
-              style={{ color: colors.gray }}
+              className="text-lg lg:text-xl max-w-2xl mx-auto"
+              style={{ color: colors.gray, lineHeight: 1.7 }}
             >
               {pages?.services?.metaDescription || "Professional service solutions tailored to your needs."}
             </p>
           </div>
 
-          {/* Services Grid */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+          {/* Enhanced Services Grid */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
             {getServicesContent().slice(0, 6).map((service, idx) => {
               const IconComponent = icons.icons[idx % icons.icons.length];
               return (
                 <div 
                   key={idx} 
-                  className="group relative bg-white p-6 lg:p-8 border transition-all duration-300 hover:-translate-y-1"
+                  className="group relative bg-white p-7 lg:p-9 border transition-all duration-500 hover:-translate-y-2"
                   style={{ 
                     borderColor: colors.secondaryDark,
                     boxShadow: style.shadows.card,
@@ -565,34 +643,47 @@ const GeneratedSitePreview = () => {
                     e.currentTarget.style.borderColor = colors.secondaryDark;
                   }}
                 >
-                  {/* Icon Container */}
+                  {/* Accent line on hover */}
                   <div 
-                    className="w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center mb-5 transition-transform duration-300 group-hover:scale-110"
-                    style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
+                    className="absolute top-0 left-0 right-0 h-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ 
+                      background: colors.heroGradient,
+                      borderRadius: `${style.borderRadius.card} ${style.borderRadius.card} 0 0`,
+                    }}
+                  />
+                  
+                  {/* Enhanced Icon Container */}
+                  <div 
+                    className="w-16 h-16 lg:w-18 lg:h-18 flex items-center justify-center mb-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3"
+                    style={{ 
+                      background: colors.heroGradient, 
+                      borderRadius: style.borderRadius.button,
+                      boxShadow: `0 10px 30px -8px ${colors.primary}40`,
+                    }}
                   >
-                    <IconComponent className="w-7 h-7 lg:w-8 lg:h-8 text-white" />
+                    <IconComponent className="w-8 h-8 lg:w-9 lg:h-9 text-white" />
                   </div>
                   
                   <h3 
-                    className="text-xl lg:text-2xl mb-3"
+                    className="text-xl lg:text-2xl mb-4 tracking-tight"
                     style={{ color: colors.dark, ...fontStyles.heading }}
                   >
                     {service.name}
                   </h3>
                   <p 
-                    className="mb-5 leading-relaxed"
-                    style={{ color: colors.gray }}
+                    className="mb-6 leading-relaxed text-base"
+                    style={{ color: colors.gray, lineHeight: 1.7 }}
                   >
-                    {service.content?.substring(0, 150)}...
+                    {service.content?.substring(0, 140)}...
                   </p>
                   
                   <button 
-                    className="inline-flex items-center font-semibold transition-all duration-300 group-hover:gap-2"
+                    className="inline-flex items-center font-bold transition-all duration-300 group-hover:gap-3"
                     style={{ color: colors.primary }}
                     onClick={() => scrollToSection("contact")}
                   >
                     Get a Quote 
-                    <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                    <ChevronRight className="w-5 h-5 ml-1 transition-transform group-hover:translate-x-2" />
                   </button>
                 </div>
               );
@@ -601,37 +692,55 @@ const GeneratedSitePreview = () => {
         </div>
       </section>
 
-      {/* ========== WHY CHOOSE US ========== */}
+      {/* ========== ENHANCED WHY CHOOSE US ========== */}
       <section 
         id="why-choose-us" 
-        className="py-16 lg:py-24"
-        style={{ backgroundColor: colors.secondary }}
+        className="py-20 lg:py-28 relative overflow-hidden"
+        style={{ 
+          background: `
+            linear-gradient(135deg, ${colors.secondary} 0%, ${colors.primaryLight}40 50%, ${colors.secondary} 100%)
+          `,
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 lg:mb-16">
+        {/* Decorative blurs */}
+        <div 
+          className="absolute top-20 left-10 w-72 h-72 rounded-full blur-[100px] opacity-20"
+          style={{ backgroundColor: colors.primary }}
+        />
+        <div 
+          className="absolute bottom-20 right-10 w-96 h-96 rounded-full blur-[120px] opacity-15"
+          style={{ backgroundColor: colors.accent }}
+        />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14 lg:mb-20">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
-              style={{ backgroundColor: colors.accentLight, borderRadius: style.borderRadius.badge }}
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-6 shadow-sm"
+              style={{ 
+                backgroundColor: colors.accentLight, 
+                borderRadius: style.borderRadius.badge,
+                border: `1px solid ${colors.accent}15`,
+              }}
             >
               <Award className="w-4 h-4" style={{ color: colors.accent }} />
-              <span className="text-sm font-bold" style={{ color: colors.accent }}>Why Choose Us</span>
+              <span className="text-sm font-bold tracking-wide" style={{ color: colors.accent }}>Why Choose Us</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
-              style={{ color: colors.dark, ...fontStyles.heading }}
+              className="text-3xl lg:text-5xl xl:text-6xl mb-5 tracking-tight"
+              style={{ color: colors.dark, ...fontStyles.heading, lineHeight: 1.1 }}
             >
               The Team You Can Trust
             </h2>
             <p 
-              className="text-lg max-w-2xl mx-auto"
-              style={{ color: colors.gray }}
+              className="text-lg lg:text-xl max-w-2xl mx-auto"
+              style={{ color: colors.gray, lineHeight: 1.7 }}
             >
               Homeowners and businesses choose us for reliable, professional services
             </p>
           </div>
 
-          {/* Benefits Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+          {/* Enhanced Benefits Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-8">
             {[
               { icon: Shield, title: "Licensed & Insured", desc: "Fully certified professionals with comprehensive coverage" },
               { icon: Clock, title: "Fast Response", desc: "Same-day service with flexible scheduling options" },
@@ -640,7 +749,7 @@ const GeneratedSitePreview = () => {
             ].map((item, idx) => (
               <div 
                 key={idx} 
-                className="bg-white p-5 lg:p-6 border text-center transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white p-6 lg:p-8 border text-center transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
                 style={{ 
                   borderColor: colors.secondaryDark,
                   boxShadow: style.shadows.card,
@@ -648,71 +757,120 @@ const GeneratedSitePreview = () => {
                 }}
               >
                 <div 
-                  className="w-12 h-12 mx-auto flex items-center justify-center mb-4"
-                  style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.button }}
+                  className="w-14 h-14 lg:w-16 lg:h-16 mx-auto flex items-center justify-center mb-5 transition-all duration-500 group-hover:scale-110"
+                  style={{ 
+                    backgroundColor: colors.primaryLight, 
+                    borderRadius: style.borderRadius.button,
+                    border: `2px solid ${colors.primary}20`,
+                  }}
                 >
-                  <item.icon className="w-6 h-6" style={{ color: colors.primary }} />
+                  <item.icon className="w-7 h-7 lg:w-8 lg:h-8" style={{ color: colors.primary }} />
                 </div>
-                <h3 className="font-bold mb-2" style={{ color: colors.dark, ...fontStyles.heading }}>{item.title}</h3>
-                <p className="text-sm" style={{ color: colors.gray }}>{item.desc}</p>
+                <h3 className="font-bold text-lg mb-3" style={{ color: colors.dark, ...fontStyles.heading }}>{item.title}</h3>
+                <p className="text-sm leading-relaxed" style={{ color: colors.gray }}>{item.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ========== ABOUT SECTION ========== */}
-      <section id="about-us" className="py-16 lg:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-            {/* Image */}
+      {/* ========== ENHANCED ABOUT SECTION ========== */}
+      <section id="about-us" className="py-20 lg:py-28 relative overflow-hidden">
+        {/* Subtle background accent */}
+        <div 
+          className="absolute top-0 right-0 w-1/2 h-full opacity-[0.02]"
+          style={{ 
+            backgroundImage: `radial-gradient(${colors.primary} 1px, transparent 1px)`,
+            backgroundSize: '20px 20px',
+          }}
+        />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Enhanced Image */}
             <div className="relative">
               <div 
-                className="absolute -inset-4 opacity-20 blur-2xl"
+                className="absolute -inset-6 opacity-30 blur-3xl animate-pulse-slow"
                 style={{ background: colors.subtleGradient, borderRadius: style.borderRadius.image }}
               />
               <div 
-                className="relative overflow-hidden shadow-2xl"
-                style={{ borderRadius: style.borderRadius.image }}
+                className="relative overflow-hidden border-4 border-white"
+                style={{ 
+                  borderRadius: style.borderRadius.image,
+                  boxShadow: `0 40px 80px -20px ${colors.dark}30, 0 20px 40px -15px ${colors.primary}15`,
+                }}
               >
                 {imagesLoading ? (
-                  <div className="w-full h-80 lg:h-[450px] flex items-center justify-center" style={{ background: colors.subtleGradient }}>
-                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: colors.primary }} />
+                  <div className="w-full h-96 lg:h-[500px] flex items-center justify-center" style={{ background: colors.subtleGradient }}>
+                    <Loader2 className="w-12 h-12 animate-spin" style={{ color: colors.primary }} />
                   </div>
                 ) : (
                   <img 
                     src={getImage(2).url}
                     alt={getImage(2).alt || `${businessName} team`}
-                    className="w-full h-80 lg:h-[450px] object-cover"
+                    className="w-full h-96 lg:h-[500px] object-cover"
                   />
                 )}
                 <div 
                   className="absolute inset-0"
-                  style={{ background: `linear-gradient(180deg, transparent 50%, ${colors.dark}40 100%)` }}
+                  style={{ 
+                    background: `
+                      linear-gradient(180deg, transparent 40%, ${colors.dark}50 100%),
+                      radial-gradient(ellipse at center, transparent 60%, ${colors.dark}20 100%)
+                    `,
+                  }}
                 />
+                
+                {/* Experience badge */}
+                <div 
+                  className="absolute bottom-6 left-6 px-5 py-4 backdrop-blur-xl border"
+                  style={{ 
+                    backgroundColor: 'rgba(255,255,255,0.95)',
+                    borderRadius: style.borderRadius.button,
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    boxShadow: `0 10px 40px -10px ${colors.dark}30`,
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-12 h-12 flex items-center justify-center"
+                      style={{ background: colors.heroGradient, borderRadius: '50%' }}
+                    >
+                      <Award className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold" style={{ color: colors.dark }}>15+</p>
+                      <p className="text-xs font-semibold" style={{ color: colors.gray }}>Years Experience</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Content */}
+            {/* Enhanced Content */}
             <div>
               <div 
-                className="inline-flex items-center gap-2 px-4 py-2 mb-5"
-                style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
+                className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-6 shadow-sm"
+                style={{ 
+                  backgroundColor: colors.primaryLight, 
+                  borderRadius: style.borderRadius.badge,
+                  border: `1px solid ${colors.primary}15`,
+                }}
               >
                 <Users className="w-4 h-4" style={{ color: colors.primary }} />
-                <span className="text-sm font-bold" style={{ color: colors.primary }}>About Us</span>
+                <span className="text-sm font-bold tracking-wide" style={{ color: colors.primary }}>About Us</span>
               </div>
               
               <h2 
-                className="text-3xl lg:text-4xl xl:text-5xl mb-6"
-                style={{ color: colors.dark, ...fontStyles.heading }}
+                className="text-3xl lg:text-5xl xl:text-6xl mb-7 tracking-tight"
+                style={{ color: colors.dark, ...fontStyles.heading, lineHeight: 1.1 }}
               >
                 {pages?.about?.title || `About ${businessName}`}
               </h2>
               
-              <div className="space-y-5 mb-8">
+              <div className="space-y-6 mb-10">
                 {getAboutContent().slice(0, 3).map((section, idx) => (
-                  <div key={idx}>
+                  <div key={idx} className="group">
                     <h3 
                       className="text-lg font-bold mb-2"
                       style={{ color: colors.dark }}
@@ -720,10 +878,10 @@ const GeneratedSitePreview = () => {
                       {section.name}
                     </h3>
                     <p 
-                      className="leading-relaxed"
-                      style={{ color: colors.gray }}
+                      className="leading-relaxed text-base"
+                      style={{ color: colors.gray, lineHeight: 1.8 }}
                     >
-                      {section.content?.substring(0, 200)}...
+                      {section.content?.substring(0, 180)}...
                     </p>
                   </div>
                 ))}
@@ -731,78 +889,96 @@ const GeneratedSitePreview = () => {
 
               <button 
                 onClick={() => scrollToSection("contact")}
-                className="inline-flex items-center px-7 py-4 font-bold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+                className="group relative inline-flex items-center px-9 py-5 font-bold text-lg text-white shadow-2xl transition-all duration-300 hover:scale-[1.03] hover:brightness-110 active:scale-[0.98] overflow-hidden"
                 style={{ 
                   background: colors.ctaGradient,
-                  boxShadow: style.shadows.button,
+                  boxShadow: `0 20px 50px -12px ${colors.cta}60`,
                   borderRadius: style.borderRadius.button,
                 }}
               >
-                Get In Touch <ChevronRight className="w-5 h-5 ml-2" />
+                <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                <span className="relative z-10">Get In Touch</span>
+                <ChevronRight className="w-5 h-5 ml-2 relative z-10 transition-transform group-hover:translate-x-1" />
               </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ========== GALLERY SECTION ========== */}
+      {/* ========== ENHANCED GALLERY SECTION ========== */}
       <section 
         id="gallery" 
-        className="py-16 lg:py-24"
+        className="py-20 lg:py-28"
         style={{ backgroundColor: colors.secondary }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12 lg:mb-16">
+          <div className="text-center mb-14 lg:mb-20">
             <div 
-              className="inline-flex items-center gap-2 px-4 py-2 mb-5"
-              style={{ backgroundColor: colors.primaryLight, borderRadius: style.borderRadius.badge }}
+              className="inline-flex items-center gap-2.5 px-5 py-2.5 mb-6 shadow-sm"
+              style={{ 
+                backgroundColor: colors.primaryLight, 
+                borderRadius: style.borderRadius.badge,
+                border: `1px solid ${colors.primary}15`,
+              }}
             >
               <Camera className="w-4 h-4" style={{ color: colors.primary }} />
-              <span className="text-sm font-bold" style={{ color: colors.primary }}>Our Work</span>
+              <span className="text-sm font-bold tracking-wide" style={{ color: colors.primary }}>Our Work</span>
             </div>
             <h2 
-              className="text-3xl lg:text-4xl xl:text-5xl mb-4"
-              style={{ color: colors.dark, ...fontStyles.heading }}
+              className="text-3xl lg:text-5xl xl:text-6xl mb-5 tracking-tight"
+              style={{ color: colors.dark, ...fontStyles.heading, lineHeight: 1.1 }}
             >
               {pages?.gallery?.title || "Recent Projects"}
             </h2>
             <p 
-              className="text-lg max-w-2xl mx-auto"
-              style={{ color: colors.gray }}
+              className="text-lg lg:text-xl max-w-2xl mx-auto"
+              style={{ color: colors.gray, lineHeight: 1.7 }}
             >
               {pages?.gallery?.metaDescription || "See examples of our professional work"}
             </p>
           </div>
 
-          {/* Gallery Grid - Masonry Style */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-5">
+          {/* Enhanced Gallery Grid - Uniform Aspect Ratios with Premium Shadows */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
             {galleryImages.map((item, idx) => (
               <div 
                 key={idx} 
-                className={`group relative overflow-hidden shadow-lg cursor-pointer ${idx === 0 ? 'row-span-2' : ''}`}
-                style={{ aspectRatio: idx === 0 ? '3/4' : '4/3', borderRadius: style.borderRadius.image }}
+                className="group relative overflow-hidden cursor-pointer aspect-[4/3] transition-all duration-500 hover:-translate-y-2"
+                style={{ 
+                  borderRadius: style.borderRadius.image,
+                  boxShadow: `0 10px 40px -15px ${colors.dark}20`,
+                }}
               >
                 {imagesLoading ? (
                   <div className="w-full h-full flex items-center justify-center" style={{ background: colors.subtleGradient }}>
-                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: colors.primary }} />
+                    <Loader2 className="w-10 h-10 animate-spin" style={{ color: colors.primary }} />
                   </div>
                 ) : (
                   <img 
                     src={getImage(idx).url}
                     alt={getImage(idx).alt || item.name}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
                 )}
+                {/* Enhanced overlay */}
                 <div 
-                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  style={{ background: `linear-gradient(180deg, transparent 30%, ${colors.primary}ee 100%)` }}
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500"
+                  style={{ 
+                    background: `linear-gradient(180deg, transparent 20%, ${colors.dark}40 60%, ${colors.primary}ee 100%)`,
+                  }}
                 />
-                <div className="absolute bottom-0 left-0 right-0 p-4 lg:p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <div className="flex items-center gap-2 text-white mb-1">
-                    <PrimaryIcon className="w-4 h-4" />
-                    <span className="font-bold">{item.name}</span>
+                {/* Info slide up */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-6 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+                  <div className="flex items-center gap-2 text-white mb-2">
+                    <div 
+                      className="w-8 h-8 flex items-center justify-center"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: '50%' }}
+                    >
+                      <PrimaryIcon className="w-4 h-4" />
+                    </div>
+                    <span className="font-bold text-lg">{item.name}</span>
                   </div>
-                  <p className="text-white/80 text-sm">{item.content}</p>
+                  <p className="text-white/90 text-sm">{item.content}</p>
                 </div>
               </div>
             ))}
@@ -870,37 +1046,39 @@ const GeneratedSitePreview = () => {
         </div>
       </section>
 
-      {/* ========== CTA BAND ========== */}
+      {/* ========== ENHANCED CTA BAND ========== */}
       <section 
-        className="py-16 lg:py-20 relative overflow-hidden"
+        className="py-20 lg:py-28 relative overflow-hidden"
         style={{ background: colors.heroGradient }}
       >
-        {/* Decorative Elements */}
+        {/* Enhanced Decorative Elements */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-40 h-40 border-2 border-white rounded-full" />
-          <div className="absolute bottom-10 right-10 w-60 h-60 border-2 border-white rounded-full" />
+          <div className="absolute top-10 left-10 w-48 h-48 border-2 border-white rounded-full animate-pulse-slow" />
+          <div className="absolute bottom-10 right-10 w-72 h-72 border-2 border-white rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] border border-white/20 rounded-full" />
         </div>
         
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <PrimaryIcon className="w-12 h-12 mx-auto text-white/30 mb-6 animate-spin" style={{ animationDuration: '10s' }} />
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl text-white mb-4" style={fontStyles.heading}>
+          <PrimaryIcon className="w-14 h-14 mx-auto text-white/40 mb-8 animate-spin" style={{ animationDuration: '10s' }} />
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl text-white mb-6 tracking-tight" style={fontStyles.heading}>
             Ready to Get Started?
           </h2>
-          <p className="text-lg lg:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg lg:text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed">
             Contact us today for a free, no-obligation estimate. We're here to help!
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-5 justify-center">
             <a 
               href={`tel:${phone || "5551234567"}`}
-              className="group flex items-center justify-center gap-3 px-8 py-4 bg-white font-bold text-lg shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+              className="group relative flex items-center justify-center gap-3 px-10 py-5 bg-white font-bold text-lg shadow-2xl transition-all duration-300 hover:scale-[1.03] hover:shadow-3xl overflow-hidden"
               style={{ color: colors.primary, borderRadius: style.borderRadius.button }}
             >
-              <Phone className="w-5 h-5 group-hover:animate-pulse" />
-              {phone || "(555) 123-4567"}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 bg-gradient-to-r from-transparent via-black/5 to-transparent" />
+              <Phone className="w-5 h-5 relative z-10 group-hover:animate-pulse" />
+              <span className="relative z-10">{phone || "(555) 123-4567"}</span>
             </a>
             <button 
               onClick={() => scrollToSection("contact")}
-              className="px-8 py-4 font-bold text-lg border-2 border-white/40 text-white hover:bg-white/10 transition-all duration-300"
+              className="px-10 py-5 font-bold text-lg border-2 border-white/50 text-white hover:bg-white/15 transition-all duration-300 hover:border-white hover:scale-[1.02]"
               style={{ borderRadius: style.borderRadius.button }}
             >
               Request Online Quote
@@ -1149,40 +1327,55 @@ const GeneratedSitePreview = () => {
         </div>
       </section>
 
-      {/* ========== FOOTER ========== */}
-      <footer style={{ background: colors.darkGradient }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 lg:py-16">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
+      {/* ========== ENHANCED FOOTER ========== */}
+      <footer className="relative overflow-hidden" style={{ background: colors.darkGradient }}>
+        {/* Subtle pattern overlay */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{ 
+            backgroundImage: `radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
+          }}
+        />
+        {/* Gradient accent at top */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-1"
+          style={{ background: colors.heroGradient }}
+        />
+        
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 lg:py-20">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-14 mb-14">
             {/* Company Info */}
             <div className="sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center gap-3 mb-5">
+              <div className="flex items-center gap-3 mb-6">
                 <div 
-                  className="w-10 h-10 flex items-center justify-center text-white font-bold"
+                  className="w-12 h-12 flex items-center justify-center text-white font-bold text-lg shadow-lg"
                   style={{ background: colors.heroGradient, borderRadius: style.borderRadius.button }}
                 >
                   {businessName?.charAt(0) || "A"}
                 </div>
-                <span className="text-lg font-bold text-white" style={fontStyles.heading}>{businessName}</span>
+                <span className="text-xl font-bold text-white" style={fontStyles.heading}>{businessName}</span>
               </div>
-              <p className="text-gray-400 text-sm mb-4 leading-relaxed">
+              <p className="text-gray-400 text-sm mb-5 leading-relaxed">
                 Your trusted {colors.industryLabel.toLowerCase()} in the area. Professional service with quality results.
               </p>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5 mb-2">
                 {[1,2,3,4,5].map(i => (
-                  <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <Star key={i} className="w-5 h-5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
+              <p className="text-gray-500 text-xs">Trusted by 200+ customers</p>
             </div>
 
             {/* Quick Links */}
             <div>
-              <h4 className="text-white font-bold mb-4" style={fontStyles.heading}>Quick Links</h4>
-              <ul className="space-y-2">
+              <h4 className="text-white font-bold text-lg mb-5" style={fontStyles.heading}>Quick Links</h4>
+              <ul className="space-y-3">
                 {navigation?.slice(0, 5).map((item, idx) => (
                   <li key={idx}>
                     <button 
                       onClick={() => scrollToSection(item.toLowerCase().replace(/\s+/g, "-"))}
-                      className="text-gray-400 hover:text-white text-sm transition-colors"
+                      className="text-gray-400 hover:text-white text-sm transition-all duration-200 hover:translate-x-1 inline-block"
                     >
                       {item}
                     </button>
@@ -1193,55 +1386,83 @@ const GeneratedSitePreview = () => {
 
             {/* Contact */}
             <div>
-              <h4 className="text-white font-bold mb-4" style={fontStyles.heading}>Contact</h4>
-              <ul className="space-y-3">
+              <h4 className="text-white font-bold text-lg mb-5" style={fontStyles.heading}>Contact</h4>
+              <ul className="space-y-4">
                 {phone && (
                   <li>
-                    <a href={`tel:${phone}`} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors">
-                      <Phone className="w-4 h-4" /> {phone}
+                    <a href={`tel:${phone}`} className="flex items-center gap-3 text-gray-400 hover:text-white text-sm transition-colors group">
+                      <div 
+                        className="w-9 h-9 flex items-center justify-center transition-colors"
+                        style={{ backgroundColor: `${colors.primary}20`, borderRadius: style.borderRadius.button }}
+                      >
+                        <Phone className="w-4 h-4" style={{ color: colors.primary }} />
+                      </div>
+                      <span className="group-hover:underline">{phone}</span>
                     </a>
                   </li>
                 )}
                 {email && (
                   <li>
-                    <a href={`mailto:${email}`} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors">
-                      <Mail className="w-4 h-4" /> {email}
+                    <a href={`mailto:${email}`} className="flex items-center gap-3 text-gray-400 hover:text-white text-sm transition-colors group">
+                      <div 
+                        className="w-9 h-9 flex items-center justify-center transition-colors"
+                        style={{ backgroundColor: `${colors.primary}20`, borderRadius: style.borderRadius.button }}
+                      >
+                        <Mail className="w-4 h-4" style={{ color: colors.primary }} />
+                      </div>
+                      <span className="group-hover:underline">{email}</span>
                     </a>
                   </li>
                 )}
-                <li className="flex items-center gap-2 text-gray-400 text-sm">
-                  <MapPin className="w-4 h-4" /> {businessName} Metro Area
+                <li className="flex items-center gap-3 text-gray-400 text-sm">
+                  <div 
+                    className="w-9 h-9 flex items-center justify-center"
+                    style={{ backgroundColor: `${colors.primary}20`, borderRadius: style.borderRadius.button }}
+                  >
+                    <MapPin className="w-4 h-4" style={{ color: colors.primary }} />
+                  </div>
+                  <span>{businessName} Metro Area</span>
                 </li>
               </ul>
             </div>
 
             {/* Hours */}
             <div>
-              <h4 className="text-white font-bold mb-4" style={fontStyles.heading}>Hours</h4>
-              <ul className="space-y-2 text-sm">
-                <li className="flex justify-between text-gray-400">
+              <h4 className="text-white font-bold text-lg mb-5" style={fontStyles.heading}>Hours</h4>
+              <ul className="space-y-3 text-sm">
+                <li className="flex justify-between text-gray-400 pb-2 border-b border-gray-700/50">
                   <span>Mon - Fri</span>
-                  <span className="text-white">8AM - 6PM</span>
+                  <span className="text-white font-semibold">8AM - 6PM</span>
                 </li>
-                <li className="flex justify-between text-gray-400">
+                <li className="flex justify-between text-gray-400 pb-2 border-b border-gray-700/50">
                   <span>Saturday</span>
-                  <span className="text-white">9AM - 4PM</span>
+                  <span className="text-white font-semibold">9AM - 4PM</span>
                 </li>
                 <li className="flex justify-between text-gray-400">
                   <span>Emergency</span>
-                  <span className="text-white">24/7</span>
+                  <span className="text-white font-semibold">24/7</span>
                 </li>
               </ul>
-              <div className="mt-4 flex items-center gap-2">
-                <Shield className="w-4 h-4" style={{ color: colors.primary }} />
-                <span className="text-gray-400 text-xs">Licensed & Insured</span>
+              <div 
+                className="mt-5 flex items-center gap-3 px-4 py-3"
+                style={{ 
+                  backgroundColor: `${colors.primary}15`, 
+                  borderRadius: style.borderRadius.button,
+                  border: `1px solid ${colors.primary}30`,
+                }}
+              >
+                <Shield className="w-5 h-5" style={{ color: colors.primary }} />
+                <span className="text-gray-300 text-xs font-semibold">Licensed & Insured</span>
               </div>
             </div>
           </div>
 
-          {/* Bottom Bar */}
-          <div className="pt-8 border-t border-gray-700/50 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-xs">
+          {/* Enhanced Bottom Bar */}
+          <div 
+            className="pt-8 mt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4"
+            style={{ borderColor: 'rgba(255,255,255,0.1)' }}
+          >
+            <p className="text-gray-500 text-sm">
               © {new Date().getFullYear()} {businessName}. All rights reserved.
             </p>
             <p className="text-gray-600 text-xs">
