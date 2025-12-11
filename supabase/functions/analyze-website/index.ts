@@ -217,8 +217,6 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
 - Always assume the goal is: “Get more phone calls, quote requests, and booked jobs from this website.”
 `;
 
-a). Analyze the following website data and provide actionable, specific recommendations.
-
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
