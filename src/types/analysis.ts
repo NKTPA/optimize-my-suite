@@ -3,6 +3,8 @@ export interface Finding {
   text: string;
 }
 
+export type FindingInput = Finding | string;
+
 export interface AnalysisResult {
   summary: {
     overallScore: number;
@@ -11,36 +13,36 @@ export interface AnalysisResult {
   };
   messaging: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     recommendedHeadline: string;
     recommendedSubheadline: string;
     elevatorPitch: string;
   };
   conversion: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     recommendations: string[];
     sampleButtons: string[];
   };
   designUx: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     recommendations: string[];
   };
   mobile: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     recommendations: string[];
   };
   performance: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     heavyImages: string[];
     recommendations: string[];
   };
   seo: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     recommendedTitle: string;
     recommendedMetaDescription: string;
     recommendedH1: string;
@@ -49,12 +51,12 @@ export interface AnalysisResult {
   };
   trust: {
     score: number;
-    findings: Finding[];
+    findings: FindingInput[];
     whyChooseUs: string[];
     testimonialsBlock: string;
   };
   technical: {
-    findings: Finding[];
+    findings: FindingInput[];
     recommendations: string[];
   };
   aiServicePitch: {

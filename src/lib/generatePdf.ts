@@ -1,5 +1,9 @@
 import jsPDF from "jspdf";
-import { AnalysisResult } from "@/types/analysis";
+import { AnalysisResult, FindingInput } from "@/types/analysis";
+
+// Helper to get text from FindingInput
+const getFindingText = (f: FindingInput): string => 
+  typeof f === "string" ? f : f.text;
 
 export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   const doc = new jsPDF();
@@ -111,7 +115,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // Messaging
   addTitle("Messaging & Offer Clarity");
   addScore("Score", results.messaging.score);
-  results.messaging.findings.forEach((f) => addBullet(f.text));
+  results.messaging.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Recommended Headline");
   addText(results.messaging.recommendedHeadline, 5);
   addSubtitle("Recommended Subheadline");
@@ -123,7 +127,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // Conversion
   addTitle("Conversion & Lead Capture");
   addScore("Score", results.conversion.score);
-  results.conversion.findings.forEach((f) => addBullet(f.text));
+  results.conversion.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Recommendations");
   results.conversion.recommendations.forEach((r) => addBullet(r));
   addSubtitle("Sample CTAs");
@@ -133,7 +137,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // Design UX
   addTitle("Design & User Experience");
   addScore("Score", results.designUx.score);
-  results.designUx.findings.forEach((f) => addBullet(f.text));
+  results.designUx.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Recommendations");
   results.designUx.recommendations.forEach((r) => addBullet(r));
   y += 5;
@@ -141,7 +145,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // Mobile
   addTitle("Mobile Experience");
   addScore("Score", results.mobile.score);
-  results.mobile.findings.forEach((f) => addBullet(f.text));
+  results.mobile.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Mobile Fixes");
   results.mobile.recommendations.forEach((r) => addBullet(r));
   y += 5;
@@ -149,7 +153,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // Performance
   addTitle("Speed & Performance");
   addScore("Score", results.performance.score);
-  results.performance.findings.forEach((f) => addBullet(f.text));
+  results.performance.findings.forEach((f) => addBullet(getFindingText(f)));
   if (results.performance.heavyImages.length > 0) {
     addSubtitle("Heavy Images Detected");
     results.performance.heavyImages.forEach((img) => addBullet(img));
@@ -161,7 +165,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // SEO
   addTitle("SEO & Local SEO");
   addScore("Score", results.seo.score);
-  results.seo.findings.forEach((f) => addBullet(f.text));
+  results.seo.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Recommended Title Tag");
   addText(results.seo.recommendedTitle, 5);
   addSubtitle("Recommended Meta Description");
@@ -177,7 +181,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   // Trust
   addTitle("Trust & Credibility");
   addScore("Score", results.trust.score);
-  results.trust.findings.forEach((f) => addBullet(f.text));
+  results.trust.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Why Choose Us Section");
   results.trust.whyChooseUs.forEach((item) => addBullet(item));
   addSubtitle("Testimonials Block");
@@ -186,7 +190,7 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
 
   // Technical
   addTitle("Technical Basics");
-  results.technical.findings.forEach((f) => addBullet(f.text));
+  results.technical.findings.forEach((f) => addBullet(getFindingText(f)));
   addSubtitle("Technical Recommendations");
   results.technical.recommendations.forEach((r) => addBullet(r));
   y += 5;
