@@ -117,9 +117,7 @@ const Index = () => {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-3 text-left">
-                Works best for HVAC, plumbing, electrical, roofing, dental, and med spa websites.
-              </p>
+              <p className="text-xs text-muted-foreground mt-3 text-left">Works best for HVAC, Plumbing, Electrical, Roofing, Dental, Med Spas websites & more.</p>
             </div>
 
             {/* Feature Pills */}
