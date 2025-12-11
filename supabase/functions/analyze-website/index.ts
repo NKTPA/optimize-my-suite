@@ -126,71 +126,99 @@ function extractDataFromHtml(html: string, url: string) {
   };
 }
 
-const ANALYSIS_PROMPT = `You are an expert website conversion consultant specializing in home services businesses (HVAC, plumbing, electrical, roofing, dental, med spa). Analyze the following website data and provide actionable, specific recommendations.
 
-The analysis must be practical and written for a busy contractor or office manager who doesn't know web development. Be specific - don't say "improve your headline" - instead provide an actual better headline.
+const ANALYSIS_PROMPT = `
+You are a senior CRO (conversion rate optimization) expert, web designer, and local SEO specialist focused on small HOME-SERVICES businesses (HVAC, plumbing, roofing, electrical, landscaping, med spa, dental, etc.).
 
-Return a JSON object with EXACTLY this structure (no markdown, just valid JSON):
+You receive:
+- Basic business category and location (if detectable from the site)
+- Extracted website data:
+  - title, metaDescription
+  - headings (H1, H2, H3)
+  - main body text
+  - phoneNumbers, emails
+  - CTA buttons (text + href)
+  - forms (fields, actions)
+  - images (src, alt, approxSize)
+  - scripts (urls)
+
+TASK:
+1) Analyze the site as if you were hired to increase LEADS (calls, form fills, bookings).
+2) Be brutally honest but respectful.
+3) Write at a 7th–8th grade reading level. Avoid jargon.
+4) Focus on QUICK, PRACTICAL fixes, not theory.
+5) Tailor your advice to home-services: urgent jobs, local customers, trust, and speed.
+
+OUTPUT:
+Return ONLY a valid JSON object with the following shape (no extra commentary):
 
 {
   "summary": {
-    "overallScore": <number 0-100>,
-    "overview": "<2 sentence summary of main findings>",
-    "quickWins": ["<fix 1 that can be done in 24h>", "<fix 2>", "<fix 3>"]
+    "overallScore": number,
+    "overview": "string",
+    "quickWins": ["string", "string", "string"]
   },
   "messaging": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "recommendedHeadline": "<specific headline for this business>",
-    "recommendedSubheadline": "<specific subheadline>",
-    "elevatorPitch": "<2-3 sentence pitch for this business>"
+    "score": number,
+    "findings": ["string", "string"],
+    "recommendedHeadline": "string",
+    "recommendedSubheadline": "string",
+    "elevatorPitch": "string"
   },
   "conversion": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "recommendations": ["<specific recommendation>"],
-    "sampleButtons": ["<CTA text 1>", "<CTA text 2>", "<CTA text 3>"]
+    "score": number,
+    "findings": ["string", "string"],
+    "recommendations": ["string", "string"],
+    "sampleButtons": ["string", "string"]
   },
   "designUx": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "recommendations": ["<specific design tweak>"]
+    "score": number,
+    "findings": ["string", "string"],
+    "recommendations": ["string", "string"]
   },
   "mobile": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "recommendations": ["<mobile-specific fix>"]
+    "score": number,
+    "findings": ["string", "string"],
+    "recommendations": ["string", "string"]
   },
   "performance": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "heavyImages": ["<image filename if any heavy images detected>"],
-    "recommendations": ["<performance recommendation>"]
+    "score": number,
+    "findings": ["string", "string"],
+    "heavyImages": ["string"],
+    "recommendations": ["string", "string"]
   },
   "seo": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "recommendedTitle": "<better title tag, 45-60 chars>",
-    "recommendedMetaDescription": "<better meta desc, 120-155 chars>",
-    "recommendedH1": "<better H1>",
-    "keywords": ["<keyword phrase 1>", "<keyword phrase 2>", "<keyword phrase 3>", "<keyword phrase 4>", "<keyword phrase 5>"],
-    "checklist": ["<local SEO action item>"]
+    "score": number,
+    "findings": ["string", "string"],
+    "recommendedTitle": "string",
+    "recommendedMetaDescription": "string",
+    "recommendedH1": "string",
+    "keywords": ["string", "string", "string", "string", "string"],
+    "checklist": ["string", "string"]
   },
   "trust": {
-    "score": <number 0-100>,
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "whyChooseUs": ["<bullet point 1>", "<bullet point 2>", "<bullet point 3>"],
-    "testimonialsBlock": "<description of recommended testimonials section>"
+    "score": number,
+    "findings": ["string", "string"],
+    "whyChooseUs": ["string", "string", "string"],
+    "testimonialsBlock": "string"
   },
   "technical": {
-    "findings": [{"type": "success|warning|error|info", "text": "<finding>"}],
-    "recommendations": ["<technical recommendation>"]
+    "findings": ["string", "string"],
+    "recommendations": ["string", "string"]
   },
   "aiServicePitch": {
-    "paragraph": "<1-2 sentences about how AI call answering would help THIS specific business>",
-    "bullets": ["<benefit 1: faster response>", "<benefit 2: 24/7 coverage>", "<benefit 3: automatic booking>"]
+    "paragraph": "string",
+    "bullets": ["string", "string", "string"]
   }
-}`;
+}
+
+- Use scores on a 0–100 scale.
+- If some data is missing (for example, no meta description), explain that and still give a recommendation.
+- Always assume the goal is: “Get more phone calls, quote requests, and booked jobs from this website.”
+`;
+
+a). Analyze the following website data and provide actionable, specific recommendations.
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
