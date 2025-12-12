@@ -4,7 +4,7 @@ import { Upload, Play, FileDown, ArrowLeft, AlertTriangle, FileSpreadsheet } fro
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BatchSite } from "@/types/batch";
-import { BatchTable } from "@/components/batch/BatchTable";
+import { BatchSummaryCard } from "@/components/batch/BatchSummaryCard";
 import { ImplementationModal } from "@/components/batch/ImplementationModal";
 import { parseCSV, generateSummaryCSV } from "@/lib/csvParser";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
@@ -25,6 +25,7 @@ export default function BatchMode() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedSite, setSelectedSite] = useState<BatchSite | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [generatingSiteId, setGeneratingSiteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -87,7 +88,7 @@ export default function BatchMode() {
       );
 
       try {
-        // Step 1: Analyze website
+        // Analyze website only (no implementation plan in batch mode)
         const analyzeResponse = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-website`,
           {
@@ -112,31 +113,7 @@ export default function BatchMode() {
           phone: analysisResult.conversion?.sampleButtons?.[0],
         };
 
-        // Step 2: Generate implementation plan
-        const implementationResponse = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-implementation-plan`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({
-              analysisResult,
-              extractedData,
-              url: site.url,
-            }),
-          }
-        );
-
-        if (!implementationResponse.ok) {
-          const errorData = await implementationResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || `Implementation plan failed (${implementationResponse.status})`);
-        }
-
-        const implementationPlan = await implementationResponse.json();
-
-        // Update site with results
+        // Update site with analysis results only
         setSites((prev) =>
           prev.map((s) =>
             s.id === site.id
@@ -145,7 +122,6 @@ export default function BatchMode() {
                   status: "done",
                   analysisResult,
                   extractedData,
-                  implementationPlan,
                 }
               : s
           )
@@ -173,14 +149,75 @@ export default function BatchMode() {
 
     setIsRunningBatch(false);
     toast({
-      title: "Batch processing complete",
-      description: "All websites have been analyzed.",
+      title: "Batch analysis complete",
+      description: "All websites have been analyzed. Click 'Generate Implementation Pack' for detailed recommendations.",
     });
   };
 
+  const handleGenerateImplementation = async (site: BatchSite) => {
+    if (!site.analysisResult) return;
+
+    setGeneratingSiteId(site.id);
+
+    try {
+      const implementationResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-implementation-plan`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            analysisResult: site.analysisResult,
+            extractedData: site.extractedData,
+            url: site.url,
+          }),
+        }
+      );
+
+      if (!implementationResponse.ok) {
+        const errorData = await implementationResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `Implementation plan failed (${implementationResponse.status})`);
+      }
+
+      const implementationPlan = await implementationResponse.json();
+
+      // Update site with implementation plan
+      setSites((prev) =>
+        prev.map((s) =>
+          s.id === site.id
+            ? { ...s, implementationPlan }
+            : s
+        )
+      );
+
+      // Open modal with the updated site
+      const updatedSite = { ...site, implementationPlan };
+      setSelectedSite(updatedSite);
+      setIsModalOpen(true);
+
+      toast({
+        title: "Implementation Pack ready",
+        description: "Your detailed implementation plan has been generated.",
+      });
+    } catch (error) {
+      console.error(`Error generating implementation for ${site.url}:`, error);
+      toast({
+        title: "Failed to generate Implementation Pack",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingSiteId(null);
+    }
+  };
+
   const handleViewImplementation = (site: BatchSite) => {
-    setSelectedSite(site);
-    setIsModalOpen(true);
+    if (site.implementationPlan) {
+      setSelectedSite(site);
+      setIsModalOpen(true);
+    }
   };
 
   const handleDownloadPdf = (site: BatchSite) => {
@@ -322,12 +359,65 @@ export default function BatchMode() {
           </Card>
         )}
 
-        {/* Sites Table */}
-        <BatchTable
-          sites={sites}
-          onViewImplementation={handleViewImplementation}
-          onDownloadPdf={handleDownloadPdf}
-        />
+        {/* Analysis Summaries */}
+        {sites.filter((s) => s.status === "done" && s.analysisResult).length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Analysis Summaries</h2>
+            {sites
+              .filter((s) => s.status === "done" && s.analysisResult)
+              .map((site, index) => (
+                <BatchSummaryCard
+                  key={site.id}
+                  site={site}
+                  index={index}
+                  onGenerateImplementation={handleGenerateImplementation}
+                  onDownloadPdf={handleDownloadPdf}
+                  isGenerating={generatingSiteId === site.id}
+                />
+              ))}
+          </div>
+        )}
+
+        {/* Pending/Running sites mini list */}
+        {sites.filter((s) => s.status === "pending" || s.status === "running").length > 0 && (
+          <Card>
+            <CardContent className="pt-4">
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">Queued Sites</h3>
+              <div className="space-y-1">
+                {sites
+                  .filter((s) => s.status === "pending" || s.status === "running")
+                  .map((site, i) => (
+                    <div key={site.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="w-5 text-right">{i + 1}.</span>
+                      <span className="truncate">{site.name || site.url}</span>
+                      {site.status === "running" && (
+                        <span className="text-xs text-primary animate-pulse ml-auto">Analyzing...</span>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Error sites */}
+        {sites.filter((s) => s.status === "error").length > 0 && (
+          <Card className="border-destructive/30">
+            <CardContent className="pt-4">
+              <h3 className="text-sm font-semibold text-destructive mb-2">Failed Sites</h3>
+              <div className="space-y-2">
+                {sites
+                  .filter((s) => s.status === "error")
+                  .map((site) => (
+                    <div key={site.id} className="text-sm">
+                      <p className="text-foreground">{site.name || site.url}</p>
+                      <p className="text-destructive/70 text-xs">{site.errorMessage}</p>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary Section */}
         {sites.length > 0 && !isRunningBatch && completedCount + errorCount > 0 && (
