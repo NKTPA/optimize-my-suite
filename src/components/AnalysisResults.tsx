@@ -14,6 +14,7 @@ import {
   Download,
   Cog,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ImplementationPlan } from "@/types/implementation";
@@ -31,9 +32,10 @@ import { useToast } from "@/hooks/use-toast";
 interface AnalysisResultsProps {
   results: AnalysisResult;
   url: string;
+  onReset?: () => void;
 }
 
-export function AnalysisResults({ results, url }: AnalysisResultsProps) {
+export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps) {
   const [implementationPlan, setImplementationPlan] = useState<ImplementationPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [implementationError, setImplementationError] = useState<string | null>(null);
@@ -98,6 +100,16 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
     <div className="space-y-6 opacity-0 animate-fade-in">
       {/* Action Buttons */}
       <div className="flex flex-wrap justify-end gap-3">
+        {onReset && (
+          <Button
+            onClick={onReset}
+            variant="secondary"
+            className="gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Start New Analysis
+          </Button>
+        )}
         <Button
           onClick={handleGenerateImplementation}
           variant="outline"
