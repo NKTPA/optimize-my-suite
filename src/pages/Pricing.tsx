@@ -5,19 +5,13 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
-// TODO: Replace these with actual Stripe Price IDs from your dashboard
-const PRICE_IDS = {
-  starter: "price_starter_placeholder",
-  pro: "price_pro_placeholder",
-  scale: "price_scale_placeholder",
-};
+import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
 
 const plans = [
   {
     name: "Starter",
     price: 49,
-    priceId: PRICE_IDS.starter,
+    priceId: STRIPE_PRICE_IDS.starter,
     description: "Perfect for solo consultants and small agencies",
     features: [
       "25 analyses per month",
@@ -34,7 +28,7 @@ const plans = [
   {
     name: "Pro",
     price: 149,
-    priceId: PRICE_IDS.pro,
+    priceId: STRIPE_PRICE_IDS.pro,
     description: "For growing agencies scaling their services",
     features: [
       "150 analyses per month",
@@ -52,7 +46,7 @@ const plans = [
   {
     name: "Scale",
     price: 399,
-    priceId: PRICE_IDS.scale,
+    priceId: STRIPE_PRICE_IDS.scale,
     description: "Enterprise-ready for high-volume agencies",
     features: [
       "500 analyses per month",
