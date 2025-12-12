@@ -205,24 +205,6 @@ const Index = () => {
               <BlueprintForm onSubmit={handleGenerateBlueprint} isLoading={isGeneratingBlueprint} />
             </div>
 
-            {/* Feature Pills */}
-            <div className="flex flex-wrap justify-center gap-3 mt-8">
-              {[{
-                icon: Target,
-                text: "Lead Capture"
-              }, {
-                icon: Zap,
-                text: "Performance"
-              }, {
-                icon: TrendingUp,
-                text: "SEO"
-              }].map((feature, idx) => (
-                <div key={idx} className="flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm">
-                  <feature.icon className="w-4 h-4" />
-                  {feature.text}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </header>
