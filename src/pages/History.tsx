@@ -192,7 +192,7 @@ const History = () => {
       <footer className="border-t border-border/50 py-8 mt-auto">
         <div className="container">
           <p className="text-sm text-muted-foreground text-center">
-            <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
+            <span className="font-semibold text-foreground">OptimizeSuite</span> — Website audits & optimization for marketing agencies
           </p>
         </div>
       </footer>
