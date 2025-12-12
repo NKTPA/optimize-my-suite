@@ -21,7 +21,7 @@ import { OverallScore } from "./OverallScore";
 import { AnalysisSection } from "./AnalysisSection";
 import { FindingsList } from "./FindingsList";
 import { RecommendationCard } from "./RecommendationCard";
-import { AIServicePitch } from "./AIServicePitch";
+
 import { ImplementationPack } from "./ImplementationPack";
 import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
@@ -355,10 +355,6 @@ export function AnalysisResults({ results, url }: AnalysisResultsProps) {
             </AnalysisSection>
           </div>
 
-          {/* AI Service Pitch */}
-          <div className="mt-6">
-            <AIServicePitch paragraph={results.aiServicePitch.paragraph} bullets={results.aiServicePitch.bullets} />
-          </div>
         </TabsContent>
 
         <TabsContent value="implementation" className="mt-6">
