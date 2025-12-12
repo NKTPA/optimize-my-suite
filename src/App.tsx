@@ -4,13 +4,16 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import BatchMode from "./pages/BatchMode";
+import Dashboard from "./pages/Dashboard";
+import DashboardAnalyze from "./pages/DashboardAnalyze";
+import DashboardBatch from "./pages/DashboardBatch";
+import DashboardHistory from "./pages/DashboardHistory";
+import DashboardAccount from "./pages/DashboardAccount";
 import GeneratedSitePreview from "./pages/GeneratedSitePreview";
-import History from "./pages/History";
 import Pricing from "./pages/Pricing";
-import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,23 +21,33 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/batch" element={<BatchMode />} />
-            <Route path="/preview" element={<GeneratedSitePreview />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/account" element={<Account />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <SubscriptionProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/pricing" element={<Pricing />} />
+              
+              {/* Protected dashboard routes */}
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/analyze" element={<DashboardAnalyze />} />
+              <Route path="/dashboard/batch" element={<DashboardBatch />} />
+              <Route path="/dashboard/history" element={<DashboardHistory />} />
+              <Route path="/dashboard/account" element={<DashboardAccount />} />
+              
+              {/* Other routes */}
+              <Route path="/preview" element={<GeneratedSitePreview />} />
+              
+              {/* Catch-all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </SubscriptionProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
