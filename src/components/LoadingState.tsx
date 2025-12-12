@@ -19,15 +19,17 @@ export function LoadingState() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center py-16">
-      <div className="relative mb-8">
-        <div className="w-20 h-20 rounded-full gradient-hero flex items-center justify-center animate-pulse-slow">
-          <Loader2 className="w-10 h-10 text-primary-foreground animate-spin" />
+    <div className="flex flex-col items-center justify-center py-20">
+      {/* Main loader */}
+      <div className="relative mb-10">
+        <div className="w-24 h-24 rounded-full gradient-hero flex items-center justify-center shadow-glow animate-glow-pulse">
+          <Loader2 className="w-12 h-12 text-primary-foreground animate-spin" />
         </div>
-        <div className="absolute inset-0 rounded-full gradient-hero opacity-30 animate-ping" />
+        <div className="absolute -inset-2 rounded-full gradient-hero opacity-20 animate-ping" />
       </div>
 
-      <div className="space-y-4 text-center">
+      {/* Steps */}
+      <div className="space-y-3 text-center max-w-sm">
         {loadingSteps.map((step, index) => {
           const Icon = step.icon;
           const isActive = index === currentStep;
@@ -36,25 +38,33 @@ export function LoadingState() {
           return (
             <div
               key={index}
-              className={`flex items-center gap-3 transition-all duration-500 ${
+              className={`flex items-center gap-4 px-5 py-3 rounded-xl transition-all duration-500 ${
                 isActive
-                  ? "opacity-100 scale-100"
+                  ? "bg-primary/10 scale-100"
                   : isPast
-                  ? "opacity-40 scale-95"
+                  ? "opacity-50 scale-95"
                   : "opacity-30 scale-95"
               }`}
             >
-              <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-              <span className={`text-sm ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+              <div className={`p-2 rounded-lg transition-colors ${isActive ? "bg-primary/20" : "bg-transparent"}`}>
+                <Icon className={`w-5 h-5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
+              </div>
+              <span className={`flex-1 text-left text-sm ${isActive ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                 {step.text}
               </span>
-              {isActive && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
+              {isActive && (
+                <div className="flex gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <p className="mt-8 text-sm text-muted-foreground text-center max-w-md">
+      <p className="mt-10 text-sm text-muted-foreground text-center max-w-md leading-relaxed">
         This usually takes 30-60 seconds. We're thoroughly analyzing your website to provide actionable insights.
       </p>
     </div>

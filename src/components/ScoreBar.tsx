@@ -24,15 +24,15 @@ export function ScoreBar({ score, label, showLabel = true, size = "md", classNam
   };
 
   const heights = {
-    sm: "h-1.5",
+    sm: "h-2",
     md: "h-2.5",
-    lg: "h-3.5",
+    lg: "h-3",
   };
 
   return (
     <div className={cn("w-full", className)}>
       {showLabel && (
-        <div className="flex items-center justify-between mb-1.5">
+        <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium text-foreground">{label}</span>
           <span className="text-sm font-semibold text-foreground">
             {score}/100 <span className="text-muted-foreground font-normal">({getScoreLabel(score)})</span>
