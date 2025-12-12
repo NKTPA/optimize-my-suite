@@ -67,6 +67,8 @@ interface WorkspaceContextType extends WorkspaceState {
   canUseAnalysis: () => boolean;
   canUsePack: () => boolean;
   canUseBatchUrls: (count: number) => boolean;
+  canUseFeature: (type: "analyses" | "packs") => boolean;
+  getRemainingUsage: (type: "analyses" | "packs") => number;
   updateBranding: (branding: Partial<WorkspaceBranding>) => Promise<void>;
 }
 
@@ -245,6 +247,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return count <= state.limits.batchUrlLimit;
   }, [state.isLocked, state.limits]);
 
+  const canUseFeatureCheck = useCallback((type: "analyses" | "packs"): boolean => {
+    if (type === "analyses") return canUseAnalysis();
+    return canUsePack();
+  }, [canUseAnalysis, canUsePack]);
+
+  const getRemainingUsageCount = useCallback((type: "analyses" | "packs"): number => {
+    if (!state.usage) return 0;
+    const used = type === "analyses" ? state.usage.analyses_used : state.usage.packs_used;
+    const limit = type === "analyses" ? state.limits.analysesPerMonth : state.limits.implementationsPerMonth;
+    if (typeof limit === "string" || limit === -1) return 999999;
+    return Math.max(0, limit - used);
+  }, [state.usage, state.limits]);
+
   const updateBranding = useCallback(async (branding: Partial<WorkspaceBranding>): Promise<void> => {
     if (!state.workspace) return;
 
@@ -294,6 +309,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         canUseAnalysis,
         canUsePack,
         canUseBatchUrls,
+        canUseFeature: canUseFeatureCheck,
+        getRemainingUsage: getRemainingUsageCount,
         updateBranding,
       }}
     >

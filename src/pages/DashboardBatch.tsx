@@ -11,6 +11,9 @@ import { parseCSV, generateSummaryCSV } from "@/lib/csvParser";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { UsageLimitModal } from "@/components/entitlements/UsageLimitModal";
+import { getPlanLimits } from "@/lib/entitlements";
 import { Loader2 } from "lucide-react";
 
 function delay(ms: number) {
@@ -24,6 +27,7 @@ function generateId(): string {
 export default function DashboardBatch() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { workspace, canUseFeature, incrementUsage, getRemainingUsage } = useWorkspace();
   const [sites, setSites] = useState<BatchSite[]>([]);
   const [isRunningBatch, setIsRunningBatch] = useState(false);
   const [overallError, setOverallError] = useState<string | null>(null);
@@ -31,8 +35,13 @@ export default function DashboardBatch() {
   const [selectedSite, setSelectedSite] = useState<BatchSite | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatingSiteId, setGeneratingSiteId] = useState<string | null>(null);
+  const [showUsageLimitModal, setShowUsageLimitModal] = useState(false);
+  const [limitModalType, setLimitModalType] = useState<"analyses" | "packs">("analyses");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  
+  const planLimits = workspace ? getPlanLimits(workspace.plan as any) : getPlanLimits("starter");
+  const maxBatchUrls = planLimits.batchUrlLimit === "unlimited" ? Infinity : planLimits.batchUrlLimit;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -62,6 +71,16 @@ export default function DashboardBatch() {
         toast({
           title: "No valid URLs found",
           description: "Make sure your CSV has a 'url' column with valid website URLs.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check batch URL limit
+      if (parsed.length > maxBatchUrls) {
+        toast({
+          title: "Batch limit exceeded",
+          description: `Your plan allows up to ${maxBatchUrls} URLs per batch. Please reduce your list or upgrade.`,
           variant: "destructive",
         });
         return;
@@ -106,6 +125,19 @@ export default function DashboardBatch() {
   };
 
   const runBatchAnalysis = async () => {
+    // Check remaining usage
+    const remaining = getRemainingUsage("analyses");
+    if (remaining < sites.length) {
+      setLimitModalType("analyses");
+      setShowUsageLimitModal(true);
+      toast({
+        title: "Insufficient analyses remaining",
+        description: `You have ${remaining} analyses left, but ${sites.length} sites to analyze.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsRunningBatch(true);
     setOverallError(null);
     setCurrentIndex(0);
@@ -155,6 +187,9 @@ export default function DashboardBatch() {
               : s
           )
         );
+        
+        // Increment usage for each successful analysis
+        await incrementUsage("analysis");
       } catch (error) {
         console.error(`Error processing ${site.url}:`, error);
         setSites((prev) =>
@@ -184,6 +219,13 @@ export default function DashboardBatch() {
 
   const handleGenerateImplementation = async (site: BatchSite) => {
     if (!site.analysisResult) return;
+    
+    // Check pack usage
+    if (!canUseFeature("packs")) {
+      setLimitModalType("packs");
+      setShowUsageLimitModal(true);
+      return;
+    }
 
     setGeneratingSiteId(site.id);
 
@@ -218,6 +260,9 @@ export default function DashboardBatch() {
             : s
         )
       );
+      
+      // Increment pack usage
+      await incrementUsage("pack");
 
       const updatedSite = { ...site, implementationPlan };
       setSelectedSite(updatedSite);
@@ -274,6 +319,12 @@ export default function DashboardBatch() {
 
   return (
     <DashboardLayout>
+      <UsageLimitModal
+        open={showUsageLimitModal}
+        onClose={() => setShowUsageLimitModal(false)}
+        featureType={limitModalType}
+      />
+      
       <div className="container py-8 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

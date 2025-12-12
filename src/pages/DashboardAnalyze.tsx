@@ -15,6 +15,8 @@ import { HistoryItem } from "@/types/history";
 import { useToast } from "@/hooks/use-toast";
 import { useHistory } from "@/hooks/use-history";
 import { useAuth } from "@/hooks/use-auth";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { UsageLimitModal } from "@/components/entitlements/UsageLimitModal";
 import { Loader2 } from "lucide-react";
 
 export default function Analyze() {
@@ -24,8 +26,10 @@ export default function Analyze() {
   const { user, isLoading: authLoading } = useAuth();
   const { addAnalysis } = useHistory();
   const { toast } = useToast();
+  const { canUseFeature, incrementUsage, getRemainingUsage, isTrialExpired } = useWorkspace();
   
   const [url, setUrl] = useState("");
+  const [showUsageLimitModal, setShowUsageLimitModal] = useState(false);
   const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
@@ -89,6 +93,13 @@ export default function Analyze() {
       });
       return;
     }
+    
+    // Check usage limits
+    if (!canUseFeature("analyses")) {
+      setShowUsageLimitModal(true);
+      return;
+    }
+    
     setIsLoading(true);
     setResults(null);
     setBlueprint(null);
@@ -115,6 +126,10 @@ export default function Analyze() {
       const data = await response.json();
       setResults(data);
       setAnalyzedUrl(formattedUrl);
+      
+      // Increment usage
+      await incrementUsage("analysis");
+      
       if (user) {
         addAnalysis(formattedUrl, data);
       }
@@ -135,6 +150,12 @@ export default function Analyze() {
   };
 
   const handleGenerateBlueprint = async (formData: BlueprintFormData) => {
+    // Check usage limits for blueprints (counts as analysis)
+    if (!canUseFeature("analyses")) {
+      setShowUsageLimitModal(true);
+      return;
+    }
+    
     setIsGeneratingBlueprint(true);
     setBlueprintError("");
     setBlueprint(null);
@@ -158,6 +179,10 @@ export default function Analyze() {
       setBlueprintPhone(formData.mainPhone || "");
       setBlueprintEmail(formData.contactEmail || "");
       setBlueprintIndustry(formData.industry || "");
+      
+      // Increment usage
+      await incrementUsage("analysis");
+      
       toast({
         title: "Blueprint Generated",
         description: "Client website blueprint is ready. Scroll down to see it.",
@@ -209,6 +234,12 @@ export default function Analyze() {
 
   return (
     <DashboardLayout>
+      <UsageLimitModal
+        open={showUsageLimitModal}
+        onClose={() => setShowUsageLimitModal(false)}
+        featureType="analyses"
+      />
+      
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero opacity-[0.03]" />

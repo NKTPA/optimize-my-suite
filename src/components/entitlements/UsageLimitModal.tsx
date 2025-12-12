@@ -12,34 +12,38 @@ import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { PLAN_DEFINITIONS } from "@/lib/entitlements";
 
-interface UsageLimitModalProps {
+export interface UsageLimitModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  limitType: "analyses" | "implementations" | "batch";
+  onClose: () => void;
+  featureType: "analyses" | "packs" | "batch";
 }
 
 export function UsageLimitModal({
   open,
-  onOpenChange,
-  limitType,
+  onClose,
+  featureType,
 }: UsageLimitModalProps) {
   const navigate = useNavigate();
   const { workspace, usage, limits } = useWorkspace();
 
+  const handleOpenChange = (openState: boolean) => {
+    if (!openState) onClose();
+  };
+
   const handleUpgrade = () => {
-    onOpenChange(false);
+    onClose();
     navigate("/pricing");
   };
 
   const getUsageData = () => {
-    switch (limitType) {
+    switch (featureType) {
       case "analyses":
         return {
           label: "Analyses",
           used: usage?.analyses_used || 0,
           limit: limits.analysesPerMonth,
         };
-      case "implementations":
+      case "packs":
         return {
           label: "Implementation Packs",
           used: usage?.packs_used || 0,
@@ -64,7 +68,7 @@ export function UsageLimitModal({
   const nextPlanDef = nextPlan ? PLAN_DEFINITIONS[nextPlan] : null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="mx-auto w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center mb-4">
@@ -102,9 +106,9 @@ export function UsageLimitModal({
               </p>
               <p className="text-sm text-primary font-medium">
                 Get {
-                  limitType === "analyses" 
+                  featureType === "analyses" 
                     ? nextPlanDef.limits.analysesPerMonth 
-                    : limitType === "implementations"
+                    : featureType === "packs"
                     ? nextPlanDef.limits.implementationsPerMonth
                     : typeof nextPlanDef.limits.batchUrlLimit === "number" 
                       ? nextPlanDef.limits.batchUrlLimit 
@@ -120,7 +124,7 @@ export function UsageLimitModal({
             Upgrade Plan
             <ArrowRight className="w-4 h-4" />
           </Button>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">
+          <Button variant="ghost" onClick={onClose} className="w-full">
             Close
           </Button>
         </div>
