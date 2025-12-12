@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
-import { Link } from "react-router-dom";
-import { Upload, Play, FileDown, ArrowLeft, AlertTriangle, FileSpreadsheet } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Upload, Play, FileDown, ArrowLeft, AlertTriangle, FileSpreadsheet, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { BatchSite } from "@/types/batch";
@@ -9,6 +9,7 @@ import { ImplementationModal } from "@/components/batch/ImplementationModal";
 import { parseCSV, generateSummaryCSV } from "@/lib/csvParser";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,6 +20,8 @@ function generateId(): string {
 }
 
 export default function BatchMode() {
+  const { user, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [sites, setSites] = useState<BatchSite[]>([]);
   const [isRunningBatch, setIsRunningBatch] = useState(false);
   const [overallError, setOverallError] = useState<string | null>(null);
@@ -28,6 +31,27 @@ export default function BatchMode() {
   const [generatingSiteId, setGeneratingSiteId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-secondary border-t-primary" />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

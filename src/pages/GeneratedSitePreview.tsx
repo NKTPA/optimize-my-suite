@@ -26,6 +26,7 @@ import {
   type DesignSystem,
   type ColorTheme,
 } from "@/lib/designSystem";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LocationState {
   blueprint: WebsiteBlueprint;
@@ -36,6 +37,7 @@ interface LocationState {
 }
 
 const GeneratedSitePreview = () => {
+  const { user, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState | null;
@@ -43,6 +45,27 @@ const GeneratedSitePreview = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [serviceImages, setServiceImages] = useState<ServiceImage[]>([]);
   const [imagesLoading, setImagesLoading] = useState(true);
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render if not authenticated
+  if (!user) {
+    return null;
+  }
 
   // Infer service type from business content
   const inferredServiceType = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate, Sparkles, CheckCircle2, Shield, Smartphone, Palette, Search, MousePointerClick, Gauge, MessageSquare, Wrench, Clock, LogIn, LogOut, User } from "lucide-react";
+import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate, Sparkles, CheckCircle2, Shield, Smartphone, Palette, Search, MousePointerClick, Gauge, MessageSquare, Wrench, Clock, LogIn, LogOut, User, Play, FileText, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,56 +18,259 @@ import { useAuth } from "@/hooks/use-auth";
 const featureCards = [
   {
     icon: MessageSquare,
-    title: "Messaging & Clarity",
-    description: "Is it clear what your client does and where they operate?",
+    title: "Client Messaging & Positioning",
+    description: "Analyze if your client's value proposition and local targeting are clear.",
   },
   {
     icon: MousePointerClick,
-    title: "Lead Capture",
-    description: "Are visitors easily able to contact your client's business?",
+    title: "Conversion & Lead Capture",
+    description: "Identify form issues, CTA problems, and missed conversion opportunities.",
   },
   {
     icon: Palette,
-    title: "Design & UX",
-    description: "Does the site look professional and build trust?",
+    title: "Design & User Experience",
+    description: "Evaluate visual credibility and professional appearance.",
   },
   {
     icon: Smartphone,
-    title: "Mobile Experience",
-    description: "Does the site work flawlessly on phones and tablets?",
+    title: "Mobile Performance",
+    description: "Check if the site works flawlessly on phones and tablets.",
   },
   {
     icon: Gauge,
-    title: "Page Speed",
-    description: "Are slow assets hurting search rankings and conversions?",
+    title: "Speed & Performance",
+    description: "Find slow assets hurting search rankings and conversions.",
   },
   {
     icon: Search,
-    title: "SEO & Local SEO",
-    description: "Can Google find your client when customers search locally?",
+    title: "Client Visibility & Local SEO",
+    description: "Assess Google findability when customers search locally.",
   },
   {
     icon: Shield,
-    title: "Trust Signals",
-    description: "Are reviews, certifications, and guarantees showcased?",
+    title: "Trust & Credibility Signals",
+    description: "Check if reviews, certifications, and guarantees are showcased.",
   },
   {
     icon: Wrench,
-    title: "Technical Basics",
+    title: "Technical Foundations",
     description: "SSL, favicon, and essential technical elements.",
   },
   {
     icon: Sparkles,
-    title: "AI-Powered Insights",
-    description: "Done-for-you copy and layout recommendations ready to implement.",
+    title: "AI-Generated Recommendations",
+    description: "Done-for-you copy and layout suggestions your team can implement.",
   },
 ];
 
-const Index = () => {
+const benefits = [
+  {
+    icon: Zap,
+    title: "Win More Retainers",
+    description: "Impress prospects with instant, professional audits that showcase your expertise.",
+  },
+  {
+    icon: Target,
+    title: "Scale Client Services",
+    description: "Analyze 10-200 websites at once with Batch Mode. No more manual audits.",
+  },
+  {
+    icon: FileText,
+    title: "White-Label Reports",
+    description: "Export polished PDF reports your clients will love to share with their teams.",
+  },
+  {
+    icon: BarChart3,
+    title: "Data-Driven Proposals",
+    description: "Use concrete scores and findings to justify higher-value engagements.",
+  },
+];
+
+// Logged-out marketing landing page
+const MarketingLanding = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <header className="relative overflow-hidden">
+        <div className="absolute inset-0 gradient-hero opacity-[0.03]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,_hsl(199_89%_48%_/_0.08),_transparent_70%)]" />
+
+        {/* Navigation */}
+        <nav className="container relative pt-6">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="text-xl font-bold text-foreground">
+              Optimize My <span className="text-gradient">Biz</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/auth">
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/auth?tab=signup">
+                <Button variant="default" size="sm">
+                  Create Agency Account
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </nav>
+
+        <div className="container relative py-20 lg:py-28">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4" />
+              AI-Powered Website Audits for Agencies
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight leading-tight">
+              Give Your Agency an{" "}
+              <span className="text-gradient">AI-Powered</span>{" "}
+              Website Audit Assistant
+            </h1>
+
+            <p className="text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+              Audit client websites, spot conversion leaks, and generate implementation plans in minutes — built for agencies serving local home-service businesses.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/auth?tab=signup">
+                <Button variant="hero" size="lg" className="gap-2 min-w-[220px]">
+                  Create Agency Account
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button variant="outline" size="lg" className="gap-2 min-w-[160px]">
+                  <LogIn className="w-5 h-5" />
+                  Login
+                </Button>
+              </Link>
+            </div>
+
+            <p className="text-sm text-muted-foreground mt-6">
+              Built for agencies serving HVAC, plumbing, electrical, dental, med spas, and other local-service industries.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      {/* Benefits Section */}
+      <section className="py-16 lg:py-20 bg-secondary/30">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">Why Agencies Choose Us</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Everything you need to deliver higher-impact results with less manual work.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            {benefits.map((benefit, index) => {
+              const Icon = benefit.icon;
+              return (
+                <div
+                  key={index}
+                  className="p-6 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5"
+                >
+                  <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2">{benefit.title}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{benefit.description}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* What You Get Section */}
+      <section className="py-16 lg:py-20">
+        <div className="container">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">What Your Agency Gains</h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Generate done-for-you analysis reports your clients will love — covering everything that matters.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {featureCards.map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={index}
+                    className="group relative p-5 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 opacity-0 animate-fade-in"
+                    style={{ animationDelay: `${index * 50}ms` }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 lg:py-20 bg-primary/5">
+        <div className="container">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+              Ready to Scale Your Client Services?
+            </h2>
+            <p className="text-muted-foreground text-lg mb-8">
+              Join agencies using Optimize My Biz to win more retainers and deliver better results.
+            </p>
+            <Link to="/auth?tab=signup">
+              <Button variant="hero" size="lg" className="gap-2">
+                Get Started Free
+                <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border/50 py-10">
+        <div className="container">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
+            </p>
+            <div className="flex items-center gap-4">
+              <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Login
+              </Link>
+              <Link to="/auth?tab=signup" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Create Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+// Logged-in app dashboard
+const AppDashboard = () => {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, signOut, isLoading: authLoading } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const { addAnalysis } = useHistory();
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
@@ -93,7 +296,6 @@ const Index = () => {
       if (item.type === "analysis" && item.analysisResult) {
         setResults(item.analysisResult);
       }
-      // Clear the state to prevent re-loading on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -154,7 +356,6 @@ const Index = () => {
       const data = await response.json();
       setResults(data);
       setAnalyzedUrl(formattedUrl);
-      // Save to history if logged in
       if (user) {
         addAnalysis(formattedUrl, data);
       }
@@ -215,7 +416,6 @@ const Index = () => {
     }
   };
 
-  // Reset handler to start a new analysis
   const handleReset = () => {
     setUrl("");
     setAnalyzedUrl("");
@@ -240,7 +440,6 @@ const Index = () => {
     });
   };
 
-  // Auto-focus URL input on mount if no analysis exists
   useEffect(() => {
     if (!results && !blueprint) {
       urlInputRef.current?.focus();
@@ -249,87 +448,57 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Header */}
       <header className="relative overflow-hidden">
-        {/* Background decoration */}
         <div className="absolute inset-0 gradient-hero opacity-[0.03]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(ellipse_at_center,_hsl(199_89%_48%_/_0.08),_transparent_70%)]" />
 
         {/* Navigation */}
         <nav className="container relative pt-6">
           <div className="flex items-center justify-between">
-            {/* User info */}
             <div className="flex items-center gap-3">
-              {user && profile && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">{profile.agency_name || profile.first_name}</span>
-                </div>
+              <Link to="/" className="text-xl font-bold text-foreground">
+                Optimize My <span className="text-gradient">Biz</span>
+              </Link>
+              {profile && (
+                <span className="hidden sm:inline text-sm text-muted-foreground border-l border-border pl-3">
+                  {profile.agency_name || `${profile.first_name}'s Agency`}
+                </span>
               )}
             </div>
             
-            {/* Nav buttons */}
             <div className="flex items-center gap-2">
-              {user ? (
-                <>
-                  <Link to="/history">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Clock className="w-4 h-4" />
-                      <span className="hidden sm:inline">Client History</span>
-                    </Button>
-                  </Link>
-                  <Link to="/batch">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Layers className="w-4 h-4" />
-                      <span className="hidden sm:inline">Batch Mode</span>
-                    </Button>
-                  </Link>
-                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
-                    <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline">Logout</span>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Link to="/batch">
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Layers className="w-4 h-4" />
-                      <span className="hidden sm:inline">Batch Mode</span>
-                    </Button>
-                  </Link>
-                  <Link to="/auth">
-                    <Button variant="default" size="sm" className="gap-2">
-                      <LogIn className="w-4 h-4" />
-                      <span className="hidden sm:inline">Login</span>
-                    </Button>
-                  </Link>
-                </>
-              )}
+              <Link to="/history">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Clock className="w-4 h-4" />
+                  <span className="hidden sm:inline">Client History</span>
+                </Button>
+              </Link>
+              <Link to="/batch">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Layers className="w-4 h-4" />
+                  <span className="hidden sm:inline">Batch Mode</span>
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
+              </Button>
             </div>
           </div>
         </nav>
 
-        <div className="container relative py-16 lg:py-24">
+        <div className="container relative py-12 lg:py-16">
           <div className="max-w-3xl mx-auto text-center">
-            <Link to="/" className="inline-block hover:opacity-90 transition-opacity">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight">
-                Optimize My <span className="text-gradient">Biz</span>
-              </h1>
-            </Link>
-
-            <p className="text-lg lg:text-xl text-muted-foreground mb-4 max-w-2xl mx-auto leading-relaxed">
-              Website Audits & Optimization Packs for Marketing Agencies
-            </p>
-            
-            <p className="text-base text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Analyze client websites instantly with AI-powered insights built for digital agencies.{" "}
-              <strong className="text-foreground font-semibold">Win more retainers. Deliver higher-impact results. Scale your client services.</strong>
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Run New Client Analysis
+            </h1>
+            <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+              Enter a client's website URL to generate a comprehensive audit report with actionable recommendations.
             </p>
 
-            {/* Blueprint Error Banner */}
             {blueprintError && (
-              <Alert variant="destructive" className="max-w-xl mx-auto mb-8">
+              <Alert variant="destructive" className="max-w-xl mx-auto mb-6">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{blueprintError}</AlertDescription>
               </Alert>
@@ -337,7 +506,6 @@ const Index = () => {
 
             {/* URL Input Form */}
             <div className="relative">
-              {/* Glow effect */}
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-info/20 to-accent/20 rounded-3xl blur-xl opacity-60" />
               
               <div className="relative bg-card rounded-2xl border border-border/50 p-6 sm:p-8 shadow-xl max-w-xl mx-auto backdrop-blur-sm">
@@ -370,9 +538,6 @@ const Index = () => {
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-4 text-left leading-relaxed">
-                  Built for agencies serving HVAC, plumbing, electrical, dental, med spas, and other local-service industries.
-                </p>
 
                 {/* Divider */}
                 <div className="flex items-center gap-4 my-6">
@@ -408,21 +573,12 @@ const Index = () => {
 
         {blueprint && !isGeneratingBlueprint && (
           <>
-            {/* Build Website Layout Button */}
             <div className="max-w-4xl mx-auto mb-10 flex justify-center">
               <Button
                 variant="hero"
                 size="lg"
                 className="gap-2"
                 onClick={() => {
-                  if (!blueprint) {
-                    toast({
-                      title: "Generate a blueprint first",
-                      description: "You need to create a client website blueprint before building a layout.",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
                   navigate("/preview", {
                     state: {
                       blueprint,
@@ -441,63 +597,33 @@ const Index = () => {
             <BlueprintDisplay blueprint={blueprint} businessName={blueprintBusinessName} />
           </>
         )}
-
-        {/* Empty State with Benefits */}
-        {!isLoading && !isGeneratingBlueprint && !results && !blueprint && (
-          <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">What Your Agency Gains</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Generate done-for-you analysis reports your clients will love — covering everything that matters.
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {featureCards.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={index}
-                    className="group relative p-5 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 opacity-0 animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-10 mt-8">
+      <footer className="border-t border-border/50 py-8 mt-8">
         <div className="container">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
-            </p>
-            {!user && (
-              <Link to="/auth">
-                <Button variant="outline" size="sm" className="gap-2">
-                  <LogIn className="w-4 h-4" />
-                  Login to Save Reports
-                </Button>
-              </Link>
-            )}
-          </div>
+          <p className="text-sm text-muted-foreground text-center">
+            <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
+          </p>
         </div>
       </footer>
     </div>
   );
+};
+
+const Index = () => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-[3px] border-secondary border-t-primary" />
+      </div>
+    );
+  }
+
+  // Show marketing page for logged-out users, app dashboard for logged-in users
+  return user ? <AppDashboard /> : <MarketingLanding />;
 };
 
 export default Index;

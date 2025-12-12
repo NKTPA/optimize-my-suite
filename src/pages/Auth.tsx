@@ -34,7 +34,11 @@ const Auth = () => {
   const { user, signIn, signUp, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  // Check URL for tab parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const initialTab = urlParams.get("tab") === "signup" ? "signup" : "login";
+  
+  const [activeTab, setActiveTab] = useState<"login" | "signup">(initialTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
