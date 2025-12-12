@@ -27,11 +27,11 @@ export interface PlanDefinition {
   priceId: string; // Stripe price ID
 }
 
-// These should be updated with actual Stripe price IDs
+// Stripe price IDs for OptimizeSuite plans
 export const STRIPE_PRICE_IDS = {
-  starter: "price_starter", // Replace with actual Stripe price ID
-  pro: "price_pro", // Replace with actual Stripe price ID
-  scale: "price_scale", // Replace with actual Stripe price ID
+  starter: "price_1Sdg76JDZeHuCLwazGgchPkh",
+  pro: "price_1Sdg7gJDZeHuCLwardbQggEZ",
+  scale: "price_1Sdg80JDZeHuCLwaVVp0uBbh",
 };
 
 export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
