@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const urlInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
@@ -140,6 +141,31 @@ const Index = () => {
       setIsGeneratingBlueprint(false);
     }
   };
+
+  // Reset handler to start a new analysis
+  const handleReset = () => {
+    setUrl("");
+    setAnalyzedUrl("");
+    setResults(null);
+    setBlueprint(null);
+    setBlueprintBusinessName("");
+    setBlueprintPhone("");
+    setBlueprintEmail("");
+    setBlueprintIndustry("");
+    setBlueprintError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      urlInputRef.current?.focus();
+    }, 100);
+  };
+
+  // Auto-focus URL input on mount if no analysis exists
+  useEffect(() => {
+    if (!results && !blueprint) {
+      urlInputRef.current?.focus();
+    }
+  }, []);
+
   return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
@@ -185,7 +211,7 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative flex-1">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input id="website-url" type="text" placeholder="yourcompany.com" value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && !isLoading && handleAnalyze()} className="pl-10 h-12 text-base" disabled={isLoading || isGeneratingBlueprint} />
+                  <Input ref={urlInputRef} id="website-url" type="text" placeholder="yourcompany.com" value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === "Enter" && !isLoading && handleAnalyze()} className="pl-10 h-12 text-base" disabled={isLoading || isGeneratingBlueprint} />
                 </div>
                 <Button variant="hero" size="lg" onClick={handleAnalyze} disabled={isLoading || isGeneratingBlueprint} className="w-full sm:w-auto">
                   {isLoading ? "Analyzing..." : "Analyze Website"}
@@ -221,7 +247,7 @@ const Index = () => {
             <p className="text-sm text-muted-foreground mt-2">This may take 30-60 seconds</p>
           </div>}
         
-        {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} />}
+        {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} onReset={handleReset} />}
         
         {blueprint && !isGeneratingBlueprint && (
           <>
