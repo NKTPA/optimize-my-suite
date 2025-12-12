@@ -9,13 +9,17 @@ import {
   CreditCard,
   LayoutDashboard,
   FileText,
-  Sparkles
+  Sparkles,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { TrialBanner } from "@/components/entitlements/TrialBanner";
+import { UsageIndicator } from "@/components/entitlements/UsageIndicator";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -24,6 +28,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { profile, signOut } = useAuth();
   const { plan, isTrial, subscribed } = useSubscription();
+  const { workspace, usage, isTrialExpired } = useWorkspace();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -42,6 +47,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { href: "/dashboard/analyze", label: "Analyze", icon: Globe },
     { href: "/dashboard/batch", label: "Batch Mode", icon: Layers },
     { href: "/dashboard/history", label: "History", icon: History },
+    { href: "/dashboard/account", label: "Settings", icon: Settings },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -65,6 +71,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Trial Banner */}
+      <TrialBanner />
+
       {/* Top Navigation */}
       <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container">
@@ -105,19 +114,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               })}
             </nav>
 
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <UsageIndicator type="analyses" compact />
               {getPlanBadge()}
               <Link to="/pricing">
                 <Button variant="ghost" size="sm" className="hidden sm:flex gap-2">
                   <CreditCard className="w-4 h-4" />
                   <span className="hidden lg:inline">Plans</span>
-                </Button>
-              </Link>
-              <Link to="/dashboard/account">
-                <Button variant="ghost" size="sm" className="gap-2">
-                  <User className="w-4 h-4" />
-                  <span className="hidden lg:inline">Account</span>
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
