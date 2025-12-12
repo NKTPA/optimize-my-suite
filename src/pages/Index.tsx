@@ -103,6 +103,11 @@ const MarketingLanding = () => {
               Optimize My <span className="text-gradient">Biz</span>
             </Link>
             <div className="flex items-center gap-2">
+              <Link to="/pricing">
+                <Button variant="ghost" size="sm">
+                  Pricing
+                </Button>
+              </Link>
               <Link to="/auth">
                 <Button variant="ghost" size="sm">
                   Login
@@ -251,6 +256,9 @@ const MarketingLanding = () => {
               <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
             </p>
             <div className="flex items-center gap-4">
+              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
+              </Link>
               <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Login
               </Link>
@@ -469,15 +477,26 @@ const AppDashboard = () => {
             
             <div className="flex items-center gap-2">
               <Link to="/history">
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2">
                   <Clock className="w-4 h-4" />
-                  <span className="hidden sm:inline">Client History</span>
+                  <span className="hidden sm:inline">History</span>
                 </Button>
               </Link>
               <Link to="/batch">
-                <Button variant="outline" size="sm" className="gap-2">
+                <Button variant="ghost" size="sm" className="gap-2">
                   <Layers className="w-4 h-4" />
-                  <span className="hidden sm:inline">Batch Mode</span>
+                  <span className="hidden sm:inline">Batch</span>
+                </Button>
+              </Link>
+              <Link to="/pricing">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <span className="hidden sm:inline">Pricing</span>
+                </Button>
+              </Link>
+              <Link to="/account">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">Account</span>
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">

@@ -9,6 +9,8 @@ import Auth from "./pages/Auth";
 import BatchMode from "./pages/BatchMode";
 import GeneratedSitePreview from "./pages/GeneratedSitePreview";
 import History from "./pages/History";
+import Pricing from "./pages/Pricing";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/batch" element={<BatchMode />} />
             <Route path="/preview" element={<GeneratedSitePreview />} />
             <Route path="/history" element={<History />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/account" element={<Account />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
