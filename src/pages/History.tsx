@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, ArrowLeft, History as HistoryIcon } from "lucide-react";
+import { Search, ArrowLeft, History as HistoryIcon, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useHistory } from "@/hooks/use-history";
+import { useAuth } from "@/hooks/use-auth";
 import { HistoryCard } from "@/components/history/HistoryCard";
 import { HistoryEmptyState } from "@/components/history/HistoryEmptyState";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
@@ -23,12 +24,20 @@ import {
 const History = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { history, deleteItem, filterHistory } = useHistory();
+  const { user, isLoading: authLoading } = useAuth();
+  const { history, isLoading: historyLoading, deleteItem, filterHistory } = useHistory();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<HistoryItemType | "all">("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   // Calculate counts for filters
   const counts = useMemo(() => {
@@ -59,17 +68,25 @@ const History = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (itemToDelete) {
-      deleteItem(itemToDelete);
+      await deleteItem(itemToDelete);
       toast({
         title: "Item deleted",
-        description: "The history item has been removed.",
+        description: "The client report has been removed from history.",
       });
     }
     setDeleteDialogOpen(false);
     setItemToDelete(null);
   };
+
+  if (authLoading || historyLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,10 +102,10 @@ const History = () => {
                 <div className="p-2 rounded-xl bg-primary/10">
                   <HistoryIcon className="w-6 h-6 text-primary" />
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">History</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Client History</h1>
               </div>
               <p className="text-muted-foreground">
-                Review all your past Website Analyses & Implementation Packs.
+                Review all your past Client Website Analyses & Implementation Packs.
               </p>
             </div>
 
@@ -97,7 +114,7 @@ const History = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search by URL or content..."
+                placeholder="Search by URL or client name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-11 rounded-xl border-border/60"
@@ -114,7 +131,7 @@ const History = () => {
           <Link to="/">
             <Button variant="secondary" size="default" className="gap-2 font-medium shadow-sm hover:shadow-md transition-all">
               <ArrowLeft className="w-4 h-4" />
-              Back to Analyzer
+              Back to Dashboard
             </Button>
           </Link>
 
@@ -154,9 +171,9 @@ const History = () => {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete history item?</AlertDialogTitle>
+            <AlertDialogTitle>Delete client report?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the saved report from your history.
+              This action cannot be undone. This will permanently delete the saved report from your agency history.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -175,7 +192,7 @@ const History = () => {
       <footer className="border-t border-border/50 py-8 mt-auto">
         <div className="container">
           <p className="text-sm text-muted-foreground text-center">
-            <span className="font-semibold text-foreground">Optimize My Biz</span> — Free website analysis for home services businesses
+            <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
           </p>
         </div>
       </footer>

@@ -2,86 +2,172 @@ import { useState, useEffect, useCallback } from "react";
 import { HistoryItem, HistoryItemType } from "@/types/history";
 import { AnalysisResult } from "@/types/analysis";
 import { ImplementationPlan } from "@/types/implementation";
-
-const STORAGE_KEY = "optimize-my-biz-history";
-const MAX_HISTORY_ITEMS = 100;
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export const useHistory = () => {
+  const { user } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load history from localStorage on mount
+  // Fetch history from Supabase on mount and when user changes
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setHistory(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error("Failed to load history:", error);
+    if (user) {
+      fetchHistory();
+    } else {
+      setHistory([]);
+      setIsLoading(false);
     }
-  }, []);
+  }, [user]);
 
-  // Save history to localStorage whenever it changes
-  const saveHistory = useCallback((items: HistoryItem[]) => {
+  const fetchHistory = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      const { data, error } = await supabase
+        .from("analysis_history")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Failed to fetch history:", error);
+        return;
+      }
+
+      const items: HistoryItem[] = (data || []).map((row) => ({
+        id: row.id,
+        url: row.url,
+        type: row.type as HistoryItemType,
+        createdAt: row.created_at,
+        overallScore: row.overall_score ?? undefined,
+        snippet: row.snippet || "",
+        analysisResult: row.analysis_result as unknown as AnalysisResult | undefined,
+        implementationPlan: row.implementation_plan as unknown as ImplementationPlan | undefined,
+      }));
+
       setHistory(items);
     } catch (error) {
-      console.error("Failed to save history:", error);
+      console.error("Failed to fetch history:", error);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
   const addAnalysis = useCallback(
-    (url: string, result: AnalysisResult) => {
+    async (url: string, result: AnalysisResult) => {
+      if (!user) return null;
+
       const snippet =
         result.summary?.overview?.slice(0, 150) ||
         "Website analysis completed with actionable recommendations.";
 
-      const newItem: HistoryItem = {
-        id: `analysis-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        url,
-        type: "analysis",
-        createdAt: new Date().toISOString(),
-        overallScore: result.summary?.overallScore,
-        snippet: snippet + (snippet.length >= 150 ? "..." : ""),
-        analysisResult: result,
-      };
+      try {
+        const { data, error } = await supabase
+          .from("analysis_history")
+          .insert([{
+            user_id: user.id,
+            url,
+            type: "analysis" as const,
+            overall_score: result.summary?.overallScore ?? null,
+            snippet: snippet + (snippet.length >= 150 ? "..." : ""),
+            analysis_result: JSON.parse(JSON.stringify(result)),
+          }])
+          .select()
+          .single();
 
-      const updatedHistory = [newItem, ...history].slice(0, MAX_HISTORY_ITEMS);
-      saveHistory(updatedHistory);
-      return newItem.id;
+        if (error) {
+          console.error("Failed to save analysis:", error);
+          return null;
+        }
+
+        // Add to local state
+        const newItem: HistoryItem = {
+          id: data.id,
+          url,
+          type: "analysis",
+          createdAt: data.created_at,
+          overallScore: result.summary?.overallScore,
+          snippet: snippet + (snippet.length >= 150 ? "..." : ""),
+          analysisResult: result,
+        };
+
+        setHistory((prev) => [newItem, ...prev]);
+        return data.id;
+      } catch (error) {
+        console.error("Failed to save analysis:", error);
+        return null;
+      }
     },
-    [history, saveHistory]
+    [user]
   );
 
   const addImplementation = useCallback(
-    (url: string, plan: ImplementationPlan) => {
+    async (url: string, plan: ImplementationPlan) => {
+      if (!user) return null;
+
       const snippet =
         plan.heroSection?.headline ||
         "Implementation plan generated with detailed execution steps.";
 
-      const newItem: HistoryItem = {
-        id: `impl-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        url,
-        type: "implementation",
-        createdAt: new Date().toISOString(),
-        snippet: snippet.slice(0, 150) + (snippet.length >= 150 ? "..." : ""),
-        implementationPlan: plan,
-      };
+      try {
+        const { data, error } = await supabase
+          .from("analysis_history")
+          .insert([{
+            user_id: user.id,
+            url,
+            type: "implementation" as const,
+            snippet: snippet.slice(0, 150) + (snippet.length >= 150 ? "..." : ""),
+            implementation_plan: JSON.parse(JSON.stringify(plan)),
+          }])
+          .select()
+          .single();
 
-      const updatedHistory = [newItem, ...history].slice(0, MAX_HISTORY_ITEMS);
-      saveHistory(updatedHistory);
-      return newItem.id;
+        if (error) {
+          console.error("Failed to save implementation:", error);
+          return null;
+        }
+
+        const newItem: HistoryItem = {
+          id: data.id,
+          url,
+          type: "implementation",
+          createdAt: data.created_at,
+          snippet: snippet.slice(0, 150) + (snippet.length >= 150 ? "..." : ""),
+          implementationPlan: plan,
+        };
+
+        setHistory((prev) => [newItem, ...prev]);
+        return data.id;
+      } catch (error) {
+        console.error("Failed to save implementation:", error);
+        return null;
+      }
     },
-    [history, saveHistory]
+    [user]
   );
 
   const deleteItem = useCallback(
-    (id: string) => {
-      const updatedHistory = history.filter((item) => item.id !== id);
-      saveHistory(updatedHistory);
+    async (id: string) => {
+      if (!user) return;
+
+      try {
+        const { error } = await supabase
+          .from("analysis_history")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          console.error("Failed to delete item:", error);
+          return;
+        }
+
+        setHistory((prev) => prev.filter((item) => item.id !== id));
+      } catch (error) {
+        console.error("Failed to delete item:", error);
+      }
     },
-    [history, saveHistory]
+    [user]
   );
 
   const getItem = useCallback(
@@ -91,9 +177,25 @@ export const useHistory = () => {
     [history]
   );
 
-  const clearHistory = useCallback(() => {
-    saveHistory([]);
-  }, [saveHistory]);
+  const clearHistory = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from("analysis_history")
+        .delete()
+        .eq("user_id", user.id);
+
+      if (error) {
+        console.error("Failed to clear history:", error);
+        return;
+      }
+
+      setHistory([]);
+    } catch (error) {
+      console.error("Failed to clear history:", error);
+    }
+  }, [user]);
 
   const filterHistory = useCallback(
     (type?: HistoryItemType, searchQuery?: string) => {
@@ -119,11 +221,13 @@ export const useHistory = () => {
 
   return {
     history,
+    isLoading,
     addAnalysis,
     addImplementation,
     deleteItem,
     getItem,
     clearHistory,
     filterHistory,
+    refetch: fetchHistory,
   };
 };

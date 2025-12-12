@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate, Sparkles, CheckCircle2, Shield, Smartphone, Palette, Search, MousePointerClick, Gauge, MessageSquare, Wrench, Clock } from "lucide-react";
+import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate, Sparkles, CheckCircle2, Shield, Smartphone, Palette, Search, MousePointerClick, Gauge, MessageSquare, Wrench, Clock, LogIn, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,52 +13,53 @@ import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
 import { HistoryItem } from "@/types/history";
 import { useToast } from "@/hooks/use-toast";
 import { useHistory } from "@/hooks/use-history";
+import { useAuth } from "@/hooks/use-auth";
 
 const featureCards = [
   {
     icon: MessageSquare,
     title: "Messaging & Clarity",
-    description: "Is it clear what you do and where you operate?",
+    description: "Is it clear what your client does and where they operate?",
   },
   {
     icon: MousePointerClick,
     title: "Lead Capture",
-    description: "Are you making it easy for visitors to contact you?",
+    description: "Are visitors easily able to contact your client's business?",
   },
   {
     icon: Palette,
     title: "Design & UX",
-    description: "Does your site look professional and trustworthy?",
+    description: "Does the site look professional and build trust?",
   },
   {
     icon: Smartphone,
     title: "Mobile Experience",
-    description: "Does your site work well on phones and tablets?",
+    description: "Does the site work flawlessly on phones and tablets?",
   },
   {
     icon: Gauge,
     title: "Page Speed",
-    description: "Are slow images or scripts hurting your rankings?",
+    description: "Are slow assets hurting search rankings and conversions?",
   },
   {
     icon: Search,
     title: "SEO & Local SEO",
-    description: "Can Google find you when customers search locally?",
+    description: "Can Google find your client when customers search locally?",
   },
   {
     icon: Shield,
     title: "Trust Signals",
-    description: "Do you showcase reviews, certifications, and guarantees?",
+    description: "Are reviews, certifications, and guarantees showcased?",
   },
   {
     icon: Wrench,
     title: "Technical Basics",
-    description: "SSL, favicon, and other essential technical elements.",
+    description: "SSL, favicon, and essential technical elements.",
   },
   {
     icon: Sparkles,
-    title: "AI-Powered Tips",
-    description: "Specific copy and layout recommendations you can use today.",
+    title: "AI-Powered Insights",
+    description: "Done-for-you copy and layout recommendations ready to implement.",
   },
 ];
 
@@ -66,6 +67,7 @@ const Index = () => {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, profile, signOut, isLoading: authLoading } = useAuth();
   const { addAnalysis } = useHistory();
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
@@ -113,7 +115,7 @@ const Index = () => {
     if (!url.trim()) {
       toast({
         title: "Please enter a URL",
-        description: "Enter the website URL you want to analyze.",
+        description: "Enter the client website URL you want to analyze.",
         variant: "destructive",
       });
       return;
@@ -121,7 +123,7 @@ const Index = () => {
     if (!isValidUrl(url)) {
       toast({
         title: "Invalid URL",
-        description: "Please enter a valid website URL (e.g., example.com).",
+        description: "Please enter a valid website URL (e.g., clientsite.com).",
         variant: "destructive",
       });
       return;
@@ -152,11 +154,13 @@ const Index = () => {
       const data = await response.json();
       setResults(data);
       setAnalyzedUrl(formattedUrl);
-      // Save to history
-      addAnalysis(formattedUrl, data);
+      // Save to history if logged in
+      if (user) {
+        addAnalysis(formattedUrl, data);
+      }
       toast({
         title: "Analysis Complete",
-        description: "Your website analysis is ready. Scroll down to see the results.",
+        description: "Client website analysis is ready. Scroll down to see the results.",
       });
     } catch (error) {
       console.error("Analysis error:", error);
@@ -196,7 +200,7 @@ const Index = () => {
       setBlueprintIndustry(formData.industry || "");
       toast({
         title: "Blueprint Generated",
-        description: "Your website blueprint is ready. Scroll down to see it.",
+        description: "Client website blueprint is ready. Scroll down to see it.",
       });
     } catch (error) {
       console.error("Blueprint generation error:", error);
@@ -228,6 +232,14 @@ const Index = () => {
     }, 100);
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Signed out",
+      description: "You've been signed out of your account.",
+    });
+  };
+
   // Auto-focus URL input on mount if no analysis exists
   useEffect(() => {
     if (!results && !blueprint) {
@@ -246,19 +258,55 @@ const Index = () => {
 
         {/* Navigation */}
         <nav className="container relative pt-6">
-          <div className="flex justify-end gap-2">
-            <Link to="/history">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Clock className="w-4 h-4" />
-                History
-              </Button>
-            </Link>
-            <Link to="/batch">
-              <Button variant="outline" size="sm" className="gap-2">
-                <Layers className="w-4 h-4" />
-                Batch Mode
-              </Button>
-            </Link>
+          <div className="flex items-center justify-between">
+            {/* User info */}
+            <div className="flex items-center gap-3">
+              {user && profile && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span className="hidden sm:inline">{profile.agency_name || profile.first_name}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Nav buttons */}
+            <div className="flex items-center gap-2">
+              {user ? (
+                <>
+                  <Link to="/history">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span className="hidden sm:inline">Client History</span>
+                    </Button>
+                  </Link>
+                  <Link to="/batch">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Layers className="w-4 h-4" />
+                      <span className="hidden sm:inline">Batch Mode</span>
+                    </Button>
+                  </Link>
+                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
+                    <LogOut className="w-4 h-4" />
+                    <span className="hidden sm:inline">Logout</span>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/batch">
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Layers className="w-4 h-4" />
+                      <span className="hidden sm:inline">Batch Mode</span>
+                    </Button>
+                  </Link>
+                  <Link to="/auth">
+                    <Button variant="default" size="sm" className="gap-2">
+                      <LogIn className="w-4 h-4" />
+                      <span className="hidden sm:inline">Login</span>
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         </nav>
 
@@ -270,9 +318,13 @@ const Index = () => {
               </h1>
             </Link>
 
-            <p className="text-lg lg:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-              Get a detailed analysis of your home services website with actionable recommendations to{" "}
-              <strong className="text-foreground font-semibold">increase leads and book more jobs</strong>.
+            <p className="text-lg lg:text-xl text-muted-foreground mb-4 max-w-2xl mx-auto leading-relaxed">
+              Website Audits & Optimization Packs for Marketing Agencies
+            </p>
+            
+            <p className="text-base text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+              Analyze client websites instantly with AI-powered insights built for digital agencies.{" "}
+              <strong className="text-foreground font-semibold">Win more retainers. Deliver higher-impact results. Scale your client services.</strong>
             </p>
 
             {/* Blueprint Error Banner */}
@@ -290,7 +342,7 @@ const Index = () => {
               
               <div className="relative bg-card rounded-2xl border border-border/50 p-6 sm:p-8 shadow-xl max-w-xl mx-auto backdrop-blur-sm">
                 <label htmlFor="website-url" className="block text-sm font-semibold text-foreground mb-4 text-left">
-                  Website URL
+                  Client Website URL
                 </label>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="relative flex-1">
@@ -299,7 +351,7 @@ const Index = () => {
                       ref={urlInputRef}
                       id="website-url"
                       type="text"
-                      placeholder="yourcompany.com"
+                      placeholder="clientwebsite.com"
                       value={url}
                       onChange={(e) => setUrl(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && !isLoading && handleAnalyze()}
@@ -312,14 +364,14 @@ const Index = () => {
                     size="lg"
                     onClick={handleAnalyze}
                     disabled={isLoading || isGeneratingBlueprint}
-                    className="w-full sm:w-auto min-w-[160px]"
+                    className="w-full sm:w-auto min-w-[180px]"
                   >
-                    {isLoading ? "Analyzing..." : "Analyze Website"}
+                    {isLoading ? "Analyzing..." : "Run Client Analysis"}
                     <ArrowRight className="w-5 h-5" />
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-4 text-left leading-relaxed">
-                  Ideal for HVAC, plumbing, electrical, roofing, dental, med spas, and similar service businesses.
+                  Built for agencies serving HVAC, plumbing, electrical, dental, med spas, and other local-service industries.
                 </p>
 
                 {/* Divider */}
@@ -347,7 +399,7 @@ const Index = () => {
               <div className="animate-spin rounded-full h-14 w-14 border-[3px] border-secondary border-t-primary" />
               <div className="absolute inset-0 rounded-full animate-ping opacity-20 bg-primary" />
             </div>
-            <p className="text-lg font-medium text-foreground mt-6">Generating your website blueprint...</p>
+            <p className="text-lg font-medium text-foreground mt-6">Generating client website blueprint...</p>
             <p className="text-sm text-muted-foreground mt-2">This may take 30-60 seconds</p>
           </div>
         )}
@@ -366,7 +418,7 @@ const Index = () => {
                   if (!blueprint) {
                     toast({
                       title: "Generate a blueprint first",
-                      description: "You need to create a website blueprint before building a layout.",
+                      description: "You need to create a client website blueprint before building a layout.",
                       variant: "destructive",
                     });
                     return;
@@ -394,9 +446,9 @@ const Index = () => {
         {!isLoading && !isGeneratingBlueprint && !results && !blueprint && (
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">What You'll Get</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">What Your Agency Gains</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                A comprehensive analysis covering everything that matters for your business website.
+                Generate done-for-you analysis reports your clients will love — covering everything that matters.
               </p>
             </div>
 
@@ -431,16 +483,21 @@ const Index = () => {
         <div className="container">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">Optimize My Biz</span> — Free website analysis for home services businesses
+              <span className="font-semibold text-foreground">Optimize My Biz</span> — Website audits & optimization for marketing agencies
             </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <CheckCircle2 className="w-4 h-4 text-success" />
-              <span>No signup required</span>
-            </div>
+            {!user && (
+              <Link to="/auth">
+                <Button variant="outline" size="sm" className="gap-2">
+                  <LogIn className="w-4 h-4" />
+                  Login to Save Reports
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </footer>
     </div>
   );
 };
+
 export default Index;
