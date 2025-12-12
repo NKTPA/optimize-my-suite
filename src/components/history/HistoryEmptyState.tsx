@@ -9,14 +9,14 @@ export const HistoryEmptyState = () => {
         <FileText className="w-8 h-8 text-muted-foreground" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">
-        No saved history yet
+        No client reports yet
       </h3>
       <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-        Your Website Analyses and Implementation Packs will appear here once you run your first analysis.
+        Your Client Website Analyses and Implementation Packs will appear here once you run your first audit.
       </p>
       <Link to="/">
         <Button variant="hero" size="lg" className="gap-2">
-          Run First Website Analysis
+          Run First Client Analysis
           <ArrowRight className="w-4 h-4" />
         </Button>
       </Link>

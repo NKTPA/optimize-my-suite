@@ -58,20 +58,20 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <Building2 className="w-4 h-4" />
-          No Website Yet? Create Blueprint
+          No Client Website? Create Blueprint
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Your Website Blueprint</DialogTitle>
+          <DialogTitle>Create Client Website Blueprint</DialogTitle>
           <DialogDescription>
-            Fill in your business details and we'll generate a complete website blueprint with copy, SEO, and structure.
+            Fill in your client's business details and we'll generate a complete website blueprint with copy, SEO, and structure.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name *</Label>
+              <Label htmlFor="businessName">Client Business Name *</Label>
               <Input
                 id="businessName"
                 value={formData.businessName}
@@ -106,7 +106,7 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="location">Location (City, State) *</Label>
+            <Label htmlFor="location">Client Location (City, State) *</Label>
             <Input
               id="location"
               value={formData.location}
@@ -179,7 +179,7 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="mainPhone">Phone Number</Label>
+              <Label htmlFor="mainPhone">Client Phone Number</Label>
               <Input
                 id="mainPhone"
                 value={formData.mainPhone}
@@ -188,7 +188,7 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactEmail">Email</Label>
+              <Label htmlFor="contactEmail">Client Email</Label>
               <Input
                 id="contactEmail"
                 type="email"
@@ -213,10 +213,10 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
             {isLoading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating your website blueprint...
+                Generating client blueprint...
               </>
             ) : (
-              "Build My Site Blueprint"
+              "Generate Client Blueprint"
             )}
           </Button>
         </form>

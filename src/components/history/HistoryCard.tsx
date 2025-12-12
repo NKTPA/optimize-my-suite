@@ -40,7 +40,7 @@ export const HistoryCard = ({ item, onView, onDelete }: HistoryCardProps) => {
             {item.type === "analysis" ? (
               <>
                 <FileText className="w-3 h-3 mr-1" />
-                Analysis Report
+                Client Analysis
               </>
             ) : (
               <>
