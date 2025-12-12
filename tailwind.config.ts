@@ -7,14 +7,27 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1.5rem",
       screens: {
         "2xl": "1400px",
       },
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1.5' }],
+        'sm': ['0.875rem', { lineHeight: '1.6' }],
+        'base': ['1rem', { lineHeight: '1.7' }],
+        'lg': ['1.125rem', { lineHeight: '1.6' }],
+        'xl': ['1.25rem', { lineHeight: '1.5' }],
+        '2xl': ['1.5rem', { lineHeight: '1.4' }],
+        '3xl': ['1.875rem', { lineHeight: '1.3' }],
+        '4xl': ['2.25rem', { lineHeight: '1.2' }],
+        '5xl': ['3rem', { lineHeight: '1.1' }],
+        '6xl': ['3.75rem', { lineHeight: '1.05' }],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -83,6 +96,12 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "calc(var(--radius) + 4px)",
+        "2xl": "calc(var(--radius) + 8px)",
+      },
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
       },
       keyframes: {
         "accordion-down": {
@@ -94,16 +113,20 @@ export default {
           to: { height: "0" },
         },
         "fade-in": {
-          from: { opacity: "0", transform: "translateY(10px)" },
+          from: { opacity: "0", transform: "translateY(12px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
-          from: { opacity: "0", transform: "scale(0.95)" },
+          from: { opacity: "0", transform: "scale(0.96)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
         "slide-in-right": {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
+        },
+        "slide-up": {
+          from: { opacity: "0", transform: "translateY(24px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
         },
       },
       animation: {
@@ -112,6 +135,11 @@ export default {
         "fade-in": "fade-in 0.5s ease-out forwards",
         "scale-in": "scale-in 0.3s ease-out forwards",
         "slide-in-right": "slide-in-right 0.4s ease-out forwards",
+        "slide-up": "slide-up 0.5s ease-out forwards",
+      },
+      boxShadow: {
+        'glow': '0 0 24px -4px hsl(221 83% 53% / 0.25)',
+        'glow-lg': '0 0 40px -8px hsl(221 83% 53% / 0.3)',
       },
     },
   },

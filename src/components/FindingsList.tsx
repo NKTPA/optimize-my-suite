@@ -27,13 +27,12 @@ export function FindingsList({ findings, className }: FindingsListProps) {
   };
 
   const bgColors = {
-    success: "bg-success/10",
-    warning: "bg-warning/10",
-    error: "bg-destructive/10",
-    info: "bg-info/10",
+    success: "bg-success/10 border-success/20",
+    warning: "bg-warning/10 border-warning/20",
+    error: "bg-destructive/10 border-destructive/20",
+    info: "bg-info/10 border-info/20",
   };
 
-  // Normalize findings to always have type and text
   const normalizedFindings = findings.map((finding): Finding => {
     if (typeof finding === "string") {
       return { type: "info", text: finding };
@@ -42,15 +41,15 @@ export function FindingsList({ findings, className }: FindingsListProps) {
   });
 
   return (
-    <ul className={cn("space-y-2", className)}>
+    <ul className={cn("space-y-2.5", className)}>
       {normalizedFindings.map((finding, index) => {
         const Icon = icons[finding.type] || Info;
         return (
           <li
             key={index}
             className={cn(
-              "flex items-start gap-3 p-3 rounded-lg",
-              bgColors[finding.type] || "bg-info/10"
+              "flex items-start gap-3 p-3.5 rounded-xl border",
+              bgColors[finding.type] || "bg-info/10 border-info/20"
             )}
           >
             <Icon className={cn("w-5 h-5 mt-0.5 flex-shrink-0", colors[finding.type] || "text-info")} />

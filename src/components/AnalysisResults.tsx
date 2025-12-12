@@ -97,7 +97,7 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
   };
 
   return (
-    <div className="space-y-6 opacity-0 animate-fade-in">
+    <div className="space-y-8 opacity-0 animate-fade-in">
       {/* Action Buttons */}
       <div className="flex flex-wrap justify-end gap-3">
         {onReset && (
@@ -119,7 +119,7 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
           {isGenerating ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Generating implementation plan...
+              Generating...
             </>
           ) : (
             <>
@@ -136,7 +136,7 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
 
       {/* Error Message */}
       {implementationError && (
-        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-destructive text-sm">
+        <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-4 text-destructive text-sm">
           <strong>Error:</strong> {implementationError}
         </div>
       )}
