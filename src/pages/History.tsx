@@ -112,7 +112,7 @@ const History = () => {
         {/* Back Button & Filters */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <Link to="/">
-            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+            <Button variant="secondary" size="default" className="gap-2 font-medium shadow-sm hover:shadow-md transition-all">
               <ArrowLeft className="w-4 h-4" />
               Back to Analyzer
             </Button>
