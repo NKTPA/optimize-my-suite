@@ -219,7 +219,7 @@ const Index = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-3 text-left">
-                Works best for HVAC, Plumbing, Electrical, Roofing, Dental, Med Spas websites & more.
+                Ideal for HVAC, plumbing, electrical, roofing, dental, med spas, and similar service businesses.
               </p>
               
               {/* Divider */}
