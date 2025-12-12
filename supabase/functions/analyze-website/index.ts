@@ -323,12 +323,43 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
     let analysisResult;
     try {
       // Remove markdown code blocks if present
-      const jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      let jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Try to extract JSON from potential wrapping text
+      const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[0];
+      }
+      
+      // Fix common JSON issues
+      jsonContent = jsonContent
+        .replace(/,\s*}/g, '}')  // Remove trailing commas before }
+        .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
+        .replace(/[\x00-\x1F\x7F]/g, ' '); // Remove control characters
+      
       analysisResult = JSON.parse(jsonContent);
     } catch (parseError) {
       console.error("JSON parse error:", parseError);
-      console.error("Raw content:", content.slice(0, 500));
-      throw new Error("Failed to parse analysis results");
+      console.error("Raw content:", content.slice(0, 1000));
+      
+      // Return a minimal valid result instead of failing completely
+      analysisResult = {
+        summary: {
+          overallScore: 50,
+          overview: "Analysis partially completed. Some data could not be parsed.",
+          quickWins: ["Review website manually for specific recommendations"]
+        },
+        messaging: { score: 50, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
+        conversion: { score: 50, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
+        designUx: { score: 50, findings: ["Could not fully analyze"], recommendations: [] },
+        mobile: { score: 50, findings: ["Could not fully analyze"], recommendations: [] },
+        performance: { score: 50, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
+        seo: { score: 50, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
+        trust: { score: 50, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
+        technical: { findings: ["Could not fully analyze"], recommendations: [] },
+        aiServicePitch: { paragraph: "", bullets: [] },
+        parseWarning: "Some analysis data could not be parsed correctly"
+      };
     }
 
     console.log("Analysis complete for:", url);
