@@ -160,9 +160,11 @@ const Index = () => {
         
         <div className="container relative py-12 lg:py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4 tracking-tight">
-              Optimize My <span className="text-gradient">Biz</span>
-            </h1>
+            <Link to="/" className="hover:opacity-80 transition-opacity">
+              <h1 className="text-4xl lg:text-5xl font-bold text-foreground mb-4 tracking-tight">
+                Optimize My <span className="text-gradient">Biz</span>
+              </h1>
+            </Link>
             
             <p className="text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
               Get a detailed analysis of your home services website with actionable recommendations to 
