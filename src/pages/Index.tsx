@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate, Sparkles, CheckCircle2, Shield, Smartphone, Palette, Search, MousePointerClick, Gauge, MessageSquare, Wrench } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Globe, ArrowRight, Zap, Target, TrendingUp, Layers, AlertCircle, LayoutTemplate, Sparkles, CheckCircle2, Shield, Smartphone, Palette, Search, MousePointerClick, Gauge, MessageSquare, Wrench, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,7 +10,9 @@ import { BlueprintForm } from "@/components/BlueprintForm";
 import { BlueprintDisplay } from "@/components/BlueprintDisplay";
 import { AnalysisResult } from "@/types/analysis";
 import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
+import { HistoryItem } from "@/types/history";
 import { useToast } from "@/hooks/use-toast";
+import { useHistory } from "@/hooks/use-history";
 
 const featureCards = [
   {
@@ -63,6 +65,8 @@ const featureCards = [
 const Index = () => {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { addAnalysis } = useHistory();
   const [url, setUrl] = useState("");
   const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -77,6 +81,20 @@ const Index = () => {
   const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
   const [blueprintError, setBlueprintError] = useState("");
   const { toast } = useToast();
+
+  // Load from history if navigating from History page
+  useEffect(() => {
+    const state = location.state as { historyItem?: HistoryItem } | null;
+    if (state?.historyItem) {
+      const item = state.historyItem;
+      setAnalyzedUrl(item.url);
+      if (item.type === "analysis" && item.analysisResult) {
+        setResults(item.analysisResult);
+      }
+      // Clear the state to prevent re-loading on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const isValidUrl = (string: string) => {
     try {
@@ -134,6 +152,8 @@ const Index = () => {
       const data = await response.json();
       setResults(data);
       setAnalyzedUrl(formattedUrl);
+      // Save to history
+      addAnalysis(formattedUrl, data);
       toast({
         title: "Analysis Complete",
         description: "Your website analysis is ready. Scroll down to see the results.",
@@ -226,7 +246,13 @@ const Index = () => {
 
         {/* Navigation */}
         <nav className="container relative pt-6">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Link to="/history">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Clock className="w-4 h-4" />
+                History
+              </Button>
+            </Link>
             <Link to="/batch">
               <Button variant="outline" size="sm" className="gap-2">
                 <Layers className="w-4 h-4" />
