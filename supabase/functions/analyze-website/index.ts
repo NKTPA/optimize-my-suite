@@ -235,26 +235,57 @@ serve(async (req) => {
 
     console.log("Analyzing URL:", url);
 
-    // Fetch the website HTML
+    // Fetch the website HTML with multiple user agents if needed
     let html: string;
-    try {
-      const response = await fetch(url, {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        },
-      });
+    const userAgents = [
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    ];
+    
+    let lastError: Error | null = null;
+    
+    for (const userAgent of userAgents) {
+      try {
+        const response = await fetch(url, {
+          headers: {
+            "User-Agent": userAgent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1",
+          },
+          redirect: "follow",
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch website: ${response.status}`);
+        if (response.ok) {
+          html = await response.text();
+          console.log("Fetched HTML length:", html.length, "with UA:", userAgent.slice(0, 30));
+          break;
+        } else if (response.status === 403 || response.status === 503) {
+          console.log(`Got ${response.status} with UA: ${userAgent.slice(0, 30)}, trying next...`);
+          lastError = new Error(`Website returned ${response.status}`);
+          continue;
+        } else {
+          throw new Error(`Failed to fetch website: ${response.status}`);
+        }
+      } catch (fetchError) {
+        console.log(`Fetch failed with UA: ${userAgent.slice(0, 30)}:`, fetchError);
+        lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+        continue;
       }
-
-      html = await response.text();
-      console.log("Fetched HTML length:", html.length);
-    } catch (fetchError) {
-      console.error("Fetch error:", fetchError);
+    }
+    
+    if (!html!) {
+      console.error("All fetch attempts failed:", lastError);
       return new Response(
-        JSON.stringify({ error: "Could not access this website. Please check the URL and try again." }),
+        JSON.stringify({ error: "Could not access this website. The site may have bot protection enabled. Please check the URL and try again." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
