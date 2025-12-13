@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
+import { getOrCreateWorkspaceForUser, isWorkspaceError } from "../_shared/workspace.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -242,20 +242,18 @@ serve(async (req) => {
     // Create service role client for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's workspace
-    const { data: workspace, error: workspaceError } = await supabaseAdmin
-      .from("workspaces")
-      .select("id, plan, subscription_status, trial_ends_at")
-      .eq("owner_id", user.id)
-      .single();
-
-    if (workspaceError || !workspace) {
-      console.error("Workspace not found:", workspaceError?.message);
+    // Get or create workspace using shared helper
+    const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
+    
+    if (isWorkspaceError(workspaceResult)) {
+      console.error("Workspace error:", workspaceResult.error);
       return new Response(
-        JSON.stringify({ error: "Workspace not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: workspaceResult.error }),
+        { status: workspaceResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    const { workspace } = workspaceResult;
 
     // Check subscription status (skip for owner)
     if (!isOwner) {

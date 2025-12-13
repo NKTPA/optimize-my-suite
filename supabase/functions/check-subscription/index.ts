@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@18.5.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
-
+import { getOrCreateWorkspaceForUser, isWorkspaceError } from "../_shared/workspace.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -57,15 +57,24 @@ serve(async (req) => {
       logStep("Owner override detected - granting full access");
     }
 
-    // Get user's workspace
-    const { data: workspace, error: workspaceError } = await supabaseClient
-      .from("workspaces")
-      .select("id, plan, subscription_status, stripe_customer_id, stripe_subscription_id")
-      .eq("owner_id", user.id)
-      .single();
-
-    if (workspaceError) {
-      logStep("Error fetching workspace", { error: workspaceError.message });
+    // Get or create user's workspace using shared helper
+    const workspaceResult = await getOrCreateWorkspaceForUser(supabaseClient, user.id, user.email);
+    
+    let workspace: { id: string; plan: string; subscription_status: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null } | null = null;
+    
+    if (!isWorkspaceError(workspaceResult)) {
+      // Fetch additional workspace fields needed for this function
+      const { data: fullWorkspace, error: wsError } = await supabaseClient
+        .from("workspaces")
+        .select("id, plan, subscription_status, stripe_customer_id, stripe_subscription_id")
+        .eq("id", workspaceResult.workspace.id)
+        .single();
+      
+      if (!wsError && fullWorkspace) {
+        workspace = fullWorkspace;
+      }
+    } else {
+      logStep("Error getting workspace", { error: workspaceResult.error });
     }
 
     // If owner, return full Scale access immediately

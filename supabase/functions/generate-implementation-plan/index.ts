@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getOrCreateWorkspaceForUser, isWorkspaceError, getOrCreateWorkspaceUsage } from "../_shared/workspace.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -160,31 +161,19 @@ serve(async (req) => {
     // Create service role client for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's workspace using helper function (handles owner or member)
-    const { data: workspaceId, error: workspaceIdError } = await supabaseAdmin
-      .rpc("get_user_workspace_id", { _user_id: user.id });
-
-    if (workspaceIdError || !workspaceId) {
-      console.error("Workspace ID not found for user:", user.id, workspaceIdError?.message);
+    // Get or create workspace using shared helper
+    const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
+    
+    if (isWorkspaceError(workspaceResult)) {
+      console.error("Workspace error:", workspaceResult.error);
       return new Response(
-        JSON.stringify({ error: "Workspace not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: workspaceResult.error }),
+        { status: workspaceResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { data: workspace, error: workspaceError } = await supabaseAdmin
-      .from("workspaces")
-      .select("id, plan, subscription_status, trial_ends_at")
-      .eq("id", workspaceId)
-      .single();
-
-    if (workspaceError || !workspace) {
-      console.error("Workspace not found for user:", user.id, workspaceError?.message);
-      return new Response(
-        JSON.stringify({ error: "Workspace not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { workspace } = workspaceResult;
+    console.log("Using workspace:", workspace.id, "plan:", workspace.plan);
 
     // Check subscription status (skip for owner)
     if (!isOwner) {
@@ -202,17 +191,8 @@ serve(async (req) => {
       }
     }
 
-    // Get current usage
-    const { data: usage, error: usageError } = await supabaseAdmin
-      .from("workspace_usage")
-      .select("packs_used")
-      .eq("workspace_id", workspace.id)
-      .single();
-
-    if (usageError) {
-      console.error("Usage fetch error:", usageError.message);
-    }
-
+    // Get or create usage record
+    const usage = await getOrCreateWorkspaceUsage(supabaseAdmin, workspace.id);
     const packsUsed = usage?.packs_used || 0;
     const planLimit = PLAN_LIMITS[workspace.plan] || PLAN_LIMITS.starter;
 
