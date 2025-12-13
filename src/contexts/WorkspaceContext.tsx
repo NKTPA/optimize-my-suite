@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanId, SubscriptionStatus, getPlanLimits, PlanLimits, isWithinLimit, PLAN_DEFINITIONS } from "@/lib/entitlements";
-import { isOwnerEmail } from "@/lib/ownerOverride";
 
 export interface Workspace {
   id: string;
@@ -59,7 +58,7 @@ interface WorkspaceState {
   isTrialExpired: boolean;
   isSubscriptionActive: boolean;
   isLocked: boolean;
-  isOwnerOverride: boolean; // Internal: owner bypasses all limits
+  isOwnerOverride: boolean;
 }
 
 interface WorkspaceContextType extends WorkspaceState {
@@ -79,11 +78,8 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { user, session } = useAuth();
   
-  // ============================================================================
-  // INTERNAL OWNER OVERRIDE
-  // Owner account (configured in src/lib/ownerOverride.ts) bypasses all limits
-  // ============================================================================
-  const isOwner = isOwnerEmail(user?.email);
+  // Owner status is now determined server-side
+  const [isOwner, setIsOwner] = useState(false);
   
   const [state, setState] = useState<WorkspaceState>({
     workspace: null,
@@ -99,23 +95,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     isOwnerOverride: false,
   });
 
-  const computeStatus = useCallback((workspace: Workspace | null): Partial<WorkspaceState> => {
+  const computeStatus = useCallback((workspace: Workspace | null, ownerOverride: boolean): Partial<WorkspaceState> => {
     console.log("[WorkspaceContext] computeStatus called", {
       hasWorkspace: !!workspace,
       workspacePlan: workspace?.plan,
       subscriptionStatus: workspace?.subscription_status,
       trialEndsAt: workspace?.trial_ends_at,
-      isOwner,
+      isOwner: ownerOverride,
     });
 
-    // ============================================================================
-    // INTERNAL OWNER OVERRIDE
-    // If this is the owner account, grant full Scale plan access with no limits
-    // regardless of workspace/Stripe state. This ensures the owner can always
-    // use the app without hitting usage or trial locks.
-    // ============================================================================
-    if (isOwner) {
-      console.log("[WorkspaceContext] Applying owner override (global)");
+    // If this is the owner account (determined server-side), grant full Scale plan access
+    if (ownerOverride) {
+      console.log("[WorkspaceContext] Applying owner override (server-side verified)");
       return {
         limits: PLAN_DEFINITIONS.scale.limits,
         isTrialActive: false,
@@ -152,10 +143,34 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       isLocked,
       isOwnerOverride: false,
     };
-  }, [isOwner]);
+  }, []);
+
+  const checkOwnerStatus = useCallback(async (): Promise<boolean> => {
+    if (!session?.access_token) return false;
+    
+    try {
+      // Check subscription endpoint returns isOwner from server-side
+      const { data, error } = await supabase.functions.invoke("check-subscription", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (error) {
+        console.error("[WorkspaceContext] Error checking owner status:", error);
+        return false;
+      }
+      
+      return data?.isOwner === true;
+    } catch (error) {
+      console.error("[WorkspaceContext] Error in checkOwnerStatus:", error);
+      return false;
+    }
+  }, [session?.access_token]);
 
   const refreshWorkspace = useCallback(async () => {
     if (!user) {
+      setIsOwner(false);
       setState(prev => ({
         ...prev,
         workspace: null,
@@ -164,12 +179,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         members: [],
         isLoading: false,
         isOwnerOverride: false,
-        ...computeStatus(null),
+        ...computeStatus(null, false),
       }));
       return;
     }
 
     try {
+      // Check owner status from server first
+      const ownerStatus = await checkOwnerStatus();
+      setIsOwner(ownerStatus);
+      
       // Fetch workspace (user might be owner or member)
       const { data: workspaces, error: workspaceError } = await supabase
         .from("workspaces")
@@ -188,8 +207,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           branding: null,
           members: [],
           isLoading: false,
-          isOwnerOverride: false,
-          ...computeStatus(null),
+          isOwnerOverride: ownerStatus,
+          ...computeStatus(null, ownerStatus),
         }));
         return;
       }
@@ -208,13 +227,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         branding: brandingResult.data as WorkspaceBranding | null,
         members: (membersResult.data || []) as WorkspaceMember[],
         isLoading: false,
-        ...computeStatus(workspace),
+        ...computeStatus(workspace, ownerStatus),
       }));
     } catch (error) {
       console.error("Error fetching workspace:", error);
       setState(prev => ({ ...prev, isLoading: false }));
     }
-  }, [user, computeStatus]);
+  }, [user, computeStatus, checkOwnerStatus]);
 
   const refreshUsage = useCallback(async () => {
     if (!state.workspace) return;
@@ -238,7 +257,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [state.workspace]);
 
   const incrementUsage = useCallback(async (type: "analysis" | "pack"): Promise<boolean> => {
-    // INTERNAL OWNER OVERRIDE: Skip usage tracking for owner
+    // Owner bypass (server-side verified)
     if (state.isOwnerOverride) return true;
     
     if (!state.workspace || !state.usage) return false;
@@ -272,28 +291,22 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       console.error("Error incrementing usage:", error);
       return false;
     }
-  }, [state.workspace, state.usage, state.limits]);
+  }, [state.workspace, state.usage, state.limits, state.isOwnerOverride]);
 
   const canUseAnalysis = useCallback((): boolean => {
-    // INTERNAL OWNER OVERRIDE: Always allow for owner
     if (state.isOwnerOverride) return true;
-    
     if (state.isLocked || !state.usage) return false;
     return isWithinLimit(state.usage.analyses_used, state.limits.analysesPerMonth);
   }, [state.isLocked, state.usage, state.limits, state.isOwnerOverride]);
 
   const canUsePack = useCallback((): boolean => {
-    // INTERNAL OWNER OVERRIDE: Always allow for owner
     if (state.isOwnerOverride) return true;
-    
     if (state.isLocked || !state.usage) return false;
     return isWithinLimit(state.usage.packs_used, state.limits.implementationsPerMonth);
   }, [state.isLocked, state.usage, state.limits, state.isOwnerOverride]);
 
   const canUseBatchUrls = useCallback((count: number): boolean => {
-    // INTERNAL OWNER OVERRIDE: Always allow for owner
     if (state.isOwnerOverride) return true;
-    
     if (state.isLocked) return false;
     if (state.limits.batchUrlLimit === "unlimited") return true;
     return count <= state.limits.batchUrlLimit;
@@ -305,9 +318,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [canUseAnalysis, canUsePack]);
 
   const getRemainingUsageCount = useCallback((type: "analyses" | "packs"): number => {
-    // INTERNAL OWNER OVERRIDE: Return unlimited for owner
     if (state.isOwnerOverride) return 999999;
-    
     if (!state.usage) return 0;
     const used = type === "analyses" ? state.usage.analyses_used : state.usage.packs_used;
     const limit = type === "analyses" ? state.limits.analysesPerMonth : state.limits.implementationsPerMonth;
@@ -342,6 +353,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (user && session) {
       refreshWorkspace();
     } else {
+      setIsOwner(false);
       setState(prev => ({
         ...prev,
         workspace: null,
@@ -350,24 +362,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         members: [],
         isLoading: false,
         isOwnerOverride: false,
-        ...computeStatus(null),
+        ...computeStatus(null, false),
       }));
     }
   }, [user, session, refreshWorkspace, computeStatus]);
-
-  // ============================================================================
-  // INTERNAL OWNER OVERRIDE: Recalculate status when owner status changes
-  // This ensures the override applies even if workspace was fetched before
-  // the user email was fully available
-  // ============================================================================
-  useEffect(() => {
-    if (isOwner && !state.isOwnerOverride) {
-      setState(prev => ({
-        ...prev,
-        ...computeStatus(prev.workspace),
-      }));
-    }
-  }, [isOwner, state.isOwnerOverride, computeStatus]);
 
   return (
     <WorkspaceContext.Provider

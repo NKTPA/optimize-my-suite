@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Owner email for bypass
-const OWNER_EMAIL = "nidal.khoury@gmail.com";
+// Owner email from secrets (server-side only)
+const getOwnerEmail = () => Deno.env.get("OWNER_EMAIL")?.toLowerCase();
 
 // Plan limits for packs
 const PLAN_LIMITS: Record<string, number> = {
@@ -154,7 +154,8 @@ serve(async (req) => {
     console.log("Authenticated user:", user.email);
 
     // Check if owner (bypass limits)
-    const isOwner = user.email === OWNER_EMAIL;
+    const ownerEmail = getOwnerEmail();
+    const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
 
     // Create service role client for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);

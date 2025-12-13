@@ -6,8 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Owner email that bypasses limits
-const OWNER_EMAIL = "nidal.khoury@gmail.com";
+// Owner email from secrets (server-side only)
+const getOwnerEmail = () => Deno.env.get("OWNER_EMAIL")?.toLowerCase();
 
 // Plan limits for analyses per month
 const PLAN_LIMITS: Record<string, number> = {
@@ -322,7 +322,8 @@ serve(async (req) => {
     // ========================================
     // USAGE LIMIT CHECK
     // ========================================
-    const isOwner = user.email === OWNER_EMAIL;
+    const ownerEmail = getOwnerEmail();
+    const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
     
     if (!isOwner) {
       // Get user's workspace

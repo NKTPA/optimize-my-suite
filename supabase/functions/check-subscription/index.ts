@@ -31,6 +31,9 @@ serve(async (req) => {
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     logStep("Stripe key verified");
 
+    // Get owner email from secrets (server-side only)
+    const ownerEmail = Deno.env.get("OWNER_EMAIL")?.toLowerCase();
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
@@ -48,6 +51,12 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
+    // Check if user is the platform owner (server-side check)
+    const isOwner = ownerEmail ? user.email.toLowerCase() === ownerEmail : false;
+    if (isOwner) {
+      logStep("Owner override detected - granting full access");
+    }
+
     // Get user's workspace
     const { data: workspace, error: workspaceError } = await supabaseClient
       .from("workspaces")
@@ -57,6 +66,21 @@ serve(async (req) => {
 
     if (workspaceError) {
       logStep("Error fetching workspace", { error: workspaceError.message });
+    }
+
+    // If owner, return full Scale access immediately
+    if (isOwner) {
+      return new Response(JSON.stringify({ 
+        subscribed: true,
+        plan: "scale",
+        subscription_status: "active",
+        subscription_end: null,
+        usage_limit: 999999,
+        isOwner: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
@@ -70,6 +94,7 @@ serve(async (req) => {
         subscription_status: workspace?.subscription_status || "trialing",
         subscription_end: null,
         usage_limit: 25,
+        isOwner: false,
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -215,6 +240,7 @@ serve(async (req) => {
       subscription_end: subscriptionEnd,
       usage_limit: usageLimit,
       stripe_customer_id: customerId,
+      isOwner: false,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
