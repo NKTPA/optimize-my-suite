@@ -14,6 +14,7 @@ import DashboardBatch from "./pages/DashboardBatch";
 import DashboardHistory from "./pages/DashboardHistory";
 import DashboardAccount from "./pages/DashboardAccount";
 import GeneratedSitePreview from "./pages/GeneratedSitePreview";
+import LogoPreview from "./pages/LogoPreview";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
               
               {/* Other routes */}
               <Route path="/preview" element={<GeneratedSitePreview />} />
+              <Route path="/logo-preview" element={<LogoPreview />} />
               
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
