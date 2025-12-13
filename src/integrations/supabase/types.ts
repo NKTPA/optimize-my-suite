@@ -370,7 +370,44 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      api_keys_safe: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          key_prefix: string | null
+          last_used_at: string | null
+          name: string | null
+          revoked_at: string | null
+          workspace_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          key_prefix?: string | null
+          last_used_at?: string | null
+          name?: string | null
+          revoked_at?: string | null
+          workspace_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          key_prefix?: string | null
+          last_used_at?: string | null
+          name?: string | null
+          revoked_at?: string | null
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_keys_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_workspace_id: { Args: { _user_id: string }; Returns: string }
