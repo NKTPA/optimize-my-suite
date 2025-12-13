@@ -4,12 +4,9 @@ import {
   Globe, 
   History, 
   Layers, 
-  User, 
   LogOut, 
   CreditCard,
   LayoutDashboard,
-  FileText,
-  Sparkles,
   Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { TrialBanner } from "@/components/entitlements/TrialBanner";
 import { UsageIndicator } from "@/components/entitlements/UsageIndicator";
+import { HeaderBrand } from "@/components/layout/HeaderBrand";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -80,14 +78,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex h-16 items-center justify-between">
             {/* Logo & Agency Name */}
             <div className="flex items-center gap-4">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-lg font-bold text-foreground">
-                  Optimize<span className="text-gradient">MySuite</span>
-                </span>
-              </Link>
+              <HeaderBrand to="/dashboard" textFallback />
               {profile && (
                 <span className="hidden md:inline text-sm text-muted-foreground border-l border-border pl-4">
                   {profile.agency_name || `${profile.first_name}'s Agency`}

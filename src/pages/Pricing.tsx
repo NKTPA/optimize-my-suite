@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Sparkles, ArrowRight, LogIn, Zap, Users, Headphones, Building2 } from "lucide-react";
+import { Check, Sparkles, ArrowRight, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
+import { HeaderBrand } from "@/components/layout/HeaderBrand";
 
 const plans = [
   {
@@ -116,9 +117,7 @@ export default function Pricing() {
       {/* Navigation */}
       <nav className="container pt-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-foreground">
-            Optimize<span className="text-gradient">MySuite</span>
-          </Link>
+          <HeaderBrand textFallback />
           <div className="flex items-center gap-2">
             {user ? (
               <>
