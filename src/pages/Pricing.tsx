@@ -165,20 +165,22 @@ export default function Pricing() {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative p-6 rounded-2xl bg-card border ${
-                plan.popular ? "border-primary shadow-lg shadow-primary/10" : "border-border/50"
-              } transition-all duration-300 hover:shadow-card-hover`}
+              className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
+                plan.popular 
+                  ? "border-primary border-2 shadow-xl scale-[1.02] ring-4 ring-primary/10" 
+                  : "border-border/50 hover:border-border hover:shadow-card-hover"
+              }`}
             >
               {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md">
                   Most Popular
                 </div>
               )}
-              <div className="mb-6">
+              <div className="mb-6 mt-2">
                 <h3 className="text-xl font-bold text-foreground mb-2">{plan.name}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">${plan.price}</span>
+                  <span className={`text-4xl font-bold ${plan.popular ? "text-primary" : "text-foreground"}`}>${plan.price}</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
               </div>
@@ -194,14 +196,14 @@ export default function Pricing() {
 
               <Button
                 variant={plan.popular ? "hero" : "outline"}
-                className="w-full"
+                className={`w-full ${plan.popular ? "shadow-lg" : ""}`}
                 onClick={() => handleSelectPlan(plan.priceId, plan.name)}
                 disabled={loadingPlan === plan.name}
               >
                 {loadingPlan === plan.name ? "Loading..." : plan.cta}
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-3">
-                {plan.popular ? "Start your 14-day free trial" : "No credit card required to start"}
+                {plan.popular ? "Start your 3-day free trial" : "No credit card required to start"}
               </p>
             </div>
           ))}
