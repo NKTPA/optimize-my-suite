@@ -20,7 +20,7 @@ function generateId(): string {
 }
 
 export default function BatchMode() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, session, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [sites, setSites] = useState<BatchSite[]>([]);
   const [isRunningBatch, setIsRunningBatch] = useState(false);
@@ -119,7 +119,7 @@ export default function BatchMode() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+              Authorization: `Bearer ${session?.access_token}`,
             },
             body: JSON.stringify({ url: site.url }),
           }
@@ -190,7 +190,7 @@ export default function BatchMode() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
             analysisResult: site.analysisResult,

@@ -28,6 +28,7 @@ import { Button } from "./ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AnalysisResultsProps {
   results: AnalysisResult;
@@ -41,6 +42,7 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
   const [implementationError, setImplementationError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("analysis");
   const { toast } = useToast();
+  const { session } = useAuth();
 
   const handleExportPdf = () => {
     generateAnalysisPdf(results, url);
@@ -56,7 +58,7 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            Authorization: `Bearer ${session?.access_token}`,
           },
           body: JSON.stringify({
             analysisResult: results,
