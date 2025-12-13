@@ -177,7 +177,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <footer className="border-t border-border/50 py-8 mt-auto">
         <div className="container">
           <p className="text-sm text-muted-foreground text-center">
-            <span className="font-semibold text-foreground">OptimizeSuite</span> — Your agency's automated website analysis engine
+            <span className="font-semibold text-foreground">OptimizeMySuite</span> — Your agency's automated website analysis engine
           </p>
         </div>
       </footer>

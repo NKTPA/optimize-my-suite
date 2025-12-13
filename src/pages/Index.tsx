@@ -209,7 +209,7 @@ export default function Index() {
               Ready to Scale Your Agency?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Join agencies using OptimizeSuite to win more retainers and deliver better client results.
+              Join agencies using OptimizeMySuite to win more retainers and deliver better client results.
             </p>
             <Button variant="hero" size="lg" className="gap-2" onClick={() => setShowPlanModal(true)}>
               Start Your Free Trial
@@ -224,7 +224,7 @@ export default function Index() {
         <div className="container">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">OptimizeSuite</span> — Your agency's automated website analysis engine
+              <span className="font-semibold text-foreground">OptimizeMySuite</span> — Your agency's automated website analysis engine
             </p>
             <div className="flex items-center gap-4">
               <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link>

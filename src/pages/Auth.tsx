@@ -132,7 +132,7 @@ const Auth = () => {
     } else {
       toast({
         title: "Account created!",
-        description: "Welcome to OptimizeSuite. Let's start auditing client websites.",
+        description: "Welcome to OptimizeMySuite. Let's start auditing client websites.",
       });
       navigate("/");
     }
