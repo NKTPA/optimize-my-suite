@@ -280,7 +280,7 @@ export default function Pricing() {
         <div className="container">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">OptimizeSuite</span> — Website audits & optimization for marketing agencies
+              <span className="font-semibold text-foreground">OptimizeMySuite</span> — Website audits & optimization for marketing agencies
             </p>
             <div className="flex items-center gap-4">
               <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
