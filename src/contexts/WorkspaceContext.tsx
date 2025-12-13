@@ -111,9 +111,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     // ============================================================================
     // INTERNAL OWNER OVERRIDE
     // If this is the owner account, grant full Scale plan access with no limits
+    // regardless of workspace/Stripe state. This ensures the owner can always
+    // use the app without hitting usage or trial locks.
     // ============================================================================
-    if (isOwner && workspace) {
-      console.log("[WorkspaceContext] Applying owner override for workspace", workspace.id);
+    if (isOwner) {
+      console.log("[WorkspaceContext] Applying owner override (global)");
       return {
         limits: PLAN_DEFINITIONS.scale.limits,
         isTrialActive: false,
@@ -359,13 +361,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // the user email was fully available
   // ============================================================================
   useEffect(() => {
-    if (state.workspace && isOwner && !state.isOwnerOverride) {
+    if (isOwner && !state.isOwnerOverride) {
       setState(prev => ({
         ...prev,
         ...computeStatus(prev.workspace),
       }));
     }
-  }, [isOwner, state.workspace, state.isOwnerOverride, computeStatus]);
+  }, [isOwner, state.isOwnerOverride, computeStatus]);
 
   return (
     <WorkspaceContext.Provider
