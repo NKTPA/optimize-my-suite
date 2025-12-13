@@ -18,8 +18,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Building2, Loader2 } from "lucide-react";
+import { Building2, Loader2, AlertCircle } from "lucide-react";
 import { BlueprintFormData } from "@/types/blueprint";
+import { BUSINESS_TYPES, getTemplatePack, type BusinessType } from "@/lib/businessTypeTemplates";
 
 interface BlueprintFormProps {
   onSubmit: (data: BlueprintFormData) => void;
@@ -30,6 +31,7 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<BlueprintFormData>({
     businessName: "",
+    businessType: "Other" as BusinessType,
     industry: "",
     location: "",
     primaryServices: "",
@@ -41,17 +43,38 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
     specialOffer: "",
     websiteGoal: "Get more leads",
   });
+  const [businessTypeError, setBusinessTypeError] = useState(false);
 
   const handleChange = (field: keyof BlueprintFormData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "businessType") {
+      setBusinessTypeError(false);
+      const businessTypeValue = value as BusinessType;
+      const template = getTemplatePack(businessTypeValue);
+      setFormData((prev) => ({
+        ...prev,
+        businessType: businessTypeValue,
+        websiteGoal: template.websiteGoal,
+        industry: value,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Validate business type is selected (not "Other" unless intentional)
+    if (!formData.businessType || formData.businessType === "Other") {
+      // Show warning but allow submission for "Other"
+      if (!formData.businessType) {
+        setBusinessTypeError(true);
+        return;
+      }
+    }
     onSubmit(formData);
   };
 
-  const isValid = formData.businessName && formData.industry && formData.location;
+  const isValid = formData.businessName && formData.businessType && formData.location;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -76,32 +99,33 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
                 id="businessName"
                 value={formData.businessName}
                 onChange={(e) => handleChange("businessName", e.target.value)}
-                placeholder="Tampa AC Services"
+                placeholder="Bella's Boutique"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="industry">Industry *</Label>
+              <Label htmlFor="businessType">Business Type *</Label>
               <Select
-                value={formData.industry}
-                onValueChange={(value) => handleChange("industry", value)}
+                value={formData.businessType}
+                onValueChange={(value) => handleChange("businessType", value)}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select industry" />
+                <SelectTrigger className={businessTypeError ? "border-destructive" : ""}>
+                  <SelectValue placeholder="Select business type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="HVAC">HVAC</SelectItem>
-                  <SelectItem value="Plumbing">Plumbing</SelectItem>
-                  <SelectItem value="Electrical">Electrical</SelectItem>
-                  <SelectItem value="Roofing">Roofing</SelectItem>
-                  <SelectItem value="Landscaping">Landscaping</SelectItem>
-                  <SelectItem value="Pest Control">Pest Control</SelectItem>
-                  <SelectItem value="Cleaning">Cleaning</SelectItem>
-                  <SelectItem value="Dental">Dental</SelectItem>
-                  <SelectItem value="Med Spa">Med Spa</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  {BUSINESS_TYPES.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              {businessTypeError && (
+                <p className="text-xs text-destructive flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  Please select a business type
+                </p>
+              )}
             </div>
           </div>
 
@@ -117,12 +141,12 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="primaryServices">Primary Services (comma-separated)</Label>
+            <Label htmlFor="primaryServices">Primary Products/Services (comma-separated)</Label>
             <Textarea
               id="primaryServices"
               value={formData.primaryServices}
               onChange={(e) => handleChange("primaryServices", e.target.value)}
-              placeholder="AC Repair, AC Installation, Maintenance Plans, Emergency Service"
+              placeholder="Dresses, Tops, Accessories, Jewelry, Handbags"
               rows={2}
             />
           </div>
@@ -133,7 +157,7 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
               id="targetCustomers"
               value={formData.targetCustomers}
               onChange={(e) => handleChange("targetCustomers", e.target.value)}
-              placeholder="Homeowners, property managers, small businesses"
+              placeholder="Fashion-conscious women ages 25-55"
             />
           </div>
 
@@ -143,7 +167,7 @@ export function BlueprintForm({ onSubmit, isLoading }: BlueprintFormProps) {
               id="uniqueSellingPoints"
               value={formData.uniqueSellingPoints}
               onChange={(e) => handleChange("uniqueSellingPoints", e.target.value)}
-              placeholder="24/7 emergency service, 20+ years experience, locally owned, satisfaction guarantee"
+              placeholder="Curated collections, Free styling consultations, Local designer partnerships"
               rows={2}
             />
           </div>

@@ -1,5 +1,8 @@
+import type { BusinessType } from "@/lib/businessTypeTemplates";
+
 export interface BlueprintFormData {
   businessName: string;
+  businessType: BusinessType;
   industry: string;
   location: string;
   primaryServices: string;
