@@ -78,7 +78,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex h-16 items-center justify-between">
             {/* Logo & Agency Name */}
             <div className="flex items-center gap-4">
-              <HeaderBrand to="/dashboard" textFallback />
+              <HeaderBrand to="/dashboard/analyze" textFallback />
               {profile && (
                 <span className="hidden md:inline text-sm text-muted-foreground border-l border-border pl-4">
                   {profile.agency_name || `${profile.first_name}'s Agency`}
