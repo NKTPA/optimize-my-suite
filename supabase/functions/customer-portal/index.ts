@@ -44,17 +44,25 @@ serve(async (req) => {
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     
+    let customerId: string;
+    
     if (customers.data.length === 0) {
-      throw new Error("No Stripe customer found for this user. Please subscribe to a plan first.");
+      // Create customer if they don't exist yet
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { supabase_user_id: user.id },
+      });
+      customerId = customer.id;
+      logStep("Created new Stripe customer", { customerId });
+    } else {
+      customerId = customers.data[0].id;
+      logStep("Found Stripe customer", { customerId });
     }
 
-    const customerId = customers.data[0].id;
-    logStep("Found Stripe customer", { customerId });
-
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const origin = req.headers.get("origin") || "https://lovable.dev";
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${origin}/account`,
+      return_url: `${origin}/dashboard/account`,
     });
     logStep("Customer portal session created", { sessionId: portalSession.id, url: portalSession.url });
 
