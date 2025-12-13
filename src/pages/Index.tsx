@@ -116,7 +116,7 @@ export default function Index() {
         </div>
       </header>
 
-      {/* Benefits */}
+      <main>
       <section className="py-16 lg:py-20 bg-secondary/30">
         <div className="container">
           <div className="text-center mb-12">
@@ -217,6 +217,7 @@ export default function Index() {
           </div>
         </div>
       </section>
+      </main>
 
       {/* Footer */}
       <footer className="border-t border-border/50 py-10">
