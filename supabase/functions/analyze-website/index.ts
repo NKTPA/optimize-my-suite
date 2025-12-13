@@ -1,9 +1,67 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Owner email that bypasses limits
+const OWNER_EMAIL = "nidal.khoury@gmail.com";
+
+// Plan limits for analyses per month
+const PLAN_LIMITS: Record<string, number> = {
+  starter: 25,
+  pro: 150,
+  scale: 500,
+};
+
+function logStep(step: string, details?: unknown) {
+  const detailsStr = details ? `: ${JSON.stringify(details)}` : "";
+  console.log(`[analyze-website] ${step}${detailsStr}`);
+}
+
+// Validate URL to prevent SSRF attacks
+function isValidPublicUrl(urlString: string): { valid: boolean; error?: string } {
+  try {
+    const url = new URL(urlString);
+    
+    // Only allow http/https
+    if (!['http:', 'https:'].includes(url.protocol)) {
+      return { valid: false, error: "Only HTTP and HTTPS URLs are allowed" };
+    }
+    
+    const hostname = url.hostname.toLowerCase();
+    
+    // Block localhost and loopback
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+      return { valid: false, error: "Cannot analyze localhost URLs" };
+    }
+    
+    // Block private IP ranges
+    const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (ipv4Match) {
+      const [, a, b, c] = ipv4Match.map(Number);
+      // 10.x.x.x
+      if (a === 10) return { valid: false, error: "Cannot analyze private network URLs" };
+      // 172.16.x.x - 172.31.x.x
+      if (a === 172 && b >= 16 && b <= 31) return { valid: false, error: "Cannot analyze private network URLs" };
+      // 192.168.x.x
+      if (a === 192 && b === 168) return { valid: false, error: "Cannot analyze private network URLs" };
+      // 169.254.x.x (link-local)
+      if (a === 169 && b === 254) return { valid: false, error: "Cannot analyze link-local URLs" };
+    }
+    
+    // Block internal hostnames
+    if (hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.localhost')) {
+      return { valid: false, error: "Cannot analyze internal network URLs" };
+    }
+    
+    return { valid: true };
+  } catch {
+    return { valid: false, error: "Invalid URL format" };
+  }
+}
 
 // Extract data from HTML
 function extractDataFromHtml(html: string, url: string) {
@@ -214,7 +272,7 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
 
 - Use scores on a 0–100 scale.
 - If some data is missing (for example, no meta description), explain that and still give a recommendation.
-- Always assume the goal is: “Get more phone calls, quote requests, and booked jobs from this website.”
+- Always assume the goal is: "Get more phone calls, quote requests, and booked jobs from this website."
 `;
 
 
@@ -224,6 +282,178 @@ serve(async (req) => {
   }
 
   try {
+    // ========================================
+    // AUTHENTICATION CHECK
+    // ========================================
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      logStep("ERROR: No authorization header");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Create Supabase client with service role for admin operations
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Create client with user's token to verify authentication
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
+
+    // Verify the user's token
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
+    if (userError || !user) {
+      logStep("ERROR: Invalid token", { error: userError?.message });
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired authentication token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    logStep("User authenticated", { userId: user.id, email: user.email });
+
+    // ========================================
+    // USAGE LIMIT CHECK
+    // ========================================
+    const isOwner = user.email === OWNER_EMAIL;
+    
+    if (!isOwner) {
+      // Get user's workspace
+      const { data: workspace, error: workspaceError } = await supabaseAdmin
+        .from("workspaces")
+        .select("id, plan, subscription_status, trial_ends_at")
+        .eq("owner_id", user.id)
+        .single();
+
+      if (workspaceError || !workspace) {
+        // Try to find workspace where user is a member
+        const { data: membership } = await supabaseAdmin
+          .from("workspace_members")
+          .select("workspace_id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!membership) {
+          logStep("ERROR: No workspace found for user");
+          return new Response(
+            JSON.stringify({ error: "No workspace found. Please complete your account setup." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Get the workspace they're a member of
+        const { data: memberWorkspace, error: memberWorkspaceError } = await supabaseAdmin
+          .from("workspaces")
+          .select("id, plan, subscription_status, trial_ends_at")
+          .eq("id", membership.workspace_id)
+          .single();
+
+        if (memberWorkspaceError || !memberWorkspace) {
+          logStep("ERROR: Could not load workspace");
+          return new Response(
+            JSON.stringify({ error: "Could not load workspace data" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Use member workspace
+        Object.assign(workspace || {}, memberWorkspace);
+      }
+
+      const workspaceData = workspace!;
+      logStep("Workspace loaded", { 
+        workspaceId: workspaceData.id, 
+        plan: workspaceData.plan,
+        status: workspaceData.subscription_status 
+      });
+
+      // Check subscription status
+      const status = workspaceData.subscription_status;
+      const trialEndsAt = workspaceData.trial_ends_at ? new Date(workspaceData.trial_ends_at) : null;
+      const now = new Date();
+
+      if (status === "trialing" && trialEndsAt && trialEndsAt < now) {
+        logStep("ERROR: Trial expired");
+        return new Response(
+          JSON.stringify({ error: "Your trial has expired. Please upgrade to continue using this feature." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (status === "canceled" || status === "unpaid" || status === "past_due") {
+        logStep("ERROR: Subscription not active", { status });
+        return new Response(
+          JSON.stringify({ error: "Your subscription is not active. Please update your payment method." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Get usage for this workspace
+      const { data: usage, error: usageError } = await supabaseAdmin
+        .from("workspace_usage")
+        .select("analyses_used, period_start, period_end")
+        .eq("workspace_id", workspaceData.id)
+        .single();
+
+      if (usageError) {
+        logStep("WARNING: Could not load usage, creating new record");
+        // Create usage record if it doesn't exist
+        await supabaseAdmin.from("workspace_usage").insert({
+          workspace_id: workspaceData.id,
+          analyses_used: 0,
+          packs_used: 0,
+        });
+      }
+
+      const currentUsage = usage?.analyses_used || 0;
+      const planLimit = PLAN_LIMITS[workspaceData.plan] || PLAN_LIMITS.starter;
+
+      logStep("Usage check", { currentUsage, planLimit, plan: workspaceData.plan });
+
+      if (currentUsage >= planLimit) {
+        logStep("ERROR: Usage limit exceeded");
+        return new Response(
+          JSON.stringify({ 
+            error: `You've used all ${planLimit} analyses for this month. Please upgrade your plan for more analyses.`,
+            limitReached: true,
+            currentUsage,
+            limit: planLimit
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // ========================================
+      // INCREMENT USAGE (before processing to prevent race conditions)
+      // ========================================
+      const { error: incrementError } = await supabaseAdmin
+        .from("workspace_usage")
+        .update({ 
+          analyses_used: currentUsage + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq("workspace_id", workspaceData.id);
+
+      if (incrementError) {
+        logStep("WARNING: Failed to increment usage", { error: incrementError.message });
+        // Don't fail the request, but log the error
+      } else {
+        logStep("Usage incremented", { newUsage: currentUsage + 1 });
+      }
+    } else {
+      logStep("Owner account - bypassing usage limits");
+    }
+
+    // ========================================
+    // PARSE AND VALIDATE REQUEST
+    // ========================================
     const { url } = await req.json();
 
     if (!url) {
@@ -233,9 +463,21 @@ serve(async (req) => {
       );
     }
 
-    console.log("Analyzing URL:", url);
+    // Validate URL to prevent SSRF
+    const urlValidation = isValidPublicUrl(url);
+    if (!urlValidation.valid) {
+      logStep("ERROR: Invalid URL", { url, error: urlValidation.error });
+      return new Response(
+        JSON.stringify({ error: urlValidation.error }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-    // Fetch the website HTML with multiple user agents if needed
+    logStep("Analyzing URL", { url });
+
+    // ========================================
+    // FETCH AND ANALYZE WEBSITE
+    // ========================================
     let html: string;
     const userAgents = [
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -247,6 +489,9 @@ serve(async (req) => {
     
     for (const userAgent of userAgents) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
         const response = await fetch(url, {
           headers: {
             "User-Agent": userAgent,
@@ -262,28 +507,38 @@ serve(async (req) => {
             "Upgrade-Insecure-Requests": "1",
           },
           redirect: "follow",
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           html = await response.text();
-          console.log("Fetched HTML length:", html.length, "with UA:", userAgent.slice(0, 30));
+          
+          // Limit response size to prevent memory issues
+          if (html.length > 5000000) { // 5MB limit
+            html = html.slice(0, 5000000);
+            logStep("WARNING: HTML truncated to 5MB");
+          }
+          
+          logStep("Fetched HTML", { length: html.length, userAgent: userAgent.slice(0, 30) });
           break;
         } else if (response.status === 403 || response.status === 503) {
-          console.log(`Got ${response.status} with UA: ${userAgent.slice(0, 30)}, trying next...`);
+          logStep("Fetch blocked, trying next UA", { status: response.status });
           lastError = new Error(`Website returned ${response.status}`);
           continue;
         } else {
           throw new Error(`Failed to fetch website: ${response.status}`);
         }
       } catch (fetchError) {
-        console.log(`Fetch failed with UA: ${userAgent.slice(0, 30)}:`, fetchError);
+        logStep("Fetch failed", { error: fetchError instanceof Error ? fetchError.message : String(fetchError) });
         lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
         continue;
       }
     }
     
     if (!html!) {
-      console.error("All fetch attempts failed:", lastError);
+      logStep("ERROR: All fetch attempts failed", { error: lastError?.message });
       return new Response(
         JSON.stringify({ error: "Could not access this website. The site may have bot protection enabled. Please check the URL and try again." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -292,7 +547,10 @@ serve(async (req) => {
 
     // Extract data from HTML
     const extractedData = extractDataFromHtml(html, url);
-    console.log("Extracted data:", JSON.stringify(extractedData, null, 2).slice(0, 500));
+    logStep("Data extracted", { 
+      title: extractedData.title?.slice(0, 50),
+      hasPhone: extractedData.phoneNumbers.length > 0
+    });
 
     // Call AI for analysis
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -325,7 +583,7 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
+      logStep("ERROR: AI API failed", { status: aiResponse.status, error: errorText.slice(0, 200) });
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -370,8 +628,7 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
       
       analysisResult = JSON.parse(jsonContent);
     } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      console.error("Raw content:", content.slice(0, 1000));
+      logStep("ERROR: JSON parse failed", { error: parseError instanceof Error ? parseError.message : String(parseError) });
       
       // Return a minimal valid result instead of failing completely
       analysisResult = {
@@ -393,13 +650,13 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
       };
     }
 
-    console.log("Analysis complete for:", url);
+    logStep("Analysis complete", { url, score: analysisResult.summary?.overallScore });
 
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Analysis error:", error);
+    logStep("ERROR: Unexpected error", { error: error instanceof Error ? error.message : String(error) });
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
