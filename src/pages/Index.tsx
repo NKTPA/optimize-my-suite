@@ -177,18 +177,36 @@ export default function Index() {
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {plans.map((plan) => (
-              <div key={plan.name} className={`p-6 rounded-2xl bg-card border ${plan.popular ? "border-primary shadow-lg" : "border-border/50"}`}>
-                {plan.popular && <div className="text-xs font-medium text-primary mb-2">Most Popular</div>}
-                <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                <div className="my-4"><span className="text-3xl font-bold">${plan.price}</span><span className="text-muted-foreground">/mo</span></div>
+              <div 
+                key={plan.name} 
+                className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
+                  plan.popular 
+                    ? "border-primary border-2 shadow-xl scale-[1.02] ring-4 ring-primary/10" 
+                    : "border-border/50 hover:border-border"
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md">
+                    Most Popular
+                  </div>
+                )}
+                <h3 className="text-xl font-bold text-foreground mt-2">{plan.name}</h3>
+                <div className="my-4">
+                  <span className={`text-4xl font-bold ${plan.popular ? "text-primary" : ""}`}>${plan.price}</span>
+                  <span className="text-muted-foreground">/mo</span>
+                </div>
                 <ul className="space-y-2 mb-6">
                   {plan.features.map((f, i) => (
                     <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Check className="w-4 h-4 text-primary" />{f}
+                      <Check className={`w-4 h-4 ${plan.popular ? "text-primary" : "text-primary"}`} />{f}
                     </li>
                   ))}
                 </ul>
-                <Button variant={plan.popular ? "default" : "outline"} className="w-full" onClick={() => setShowPlanModal(true)}>
+                <Button 
+                  variant={plan.popular ? "hero" : "outline"} 
+                  className={`w-full ${plan.popular ? "shadow-lg" : ""}`} 
+                  onClick={() => setShowPlanModal(true)}
+                >
                   Start Free Trial
                 </Button>
               </div>
