@@ -11,7 +11,9 @@ import {
   Copy,
   Check,
   Download,
+  Code2,
 } from "lucide-react";
+import { generateLovableRebuildPrompt } from "@/lib/generateLovablePrompt";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
@@ -73,6 +75,70 @@ function Section({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">{children}</CardContent>
+    </Card>
+  );
+}
+
+function LovableRebuildSection({ plan, url }: { plan: ImplementationPlan; url: string }) {
+  const [copied, setCopied] = useState(false);
+  const prompt = generateLovableRebuildPrompt(plan, url);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  };
+
+  return (
+    <Card className="border-dashed border-2 border-border/60 bg-muted/30 shadow-none">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Code2 className="w-5 h-5 text-accent" />
+          Lovable Website Rebuild Prompts (Optional)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Disclaimer */}
+        <div className="bg-accent/10 border border-accent/20 rounded-lg p-3">
+          <p className="text-sm text-muted-foreground">
+            This rebuild prompt is optional and intended for internal use when recreating a website in Lovable. 
+            It does not modify the existing Implementation Plan.
+          </p>
+        </div>
+
+        {/* Prompt Container */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Copy & Paste into Lovable
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              className="gap-2 h-8"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-green-500" />
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  Copy Prompt
+                </>
+              )}
+            </Button>
+          </div>
+          
+          <div className="bg-background border border-border rounded-lg p-4 max-h-[400px] overflow-y-auto">
+            <pre className="text-xs text-foreground font-mono whitespace-pre-wrap leading-relaxed">
+              {prompt}
+            </pre>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
@@ -354,6 +420,9 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Lovable Website Rebuild Prompts - Optional Section */}
+      <LovableRebuildSection plan={plan} url={url} />
     </div>
   );
 }
