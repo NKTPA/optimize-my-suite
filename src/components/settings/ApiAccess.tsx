@@ -61,23 +61,20 @@ export function ApiAccess() {
 
     setIsGenerating(true);
     try {
-      // Generate a random API key
-      const key = `omb_${crypto.randomUUID().replace(/-/g, "")}`;
-      const keyPrefix = key.substring(0, 12) + "...";
-
-      // In production, you would hash the key before storing
-      // For now, we store a mock hash
-      const { data, error } = await supabase.from("api_keys").insert({
-        workspace_id: workspace.id,
-        key_hash: btoa(key), // Not secure - use proper hashing in production
-        key_prefix: keyPrefix,
-        name: `API Key ${apiKeys.length + 1}`,
-      }).select().single();
+      // Call server-side edge function for secure key generation with SHA-256 hashing
+      const { data, error } = await supabase.functions.invoke("generate-api-key", {
+        body: {
+          workspace_id: workspace.id,
+          key_name: `API Key ${apiKeys.length + 1}`,
+        },
+      });
 
       if (error) throw error;
 
-      setNewKey(key);
-      setApiKeys([...apiKeys, data as ApiKey]);
+      const { api_key, key_data } = data;
+
+      setNewKey(api_key);
+      setApiKeys([key_data, ...apiKeys]);
 
       toast({
         title: "API Key Generated",
