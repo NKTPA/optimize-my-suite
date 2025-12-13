@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { PlanId, SubscriptionStatus, getPlanLimits, PlanLimits, isWithinLimit } from "@/lib/entitlements";
+import { PlanId, SubscriptionStatus, getPlanLimits, PlanLimits, isWithinLimit, PLAN_DEFINITIONS } from "@/lib/entitlements";
+import { isOwnerEmail } from "@/lib/ownerOverride";
 
 export interface Workspace {
   id: string;
@@ -58,6 +59,7 @@ interface WorkspaceState {
   isTrialExpired: boolean;
   isSubscriptionActive: boolean;
   isLocked: boolean;
+  isOwnerOverride: boolean; // Internal: owner bypasses all limits
 }
 
 interface WorkspaceContextType extends WorkspaceState {
@@ -76,6 +78,13 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefin
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const { user, session } = useAuth();
+  
+  // ============================================================================
+  // INTERNAL OWNER OVERRIDE
+  // Owner account (configured in src/lib/ownerOverride.ts) bypasses all limits
+  // ============================================================================
+  const isOwner = isOwnerEmail(user?.email);
+  
   const [state, setState] = useState<WorkspaceState>({
     workspace: null,
     usage: null,
@@ -87,9 +96,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     isTrialExpired: false,
     isSubscriptionActive: false,
     isLocked: true,
+    isOwnerOverride: false,
   });
 
   const computeStatus = useCallback((workspace: Workspace | null): Partial<WorkspaceState> => {
+    // ============================================================================
+    // INTERNAL OWNER OVERRIDE
+    // If this is the owner account, grant full Scale plan access with no limits
+    // ============================================================================
+    if (isOwner && workspace) {
+      return {
+        limits: PLAN_DEFINITIONS.scale.limits,
+        isTrialActive: false,
+        isTrialExpired: false,
+        isSubscriptionActive: true,
+        isLocked: false,
+        isOwnerOverride: true,
+      };
+    }
+
     if (!workspace) {
       return {
         limits: getPlanLimits(null),
@@ -97,6 +122,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         isTrialExpired: false,
         isSubscriptionActive: false,
         isLocked: true,
+        isOwnerOverride: false,
       };
     }
 
@@ -113,8 +139,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       isTrialExpired: !!isTrialExpired,
       isSubscriptionActive,
       isLocked,
+      isOwnerOverride: false,
     };
-  }, []);
+  }, [isOwner]);
 
   const refreshWorkspace = useCallback(async () => {
     if (!user) {
@@ -125,6 +152,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         branding: null,
         members: [],
         isLoading: false,
+        isOwnerOverride: false,
         ...computeStatus(null),
       }));
       return;
@@ -149,6 +177,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           branding: null,
           members: [],
           isLoading: false,
+          isOwnerOverride: false,
           ...computeStatus(null),
         }));
         return;
@@ -198,6 +227,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [state.workspace]);
 
   const incrementUsage = useCallback(async (type: "analysis" | "pack"): Promise<boolean> => {
+    // INTERNAL OWNER OVERRIDE: Skip usage tracking for owner
+    if (state.isOwnerOverride) return true;
+    
     if (!state.workspace || !state.usage) return false;
 
     const field = type === "analysis" ? "analyses_used" : "packs_used";
@@ -232,20 +264,29 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [state.workspace, state.usage, state.limits]);
 
   const canUseAnalysis = useCallback((): boolean => {
+    // INTERNAL OWNER OVERRIDE: Always allow for owner
+    if (state.isOwnerOverride) return true;
+    
     if (state.isLocked || !state.usage) return false;
     return isWithinLimit(state.usage.analyses_used, state.limits.analysesPerMonth);
-  }, [state.isLocked, state.usage, state.limits]);
+  }, [state.isLocked, state.usage, state.limits, state.isOwnerOverride]);
 
   const canUsePack = useCallback((): boolean => {
+    // INTERNAL OWNER OVERRIDE: Always allow for owner
+    if (state.isOwnerOverride) return true;
+    
     if (state.isLocked || !state.usage) return false;
     return isWithinLimit(state.usage.packs_used, state.limits.implementationsPerMonth);
-  }, [state.isLocked, state.usage, state.limits]);
+  }, [state.isLocked, state.usage, state.limits, state.isOwnerOverride]);
 
   const canUseBatchUrls = useCallback((count: number): boolean => {
+    // INTERNAL OWNER OVERRIDE: Always allow for owner
+    if (state.isOwnerOverride) return true;
+    
     if (state.isLocked) return false;
     if (state.limits.batchUrlLimit === "unlimited") return true;
     return count <= state.limits.batchUrlLimit;
-  }, [state.isLocked, state.limits]);
+  }, [state.isLocked, state.limits, state.isOwnerOverride]);
 
   const canUseFeatureCheck = useCallback((type: "analyses" | "packs"): boolean => {
     if (type === "analyses") return canUseAnalysis();
@@ -253,12 +294,15 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [canUseAnalysis, canUsePack]);
 
   const getRemainingUsageCount = useCallback((type: "analyses" | "packs"): number => {
+    // INTERNAL OWNER OVERRIDE: Return unlimited for owner
+    if (state.isOwnerOverride) return 999999;
+    
     if (!state.usage) return 0;
     const used = type === "analyses" ? state.usage.analyses_used : state.usage.packs_used;
     const limit = type === "analyses" ? state.limits.analysesPerMonth : state.limits.implementationsPerMonth;
     if (typeof limit === "string" || limit === -1) return 999999;
     return Math.max(0, limit - used);
-  }, [state.usage, state.limits]);
+  }, [state.usage, state.limits, state.isOwnerOverride]);
 
   const updateBranding = useCallback(async (branding: Partial<WorkspaceBranding>): Promise<void> => {
     if (!state.workspace) return;
@@ -294,6 +338,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         branding: null,
         members: [],
         isLoading: false,
+        isOwnerOverride: false,
         ...computeStatus(null),
       }));
     }

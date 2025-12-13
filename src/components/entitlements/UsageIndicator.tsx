@@ -17,7 +17,21 @@ export function UsageIndicator({
   className,
   compact = false,
 }: UsageIndicatorProps) {
-  const { usage, limits, isLocked } = useWorkspace();
+  const { usage, limits, isLocked, isOwnerOverride } = useWorkspace();
+
+  // INTERNAL OWNER OVERRIDE: Show unlimited for owner
+  if (isOwnerOverride) {
+    if (compact) {
+      return (
+        <div className={cn("flex items-center gap-2 text-sm", className)}>
+          <span className="font-medium text-muted-foreground">
+            {type === "analyses" ? "Analyses" : "Packs"}: ∞
+          </span>
+        </div>
+      );
+    }
+    return null; // Don't show progress bars for owner
+  }
 
   if (!usage) return null;
 

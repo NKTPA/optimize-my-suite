@@ -21,14 +21,15 @@ export function FeatureLock({
   showLockIcon = true,
   className,
 }: FeatureLockProps) {
-  const { workspace, isLocked } = useWorkspace();
+  const { workspace, isLocked, isOwnerOverride } = useWorkspace();
   const [showUpgrade, setShowUpgrade] = useState(false);
   
   const currentPlan = workspace?.plan || null;
   const hasAccess = !isLocked && canUseFeature(currentPlan, feature);
   const requiredPlan = getRequiredPlanForFeature(feature);
 
-  if (hasAccess) {
+  // INTERNAL OWNER OVERRIDE: Always grant access for owner
+  if (isOwnerOverride || hasAccess) {
     return <>{children}</>;
   }
 

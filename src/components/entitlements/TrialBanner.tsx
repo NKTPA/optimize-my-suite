@@ -7,9 +7,11 @@ import { cn } from "@/lib/utils";
 
 export function TrialBanner() {
   const navigate = useNavigate();
-  const { workspace, isTrialActive, isTrialExpired, isLocked } = useWorkspace();
+  const { workspace, isTrialActive, isTrialExpired, isLocked, isOwnerOverride } = useWorkspace();
   const [dismissed, setDismissed] = useState(false);
 
+  // INTERNAL OWNER OVERRIDE: Never show banners for owner
+  if (isOwnerOverride) return null;
   if (dismissed) return null;
   if (!workspace) return null;
   if (!isTrialActive && !isTrialExpired && !isLocked) return null;
