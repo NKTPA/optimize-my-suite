@@ -1,9 +1,20 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Owner email for bypass
+const OWNER_EMAIL = "nidal.khoury@gmail.com";
+
+// Plan limits for analyses (blueprints count as analyses)
+const PLAN_LIMITS: Record<string, number> = {
+  starter: 25,
+  pro: 150,
+  scale: 500,
 };
 
 // Business type template configurations
@@ -237,6 +248,99 @@ serve(async (req) => {
   }
 
   try {
+    // Get authorization header
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    // Create client with user's token for authentication
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Authenticated user:", user.email);
+
+    // Check if owner (bypass limits)
+    const isOwner = user.email === OWNER_EMAIL;
+
+    // Create service role client for database operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user's workspace
+    const { data: workspace, error: workspaceError } = await supabaseAdmin
+      .from("workspaces")
+      .select("id, plan, subscription_status, trial_ends_at")
+      .eq("owner_id", user.id)
+      .single();
+
+    if (workspaceError || !workspace) {
+      console.error("Workspace not found:", workspaceError?.message);
+      return new Response(
+        JSON.stringify({ error: "Workspace not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check subscription status (skip for owner)
+    if (!isOwner) {
+      const now = new Date();
+      const trialEndsAt = workspace.trial_ends_at ? new Date(workspace.trial_ends_at) : null;
+      const isTrialExpired = trialEndsAt && now > trialEndsAt;
+      const isActiveSubscription = workspace.subscription_status === "active";
+
+      if (isTrialExpired && !isActiveSubscription) {
+        console.log("Subscription inactive for workspace:", workspace.id);
+        return new Response(
+          JSON.stringify({ error: "Your trial has expired. Please upgrade to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Get current usage (blueprints count as analyses)
+    const { data: usage, error: usageError } = await supabaseAdmin
+      .from("workspace_usage")
+      .select("analyses_used")
+      .eq("workspace_id", workspace.id)
+      .single();
+
+    if (usageError) {
+      console.error("Usage fetch error:", usageError.message);
+    }
+
+    const analysesUsed = usage?.analyses_used || 0;
+    const planLimit = PLAN_LIMITS[workspace.plan] || PLAN_LIMITS.starter;
+
+    // Check usage limit (skip for owner)
+    if (!isOwner && analysesUsed >= planLimit) {
+      console.log("Analysis limit exceeded:", analysesUsed, "/", planLimit);
+      return new Response(
+        JSON.stringify({ error: "Monthly analysis limit reached. Please upgrade your plan." }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Parse request body
     const {
       businessName,
       businessType,
@@ -398,6 +502,24 @@ Remember:
     if (!validation.valid) {
       console.warn('Blueprint validation warnings for', businessName, ':', validation.errors);
       // Log but don't fail - the sanitization should have helped
+    }
+
+    // Increment usage counter server-side (skip for owner)
+    if (!isOwner) {
+      const { error: updateError } = await supabaseAdmin
+        .from("workspace_usage")
+        .update({ 
+          analyses_used: analysesUsed + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq("workspace_id", workspace.id);
+
+      if (updateError) {
+        console.error("Failed to update usage:", updateError.message);
+        // Continue anyway - don't fail the request over usage tracking
+      } else {
+        console.log("Usage incremented to:", analysesUsed + 1);
+      }
     }
 
     console.log('Blueprint generated successfully for:', businessName, 'Type:', businessType);
