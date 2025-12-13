@@ -9,8 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
-import logoPrimaryLight from "@/assets/logo-primary-light.png";
+import { Loader2, Building2, ArrowLeft, AlertCircle } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -163,9 +162,9 @@ const Auth = () => {
 
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <Link to="/" className="inline-block mb-4">
-              <img src={logoPrimaryLight} alt="OptimizeMySuite" className="h-10 w-auto mx-auto" />
-            </Link>
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-4">
+              <Building2 className="w-7 h-7 text-primary" />
+            </div>
             <h1 className="text-2xl font-bold text-foreground mb-2">
               Agency Dashboard
             </h1>
