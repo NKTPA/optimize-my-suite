@@ -22,19 +22,19 @@ interface HeaderBrandProps {
 const VARIANT_CONSTRAINTS = {
   default: {
     containerHeight: "h-8",
-    logoMaxHeight: "max-h-[28px]",
+    logoMaxHeight: "max-h-[32px]",
     iconSize: "w-8 h-8",
     textSize: "text-lg",
   },
   compact: {
     containerHeight: "h-7",
-    logoMaxHeight: "max-h-[24px]",
+    logoMaxHeight: "max-h-[28px]",
     iconSize: "w-7 h-7",
     textSize: "text-base",
   },
   auth: {
     containerHeight: "h-10",
-    logoMaxHeight: "max-h-[36px]",
+    logoMaxHeight: "max-h-[40px]",
     iconSize: "w-10 h-10",
     textSize: "text-xl",
   },
