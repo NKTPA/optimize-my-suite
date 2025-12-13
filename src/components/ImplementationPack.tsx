@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+
 interface ImplementationPackProps {
   plan: ImplementationPlan;
   url: string;
@@ -76,8 +78,18 @@ function Section({
 }
 
 export function ImplementationPack({ plan, url }: ImplementationPackProps) {
+  const { branding, limits } = useWorkspace();
+
   const handleExportPdf = () => {
-    generateImplementationPdf(plan, url);
+    // Pass branding only if user has custom branding access
+    const pdfBranding = limits.hasCustomBranding ? {
+      logoUrl: branding?.logo_url,
+      footerText: branding?.footer_text,
+      primaryColor: branding?.primary_color,
+      accentColor: branding?.accent_color,
+    } : undefined;
+    
+    generateImplementationPdf(plan, url, pdfBranding);
   };
 
   return (
