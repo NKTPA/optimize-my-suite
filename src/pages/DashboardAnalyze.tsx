@@ -23,7 +23,7 @@ export default function Analyze() {
   const urlInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, session, isLoading: authLoading } = useAuth();
   const { addAnalysis } = useHistory();
   const { toast } = useToast();
   const { canUseFeature, incrementUsage, getRemainingUsage, isTrialExpired } = useWorkspace();
@@ -113,7 +113,7 @@ export default function Analyze() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
           url: formattedUrl,
@@ -165,7 +165,7 @@ export default function Analyze() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify(formData),
       });
