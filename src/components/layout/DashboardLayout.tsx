@@ -114,18 +114,33 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               })}
             </nav>
 
-            <div className="flex items-center gap-3">
-              <UsageIndicator type="analyses" compact />
-              {getPlanBadge()}
+            <div className="flex items-center gap-2">
+              {/* Subscription Status */}
+              <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
+                <div className="flex items-center gap-1.5">
+                  {getPlanBadge()}
+                </div>
+                <div className="h-4 w-px bg-border" />
+                <UsageIndicator type="analyses" compact />
+                <div className="h-4 w-px bg-border" />
+                <UsageIndicator type="packs" compact />
+              </div>
+              
+              {/* Mobile: Show only badge and analyses */}
+              <div className="lg:hidden flex items-center gap-2">
+                {getPlanBadge()}
+                <UsageIndicator type="analyses" compact />
+              </div>
+
               <Link to="/pricing">
                 <Button variant="ghost" size="sm" className="hidden sm:flex gap-2">
                   <CreditCard className="w-4 h-4" />
-                  <span className="hidden lg:inline">Plans</span>
+                  <span className="hidden xl:inline">Plans</span>
                 </Button>
               </Link>
               <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
                 <LogOut className="w-4 h-4" />
-                <span className="hidden lg:inline">Logout</span>
+                <span className="hidden xl:inline">Logout</span>
               </Button>
             </div>
           </div>
