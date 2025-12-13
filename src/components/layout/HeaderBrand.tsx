@@ -100,7 +100,7 @@ export function HeaderBrand({
         <div className={`flex items-center justify-center ${constraints.iconSize} rounded-lg bg-primary/10`}>
           <Sparkles className="w-4 h-4 text-primary" />
         </div>
-        <span className={`${constraints.textSize} font-extrabold tracking-tight text-foreground`}>
+        <span className={`${constraints.textSize} font-black tracking-tight text-foreground`}>
           Optimize<span className="text-gradient">MySuite</span>
         </span>
       </Link>
