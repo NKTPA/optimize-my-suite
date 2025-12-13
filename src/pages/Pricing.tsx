@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
+import logoPrimaryLight from "@/assets/logo-primary-light.png";
 
 const plans = [
   {
@@ -116,8 +117,8 @@ export default function Pricing() {
       {/* Navigation */}
       <nav className="container pt-6">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-xl font-bold text-foreground">
-            Optimize<span className="text-gradient">MySuite</span>
+          <Link to="/">
+            <img src={logoPrimaryLight} alt="OptimizeMySuite" className="h-8 w-auto" />
           </Link>
           <div className="flex items-center gap-2">
             {user ? (
