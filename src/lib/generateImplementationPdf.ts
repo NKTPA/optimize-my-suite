@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
+import { generateLovableRebuildPrompt } from "./generateLovablePrompt";
 
 // Branding options for white-label PDFs
 export interface PdfBranding {
@@ -509,6 +510,88 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   plan.executionChecklist.forEach((item, i) => {
     addNumberedItem(i + 1, item);
   });
+
+  // ============ LOVABLE REBUILD PROMPTS (OPTIONAL) ============
+  y += 10;
+  addPageIfNeeded(60);
+  
+  // Section header with dashed border style
+  doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+  doc.setLineDashPattern([3, 2], 0);
+  doc.roundedRect(margin, y - 5, contentWidth, 22, 4, 4, "S");
+  doc.setLineDashPattern([], 0);
+  
+  // Icon
+  doc.setFillColor(colors.accentLight[0], colors.accentLight[1], colors.accentLight[2]);
+  doc.circle(margin + 12, y + 6, 8, "F");
+  doc.setFillColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  doc.circle(margin + 12, y + 6, 5, "F");
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text("◈", margin + 12, y + 8, { align: "center" });
+  
+  // Title
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Lovable Website Rebuild Prompts (Optional)", margin + 26, y + 9);
+  y += 28;
+  
+  // Disclaimer box
+  addPageIfNeeded(25);
+  doc.setFillColor(colors.accentLight[0], colors.accentLight[1], colors.accentLight[2]);
+  doc.roundedRect(margin, y - 3, contentWidth, 18, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  const disclaimerText = "This rebuild prompt is optional and intended for internal use when recreating a website in Lovable. It does not modify the existing Implementation Plan.";
+  const disclaimerLines = doc.splitTextToSize(disclaimerText, contentWidth - 10);
+  doc.text(disclaimerLines, margin + 5, y + 5);
+  y += 25;
+  
+  // Prompt label
+  addPageIfNeeded(15);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  doc.text("Copy & Paste into Lovable:", margin, y);
+  y += 8;
+  
+  // Generate the Lovable prompt
+  const lovablePrompt = generateLovableRebuildPrompt(plan, url);
+  
+  // Prompt container with monospace text
+  const promptLines = doc.splitTextToSize(lovablePrompt, contentWidth - 10);
+  const promptHeight = Math.min(promptLines.length * 4 + 10, 150); // Cap height
+  
+  addPageIfNeeded(promptHeight);
+  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+  doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+  doc.roundedRect(margin, y - 3, contentWidth, promptHeight, 3, 3, "FD");
+  
+  doc.setFontSize(7);
+  doc.setFont("courier", "normal");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  
+  // Only show first portion in PDF with truncation note
+  const maxPdfLines = 35;
+  const displayLines = promptLines.slice(0, maxPdfLines);
+  let lineY = y + 3;
+  displayLines.forEach((line: string) => {
+    if (lineY < y + promptHeight - 10) {
+      doc.text(line, margin + 5, lineY);
+      lineY += 4;
+    }
+  });
+  
+  if (promptLines.length > maxPdfLines) {
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text("... [Full prompt available in web interface]", margin + 5, y + promptHeight - 8);
+  }
+  
+  y += promptHeight + 5;
 
   // ============ FINAL FOOTER ============
   addFooter();
