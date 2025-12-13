@@ -9,9 +9,9 @@ import {
   CreditCard,
   LayoutDashboard,
   FileText,
-  Sparkles,
   Settings
 } from "lucide-react";
+import logoPrimaryLight from "@/assets/logo-primary-light.png";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
@@ -80,13 +80,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           <div className="flex h-16 items-center justify-between">
             {/* Logo & Agency Name */}
             <div className="flex items-center gap-4">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-lg font-bold text-foreground">
-                  Optimize<span className="text-gradient">MySuite</span>
-                </span>
+              <Link to="/dashboard" className="flex items-center">
+                <img 
+                  src={logoPrimaryLight} 
+                  alt="OptimizeMySuite" 
+                  className="h-8 w-auto"
+                />
               </Link>
               {profile && (
                 <span className="hidden md:inline text-sm text-muted-foreground border-l border-border pl-4">
