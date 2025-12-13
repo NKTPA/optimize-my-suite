@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/use-auth";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Eagerly loaded - needed for initial render
 import Index from "./pages/Index";
@@ -51,14 +52,14 @@ const App = () => (
                 <Route path="/pricing" element={<Pricing />} />
                 
                 {/* Protected dashboard routes */}
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard/analyze" element={<DashboardAnalyze />} />
-                <Route path="/dashboard/batch" element={<DashboardBatch />} />
-                <Route path="/dashboard/history" element={<DashboardHistory />} />
-                <Route path="/dashboard/account" element={<DashboardAccount />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                <Route path="/dashboard/analyze" element={<ProtectedRoute><DashboardAnalyze /></ProtectedRoute>} />
+                <Route path="/dashboard/batch" element={<ProtectedRoute><DashboardBatch /></ProtectedRoute>} />
+                <Route path="/dashboard/history" element={<ProtectedRoute><DashboardHistory /></ProtectedRoute>} />
+                <Route path="/dashboard/account" element={<ProtectedRoute><DashboardAccount /></ProtectedRoute>} />
                 
-                {/* Other routes */}
-                <Route path="/preview" element={<GeneratedSitePreview />} />
+                {/* Other protected routes */}
+                <Route path="/preview" element={<ProtectedRoute><GeneratedSitePreview /></ProtectedRoute>} />
                 <Route path="/logo-preview" element={<LogoPreview />} />
                 
                 {/* Catch-all */}

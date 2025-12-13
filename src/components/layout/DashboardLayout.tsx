@@ -37,7 +37,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       title: "Signed out",
       description: "You've been signed out of your agency account.",
     });
-    navigate("/");
+    // Use replace: true to prevent back button from returning to authenticated pages
+    navigate("/auth", { replace: true });
   };
 
   const navItems = [
