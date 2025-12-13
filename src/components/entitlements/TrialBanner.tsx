@@ -10,6 +10,8 @@ export function TrialBanner() {
   const { workspace, isTrialActive, isTrialExpired, isLocked, isOwnerOverride } = useWorkspace();
   const [dismissed, setDismissed] = useState(false);
 
+  console.log("[TrialBanner] state", { isOwnerOverride, isTrialActive, isTrialExpired, isLocked, hasWorkspace: !!workspace });
+
   // INTERNAL OWNER OVERRIDE: Never show banners for owner
   if (isOwnerOverride) return null;
   if (dismissed) return null;

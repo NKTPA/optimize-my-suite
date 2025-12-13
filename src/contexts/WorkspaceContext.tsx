@@ -100,11 +100,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   });
 
   const computeStatus = useCallback((workspace: Workspace | null): Partial<WorkspaceState> => {
+    console.log("[WorkspaceContext] computeStatus called", {
+      hasWorkspace: !!workspace,
+      workspacePlan: workspace?.plan,
+      subscriptionStatus: workspace?.subscription_status,
+      trialEndsAt: workspace?.trial_ends_at,
+      isOwner,
+    });
+
     // ============================================================================
     // INTERNAL OWNER OVERRIDE
     // If this is the owner account, grant full Scale plan access with no limits
     // ============================================================================
     if (isOwner && workspace) {
+      console.log("[WorkspaceContext] Applying owner override for workspace", workspace.id);
       return {
         limits: PLAN_DEFINITIONS.scale.limits,
         isTrialActive: false,
