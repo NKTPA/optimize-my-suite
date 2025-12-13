@@ -9,9 +9,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, AlertCircle } from "lucide-react";
+import { Loader2, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
-
+import { supabase } from "@/integrations/supabase/client";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -42,6 +42,9 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">(initialTab);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
+  const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -93,6 +96,34 @@ const Auth = () => {
         description: "You've successfully logged in to your agency dashboard.",
       });
       navigate("/dashboard/analyze");
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setForgotPasswordSuccess(false);
+
+    const emailValidation = z.string().email("Please enter a valid email address").safeParse(forgotPasswordEmail);
+    if (!emailValidation.success) {
+      setError(emailValidation.error.errors[0].message);
+      return;
+    }
+
+    setIsSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+      redirectTo: `${window.location.origin}/auth?tab=login`,
+    });
+    setIsSubmitting(false);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setForgotPasswordSuccess(true);
+      toast({
+        title: "Check your email",
+        description: "We've sent you a password reset link.",
+      });
     }
   };
 
@@ -204,40 +235,107 @@ const Auth = () => {
 
             <CardContent>
               {activeTab === "login" ? (
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="you@agency.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Logging in...
-                      </>
+                showForgotPassword ? (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    {forgotPasswordSuccess ? (
+                      <Alert className="border-green-200 bg-green-50 text-green-800">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <AlertDescription>
+                          Check your email for a password reset link. It may take a few minutes to arrive.
+                        </AlertDescription>
+                      </Alert>
                     ) : (
-                      "Login to Your Agency Dashboard"
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          Enter your email address and we'll send you a link to reset your password.
+                        </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="forgot-email">Email</Label>
+                          <Input
+                            id="forgot-email"
+                            type="email"
+                            placeholder="you@agency.com"
+                            value={forgotPasswordEmail}
+                            onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Sending...
+                            </>
+                          ) : (
+                            "Send Reset Link"
+                          )}
+                        </Button>
+                      </>
                     )}
-                  </Button>
-                </form>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full"
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setForgotPasswordSuccess(false);
+                        setForgotPasswordEmail("");
+                        setError(null);
+                      }}
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back to Login
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="you@agency.com"
+                        value={loginEmail}
+                        onChange={(e) => setLoginEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="login-password">Password</Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotPassword(true);
+                            setError(null);
+                            setForgotPasswordEmail(loginEmail);
+                          }}
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Forgot password?
+                        </button>
+                      </div>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Logging in...
+                        </>
+                      ) : (
+                        "Login to Your Agency Dashboard"
+                      )}
+                    </Button>
+                  </form>
+                )
               ) : (
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
