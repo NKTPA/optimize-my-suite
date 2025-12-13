@@ -59,7 +59,7 @@ const Auth = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/");
+      navigate("/dashboard/analyze");
     }
   }, [user, authLoading, navigate]);
 
@@ -92,7 +92,7 @@ const Auth = () => {
         title: "Welcome back!",
         description: "You've successfully logged in to your agency dashboard.",
       });
-      navigate("/");
+      navigate("/dashboard/analyze");
     }
   };
 
@@ -135,7 +135,7 @@ const Auth = () => {
         title: "Account created!",
         description: "Welcome to OptimizeMySuite. Let's start auditing client websites.",
       });
-      navigate("/");
+      navigate("/dashboard/analyze");
     }
   };
 
