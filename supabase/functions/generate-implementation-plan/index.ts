@@ -160,41 +160,26 @@ serve(async (req) => {
     // Create service role client for database operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get user's workspace - first try as owner, then as member
-    let workspace;
-    
-    // Try to find workspace where user is owner
-    const { data: ownedWorkspace, error: ownedError } = await supabaseAdmin
-      .from("workspaces")
-      .select("id, plan, subscription_status, trial_ends_at")
-      .eq("owner_id", user.id)
-      .maybeSingle();
+    // Get user's workspace using helper function (handles owner or member)
+    const { data: workspaceId, error: workspaceIdError } = await supabaseAdmin
+      .rpc("get_user_workspace_id", { _user_id: user.id });
 
-    if (ownedWorkspace) {
-      workspace = ownedWorkspace;
-    } else {
-      // Try to find workspace where user is a member
-      const { data: membership, error: memberError } = await supabaseAdmin
-        .from("workspace_members")
-        .select("workspace_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (membership) {
-        const { data: memberWorkspace, error: wsError } = await supabaseAdmin
-          .from("workspaces")
-          .select("id, plan, subscription_status, trial_ends_at")
-          .eq("id", membership.workspace_id)
-          .single();
-        
-        if (memberWorkspace) {
-          workspace = memberWorkspace;
-        }
-      }
+    if (workspaceIdError || !workspaceId) {
+      console.error("Workspace ID not found for user:", user.id, workspaceIdError?.message);
+      return new Response(
+        JSON.stringify({ error: "Workspace not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    if (!workspace) {
-      console.error("Workspace not found for user:", user.id);
+    const { data: workspace, error: workspaceError } = await supabaseAdmin
+      .from("workspaces")
+      .select("id, plan, subscription_status, trial_ends_at")
+      .eq("id", workspaceId)
+      .single();
+
+    if (workspaceError || !workspace) {
+      console.error("Workspace not found for user:", user.id, workspaceError?.message);
       return new Response(
         JSON.stringify({ error: "Workspace not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
