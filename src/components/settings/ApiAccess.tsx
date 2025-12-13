@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { Key, Copy, RefreshCw, Trash2, Loader2, Lock, Code2, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Key, Copy, Trash2, Loader2, Code2, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -25,9 +24,37 @@ export function ApiAccess() {
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
-  const [isLoadingKeys, setIsLoadingKeys] = useState(false);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(true);
 
   const hasAccess = limits.hasApiAccess;
+
+  // Load existing API keys from the safe view
+  useEffect(() => {
+    if (!workspace?.id || !hasAccess) {
+      setIsLoadingKeys(false);
+      return;
+    }
+
+    const loadApiKeys = async () => {
+      setIsLoadingKeys(true);
+      try {
+        const { data, error } = await supabase
+          .from("api_keys_safe")
+          .select("*")
+          .eq("workspace_id", workspace.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setApiKeys(data || []);
+      } catch (error) {
+        console.error("Failed to load API keys:", error);
+      } finally {
+        setIsLoadingKeys(false);
+      }
+    };
+
+    loadApiKeys();
+  }, [workspace?.id, hasAccess]);
 
   const generateApiKey = async () => {
     if (!workspace) return;
