@@ -90,7 +90,7 @@ export async function fetchServiceImages(
     
     // Since invoke doesn't support query params well, we'll call directly
     const response = await fetch(
-      `https://aqpobgrpjsdpvrcaanyp.supabase.co/functions/v1/fetch-service-images?serviceType=${encodeURIComponent(serviceType)}&count=${count}`,
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/fetch-service-images?serviceType=${encodeURIComponent(serviceType)}&count=${count}`,
       {
         method: 'GET',
         headers: {
