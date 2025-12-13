@@ -1,9 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Owner email from secrets (server-side only)
+const getOwnerEmail = () => Deno.env.get("OWNER_EMAIL")?.toLowerCase();
 
 // Curated fallback images by service type - high-quality, relevant images
 const fallbackImages: Record<string, Array<{ url: string; alt: string }>> = {
@@ -197,6 +201,81 @@ serve(async (req) => {
   }
 
   try {
+    // ========================================
+    // AUTHENTICATION CHECK
+    // ========================================
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("No authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    
+    // Create client with user's token for authentication
+    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+    if (authError || !user) {
+      console.error("Authentication failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Authenticated user:", user.email);
+
+    // Check if owner (bypass limits)
+    const ownerEmail = getOwnerEmail();
+    const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
+
+    // Create service role client for database operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Get user's workspace
+    const { data: workspace, error: workspaceError } = await supabaseAdmin
+      .from("workspaces")
+      .select("id, plan, subscription_status, trial_ends_at")
+      .eq("owner_id", user.id)
+      .single();
+
+    if (workspaceError || !workspace) {
+      console.error("Workspace not found:", workspaceError?.message);
+      return new Response(
+        JSON.stringify({ error: "Workspace not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check subscription status (skip for owner)
+    if (!isOwner) {
+      const now = new Date();
+      const trialEndsAt = workspace.trial_ends_at ? new Date(workspace.trial_ends_at) : null;
+      const isTrialExpired = trialEndsAt && now > trialEndsAt;
+      const isActiveSubscription = workspace.subscription_status === "active";
+
+      if (isTrialExpired && !isActiveSubscription) {
+        console.log("Subscription inactive for workspace:", workspace.id);
+        return new Response(
+          JSON.stringify({ error: "Your trial has expired. Please upgrade to continue." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // ========================================
+    // IMAGE FETCHING LOGIC
+    // ========================================
     const url = new URL(req.url);
     const serviceType = url.searchParams.get('serviceType') || 'home services';
     const count = Math.min(parseInt(url.searchParams.get('count') || '8'), 20);
