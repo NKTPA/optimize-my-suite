@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanId, SubscriptionStatus, getPlanLimits, PlanLimits, isWithinLimit, PLAN_DEFINITIONS } from "@/lib/entitlements";
@@ -75,25 +75,40 @@ interface WorkspaceContextType extends WorkspaceState {
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
 
+const getInitialState = (): WorkspaceState => ({
+  workspace: null,
+  usage: null,
+  branding: null,
+  members: [],
+  isLoading: true,
+  limits: getPlanLimits(null),
+  isTrialActive: false,
+  isTrialExpired: false,
+  isSubscriptionActive: false,
+  isLocked: true,
+  isOwnerOverride: false,
+});
+
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const { user, session } = useAuth();
+  const { user, session, onSignOut } = useAuth();
   
   // Owner status is now determined server-side
   const [isOwner, setIsOwner] = useState(false);
+  const [state, setState] = useState<WorkspaceState>(getInitialState);
   
-  const [state, setState] = useState<WorkspaceState>({
-    workspace: null,
-    usage: null,
-    branding: null,
-    members: [],
-    isLoading: true,
-    limits: getPlanLimits(null),
-    isTrialActive: false,
-    isTrialExpired: false,
-    isSubscriptionActive: false,
-    isLocked: true,
-    isOwnerOverride: false,
-  });
+  // Track if we've registered the signOut callback
+  const hasRegisteredSignOut = useRef(false);
+
+  // Register signOut callback once to reset workspace state
+  useEffect(() => {
+    if (!hasRegisteredSignOut.current) {
+      hasRegisteredSignOut.current = true;
+      onSignOut(() => {
+        setIsOwner(false);
+        setState(getInitialState());
+      });
+    }
+  }, [onSignOut]);
 
   const computeStatus = useCallback((workspace: Workspace | null, ownerOverride: boolean): Partial<WorkspaceState> => {
     console.log("[WorkspaceContext] computeStatus called", {

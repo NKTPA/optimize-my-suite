@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { TrialBanner } from "@/components/entitlements/TrialBanner";
 import { UsageIndicator } from "@/components/entitlements/UsageIndicator";
@@ -30,8 +31,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSignOut = async () => {
+    // Clear React Query cache
+    queryClient.clear();
+    
     await signOut();
     toast({
       title: "Signed out",

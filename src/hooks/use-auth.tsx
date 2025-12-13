@@ -24,6 +24,7 @@ interface AuthContextType {
   }) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
+  onSignOut: (callback: () => void) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [signOutCallbacks, setSignOutCallbacks] = useState<(() => void)[]>([]);
+
+  const onSignOut = (callback: () => void) => {
+    setSignOutCallbacks(prev => [...prev, callback]);
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -107,7 +113,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // Clear all auth state first
+    // Call all registered signOut callbacks to clear external state
+    signOutCallbacks.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error("Error in signOut callback:", error);
+      }
+    });
+    
+    // Clear all auth state
     setUser(null);
     setSession(null);
     setProfile(null);
@@ -122,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, isLoading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, session, profile, isLoading, signUp, signIn, signOut, onSignOut }}>
       {children}
     </AuthContext.Provider>
   );
