@@ -16,7 +16,8 @@ import {
   Smartphone,
   Zap,
   Search,
-  AlertTriangle
+  AlertTriangle,
+  FileDown
 } from "lucide-react";
 
 interface BatchSummaryCardProps {
@@ -24,6 +25,7 @@ interface BatchSummaryCardProps {
   index: number;
   onGenerateImplementation: (site: BatchSite) => void;
   onDownloadPdf: (site: BatchSite) => void;
+  onDownloadImplementationPdf?: (site: BatchSite) => void;
   isGenerating: boolean;
 }
 
@@ -68,6 +70,7 @@ export function BatchSummaryCard({
   index,
   onGenerateImplementation,
   onDownloadPdf,
+  onDownloadImplementationPdf,
   isGenerating,
 }: BatchSummaryCardProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -204,11 +207,27 @@ export function BatchSummaryCard({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
             {site.implementationPlan ? (
-              <Badge variant="secondary" className="text-xs">
-                Implementation Pack Ready
-              </Badge>
+              <>
+                <Badge variant="secondary" className="text-xs">
+                  Implementation Pack Ready
+                </Badge>
+                {onDownloadImplementationPdf && (
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDownloadImplementationPdf(site);
+                    }}
+                    className="gap-2"
+                  >
+                    <FileDown className="w-4 h-4" />
+                    Export Pack PDF
+                  </Button>
+                )}
+              </>
             ) : (
               <Button
                 onClick={(e) => {

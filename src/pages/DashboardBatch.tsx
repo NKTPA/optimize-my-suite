@@ -9,6 +9,7 @@ import { BatchSummaryCard } from "@/components/batch/BatchSummaryCard";
 import { ImplementationModal } from "@/components/batch/ImplementationModal";
 import { parseCSV, generateSummaryCSV } from "@/lib/csvParser";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
+import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -297,6 +298,12 @@ export default function DashboardBatch() {
     }
   };
 
+  const handleDownloadImplementationPdf = (site: BatchSite) => {
+    if (site.implementationPlan) {
+      generateImplementationPdf(site.implementationPlan, site.url);
+    }
+  };
+
   const handleExportSummaryCSV = () => {
     const summaryData = sites.map((site) => ({
       url: site.url,
@@ -443,6 +450,7 @@ export default function DashboardBatch() {
                   index={index}
                   onGenerateImplementation={handleGenerateImplementation}
                   onDownloadPdf={handleDownloadPdf}
+                  onDownloadImplementationPdf={handleDownloadImplementationPdf}
                   isGenerating={generatingSiteId === site.id}
                 />
               ))}
