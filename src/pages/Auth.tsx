@@ -112,7 +112,7 @@ const Auth = () => {
 
     setIsSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-      redirectTo: `${window.location.origin}/auth?tab=login`,
+      redirectTo: `${window.location.origin}/update-password`,
     });
     setIsSubmitting(false);
 

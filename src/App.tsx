@@ -22,6 +22,7 @@ const DashboardAccount = lazy(() => import("./pages/DashboardAccount"));
 const GeneratedSitePreview = lazy(() => import("./pages/GeneratedSitePreview"));
 const LogoPreview = lazy(() => import("./pages/LogoPreview"));
 const Pricing = lazy(() => import("./pages/Pricing"));
+const UpdatePassword = lazy(() => import("./pages/UpdatePassword"));
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/pricing" element={<Pricing />} />
                 
                 {/* Protected dashboard routes */}
