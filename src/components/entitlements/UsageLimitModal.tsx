@@ -24,7 +24,12 @@ export function UsageLimitModal({
   featureType,
 }: UsageLimitModalProps) {
   const navigate = useNavigate();
-  const { workspace, usage, limits } = useWorkspace();
+  const { workspace, usage, limits, isOwnerOverride } = useWorkspace();
+
+  // INTERNAL OWNER OVERRIDE: Never show usage limit modal for owner
+  if (isOwnerOverride) {
+    return null;
+  }
 
   const handleOpenChange = (openState: boolean) => {
     if (!openState) onClose();
