@@ -344,6 +344,20 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [user, session, refreshWorkspace, computeStatus]);
 
+  // ============================================================================
+  // INTERNAL OWNER OVERRIDE: Recalculate status when owner status changes
+  // This ensures the override applies even if workspace was fetched before
+  // the user email was fully available
+  // ============================================================================
+  useEffect(() => {
+    if (state.workspace && isOwner && !state.isOwnerOverride) {
+      setState(prev => ({
+        ...prev,
+        ...computeStatus(prev.workspace),
+      }));
+    }
+  }, [isOwner, state.workspace, state.isOwnerOverride, computeStatus]);
+
   return (
     <WorkspaceContext.Provider
       value={{
