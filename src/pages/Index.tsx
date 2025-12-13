@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
+import logoPrimaryLight from "@/assets/logo-primary-light.png";
 
 const featureCards = [
   { icon: MessageSquare, title: "Client Messaging Analysis", description: "Evaluate if your client's value proposition and local targeting are clear and compelling." },
@@ -67,9 +68,9 @@ export default function Index() {
 
         <nav className="container relative pt-6">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-bold text-foreground">
-              Optimize<span className="text-gradient">MySuite</span>
-            </span>
+            <Link to="/">
+              <img src={logoPrimaryLight} alt="OptimizeMySuite" className="h-8 w-auto" />
+            </Link>
             <div className="flex items-center gap-2">
               <Link to="/pricing"><Button variant="ghost" size="sm">Pricing</Button></Link>
               <Link to="/auth"><Button variant="ghost" size="sm">Login</Button></Link>
