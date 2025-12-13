@@ -68,7 +68,7 @@ export default function Index() {
         <nav className="container relative pt-6">
           <div className="flex items-center justify-between">
             <span className="text-xl font-bold text-foreground">
-              Optimize My <span className="text-gradient">Biz</span>
+              Optimize<span className="text-gradient">MySuite</span>
             </span>
             <div className="flex items-center gap-2">
               <Link to="/pricing"><Button variant="ghost" size="sm">Pricing</Button></Link>

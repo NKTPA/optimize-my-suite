@@ -117,7 +117,7 @@ export default function Pricing() {
       <nav className="container pt-6">
         <div className="flex items-center justify-between">
           <Link to="/" className="text-xl font-bold text-foreground">
-            Optimize My <span className="text-gradient">Biz</span>
+            Optimize<span className="text-gradient">MySuite</span>
           </Link>
           <div className="flex items-center gap-2">
             {user ? (

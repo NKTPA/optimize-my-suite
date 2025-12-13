@@ -85,7 +85,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Sparkles className="w-4 h-4 text-primary" />
                 </div>
                 <span className="text-lg font-bold text-foreground">
-                  Optimize My <span className="text-gradient">Biz</span>
+                  Optimize<span className="text-gradient">MySuite</span>
                 </span>
               </Link>
               {profile && (
