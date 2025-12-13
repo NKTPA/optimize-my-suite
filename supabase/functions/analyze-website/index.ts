@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
+import { getOrCreateWorkspaceForUser, isWorkspaceError, getOrCreateWorkspaceUsage } from "../_shared/workspace.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -326,58 +326,27 @@ serve(async (req) => {
     const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
     
     if (!isOwner) {
-      // Get user's workspace
-      const { data: workspace, error: workspaceError } = await supabaseAdmin
-        .from("workspaces")
-        .select("id, plan, subscription_status, trial_ends_at")
-        .eq("owner_id", user.id)
-        .single();
-
-      if (workspaceError || !workspace) {
-        // Try to find workspace where user is a member
-        const { data: membership } = await supabaseAdmin
-          .from("workspace_members")
-          .select("workspace_id")
-          .eq("user_id", user.id)
-          .single();
-
-        if (!membership) {
-          logStep("ERROR: No workspace found for user");
-          return new Response(
-            JSON.stringify({ error: "No workspace found. Please complete your account setup." }),
-            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Get the workspace they're a member of
-        const { data: memberWorkspace, error: memberWorkspaceError } = await supabaseAdmin
-          .from("workspaces")
-          .select("id, plan, subscription_status, trial_ends_at")
-          .eq("id", membership.workspace_id)
-          .single();
-
-        if (memberWorkspaceError || !memberWorkspace) {
-          logStep("ERROR: Could not load workspace");
-          return new Response(
-            JSON.stringify({ error: "Could not load workspace data" }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Use member workspace
-        Object.assign(workspace || {}, memberWorkspace);
+      // Get or create workspace using shared helper
+      const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
+      
+      if (isWorkspaceError(workspaceResult)) {
+        logStep("ERROR: Workspace error", { error: workspaceResult.error });
+        return new Response(
+          JSON.stringify({ error: workspaceResult.error }),
+          { status: workspaceResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      const workspaceData = workspace!;
+      const { workspace } = workspaceResult;
       logStep("Workspace loaded", { 
-        workspaceId: workspaceData.id, 
-        plan: workspaceData.plan,
-        status: workspaceData.subscription_status 
+        workspaceId: workspace.id, 
+        plan: workspace.plan,
+        status: workspace.subscription_status 
       });
 
       // Check subscription status
-      const status = workspaceData.subscription_status;
-      const trialEndsAt = workspaceData.trial_ends_at ? new Date(workspaceData.trial_ends_at) : null;
+      const status = workspace.subscription_status;
+      const trialEndsAt = workspace.trial_ends_at ? new Date(workspace.trial_ends_at) : null;
       const now = new Date();
 
       if (status === "trialing" && trialEndsAt && trialEndsAt < now) {
@@ -396,27 +365,12 @@ serve(async (req) => {
         );
       }
 
-      // Get usage for this workspace
-      const { data: usage, error: usageError } = await supabaseAdmin
-        .from("workspace_usage")
-        .select("analyses_used, period_start, period_end")
-        .eq("workspace_id", workspaceData.id)
-        .single();
-
-      if (usageError) {
-        logStep("WARNING: Could not load usage, creating new record");
-        // Create usage record if it doesn't exist
-        await supabaseAdmin.from("workspace_usage").insert({
-          workspace_id: workspaceData.id,
-          analyses_used: 0,
-          packs_used: 0,
-        });
-      }
-
+      // Get or create usage record
+      const usage = await getOrCreateWorkspaceUsage(supabaseAdmin, workspace.id);
       const currentUsage = usage?.analyses_used || 0;
-      const planLimit = PLAN_LIMITS[workspaceData.plan] || PLAN_LIMITS.starter;
+      const planLimit = PLAN_LIMITS[workspace.plan] || PLAN_LIMITS.starter;
 
-      logStep("Usage check", { currentUsage, planLimit, plan: workspaceData.plan });
+      logStep("Usage check", { currentUsage, planLimit, plan: workspace.plan });
 
       if (currentUsage >= planLimit) {
         logStep("ERROR: Usage limit exceeded");
@@ -431,16 +385,14 @@ serve(async (req) => {
         );
       }
 
-      // ========================================
-      // INCREMENT USAGE (before processing to prevent race conditions)
-      // ========================================
+      // Increment usage (before processing to prevent race conditions)
       const { error: incrementError } = await supabaseAdmin
         .from("workspace_usage")
         .update({ 
           analyses_used: currentUsage + 1,
           updated_at: new Date().toISOString()
         })
-        .eq("workspace_id", workspaceData.id);
+        .eq("workspace_id", workspace.id);
 
       if (incrementError) {
         logStep("WARNING: Failed to increment usage", { error: incrementError.message });
