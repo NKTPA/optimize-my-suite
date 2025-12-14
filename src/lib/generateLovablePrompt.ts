@@ -12,9 +12,20 @@ export function generateLovableRebuildPrompt(plan: ImplementationPlan, url: stri
   // GUARDRAIL: Validate that URL is not a Lovable/deployment URL
   if (!isValidAnalysisSourceUrl(url)) {
     console.error("[Lovable Prompt] BLOCKED: Attempted to use contaminated URL:", url);
-    // Use sanitized fallback - this will show an error message instead of wrong URL
-    url = sanitizeAnalysisUrl(url, "[ERROR: Original website URL not available - do not use this prompt]");
+    // Return error message instead of generating a broken prompt
+    return `ERROR: Cannot generate rebuild prompt.
+
+The URL "${url}" appears to be a Lovable preview/deployment URL, not the original customer website.
+
+REQUIRED ACTION:
+1. Use the original customer domain URL (e.g., customersite.com)
+2. Re-run the analysis on the original website
+3. Generate the Implementation Pack from that analysis
+4. Then generate this rebuild prompt
+
+This guardrail prevents rebuilding from preview URLs that may contain placeholder content.`;
   }
+
   const services = plan.keyPages.servicesPage?.sections
     ?.map((s) => s.serviceName)
     .join(", ") || "various services";
@@ -26,26 +37,40 @@ export function generateLovableRebuildPrompt(plan: ImplementationPlan, url: stri
 - Primary Services: ${services}
 - Phone: ${plan.formsAndCTAs.primaryPhoneNumber}
 
-## Hero Section
-Create a compelling hero with:
-- Headline: "${plan.heroSection.headline}"
-- Subheadline: "${plan.heroSection.subheadline}"
-- Key selling points: ${plan.heroSection.supportingBullets.join("; ")}
-- Primary CTA button: "${plan.heroSection.primaryCTA}"
-- Secondary CTA: "${plan.heroSection.secondaryCTA}"
+## MANDATORY ABOVE-THE-FOLD ELEMENTS
+These elements MUST appear above the fold on the homepage:
+
+1. **H1 Headline**: "${plan.heroSection.headline}"
+2. **Subheadline**: "${plan.heroSection.subheadline}"
+3. **Service Area**: Display prominently (city/region served)
+4. **Tap-to-Call Primary CTA**: "${plan.heroSection.primaryCTA}" with phone number ${plan.formsAndCTAs.primaryPhoneNumber}
+5. **Secondary CTA**: "${plan.heroSection.secondaryCTA}"
+6. **Short Lead Form** (max 4 fields): Name, Phone, Service Needed, [Optional: Message]
+
+## Hero Section Details
+- Key selling points (display as badges or bullets):
+${plan.heroSection.supportingBullets.map((b) => `  - ${b}`).join("\n")}
 
 ## Page Structure & Content
 
 ### Homepage
 ${plan.keyPages.home.intro}
 
-Services overview: ${plan.keyPages.home.servicesOverview}
+**Services Overview (3-5 cards with internal links)**:
+${plan.keyPages.home.servicesOverview}
 
-"Why Choose Us" section with these points:
+${plan.keyPages.servicesPage?.sections?.map((s) => `- **${s.serviceName}**: ${s.shortDescription} → Link to service page`).join("\n") || "- List all primary services with descriptions and CTAs"}
+
+**"Why Choose Us" Trust Block**:
 ${plan.keyPages.home.whyChooseUs.map((item) => `- ${item}`).join("\n")}
 
-Trust elements to include:
+**Reviews/Testimonials Block**:
 ${plan.keyPages.home.trustElements.map((item) => `- ${item}`).join("\n")}
+
+[PLACEHOLDER: Add 3-5 real customer testimonials with names and locations]
+
+**FAQ Section** (minimum 5 questions):
+[PLACEHOLDER: Add industry-specific FAQs based on common customer questions]
 
 ### About Page
 - Headline: "${plan.keyPages.aboutPage.headline}"
@@ -56,21 +81,43 @@ ${plan.keyPages.home.trustElements.map((item) => `- ${item}`).join("\n")}
 - Intro: ${plan.keyPages.contactPage.body}
 
 ### Services Page
-Include sections for:
-${plan.keyPages.servicesPage?.sections?.map((s) => `- ${s.serviceName}: ${s.shortDescription} (CTA: "${s.idealCTA}")`).join("\n") || "- List all primary services with descriptions and CTAs"}
+Include individual sections for each service:
+${plan.keyPages.servicesPage?.sections?.map((s) => `- **${s.serviceName}**: ${s.shortDescription} (CTA: "${s.idealCTA}")`).join("\n") || "- List all primary services with detailed descriptions"}
 
 ## Conversion Elements
-- Prominent phone number: ${plan.formsAndCTAs.primaryPhoneNumber}
-- Contact form fields: ${plan.formsAndCTAs.contactFormSpec.fields.join(", ")}
-- Form notes: ${plan.formsAndCTAs.contactFormSpec.notes}
-- CTA buttons throughout: ${plan.formsAndCTAs.ctaButtons.join(", ")}
-- Placement: ${plan.formsAndCTAs.placementGuidelines.join("; ")}
+- **Prominent phone number** (tap-to-call): ${plan.formsAndCTAs.primaryPhoneNumber}
+- **Contact form fields**: ${plan.formsAndCTAs.contactFormSpec.fields.join(", ")}
+- **Form notes**: ${plan.formsAndCTAs.contactFormSpec.notes}
+- **CTA buttons throughout**: ${plan.formsAndCTAs.ctaButtons.join(", ")}
+- **Placement guidelines**: ${plan.formsAndCTAs.placementGuidelines.join("; ")}
 
 ## SEO Requirements
-- Title tag: "${plan.seoSetup.home.title}"
-- Meta description: "${plan.seoSetup.home.metaDescription}"
-- H1: "${plan.seoSetup.home.h1}"
-- Additional SEO: ${plan.seoSetup.otherSuggestions.join("; ")}
+- **Title tag** (unique, under 60 chars): "${plan.seoSetup.home.title}"
+- **Meta description** (under 160 chars): "${plan.seoSetup.home.metaDescription}"
+- **H1** (one per page, keyword-rich): "${plan.seoSetup.home.h1}"
+- **Additional SEO**: ${plan.seoSetup.otherSuggestions.join("; ")}
+- **Image alt text**: Every image MUST have descriptive alt text
+
+## LocalBusiness Schema (JSON-LD)
+Add structured data to the homepage:
+\`\`\`json
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "[PLACEHOLDER: Business Name]",
+  "description": "${plan.seoSetup.home.metaDescription}",
+  "telephone": "${plan.formsAndCTAs.primaryPhoneNumber}",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "[PLACEHOLDER: Street Address]",
+    "addressLocality": "[PLACEHOLDER: City]",
+    "addressRegion": "[PLACEHOLDER: State]",
+    "postalCode": "[PLACEHOLDER: ZIP]"
+  },
+  "areaServed": "[PLACEHOLDER: Service Area]",
+  "priceRange": "[PLACEHOLDER: $$ or $$$]"
+}
+\`\`\`
 
 ## Design & UX
 Color palette:
@@ -93,6 +140,25 @@ ${plan.technicalFixes.tasks.map((t) => `- ${t}`).join("\n")}
 - Sticky header with CTA
 - Trust badges and social proof sections
 - Clear visual hierarchy
+- Clear internal linking structure between pages
+
+## POST-BUILD SELF-CHECK (Verify Before Publishing)
+Run through this checklist after building:
+
+□ H1 heading is present and contains main keyword + location
+□ Phone number is visible above the fold and clickable (tap-to-call)
+□ Lead form is present above the fold and submits correctly
+□ All service cards link to relevant sections/pages
+□ "Why Choose Us" section is visible on homepage
+□ Testimonials section is present (even with placeholders)
+□ FAQ section is present with at least 5 questions
+□ LocalBusiness schema is in the page head
+□ All images have descriptive alt text
+□ Title tag is unique and under 60 characters
+□ Meta description is under 160 characters
+□ No authentication gate on homepage (publicly accessible)
+□ Mobile responsive - test on 375px viewport
+□ All CTAs have clear action text (not "Click Here")
 
 Make this look like a premium $4000+ agency-built website, not a template.`;
 

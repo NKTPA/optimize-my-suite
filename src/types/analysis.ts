@@ -21,6 +21,24 @@ export interface ConfidenceFinding extends Finding {
   evidence?: string[];
 }
 
+/** NOT SCORABLE state - when analysis cannot produce a valid score */
+export interface NotScorableState {
+  isNotScorable: true;
+  reason: 
+    | 'auth_gate' 
+    | 'insufficient_html' 
+    | 'blocked_fetch' 
+    | 'redirect_loop' 
+    | 'placeholder_page'
+    | 'js_only_shell'
+    | 'login_required';
+  reasonDisplay: string;
+  finalUrl?: string;
+  httpStatus?: number;
+  htmlSizeKb?: number;
+  fixInstructions: string[];
+}
+
 export interface AnalysisResult {
   summary: {
     overallScore: number;
@@ -93,4 +111,37 @@ export interface AnalysisResult {
   hasUnverifiedChecks?: boolean;
   /** List of items that could not be verified */
   unverifiedItems?: string[];
+  /** NOT SCORABLE state - when analysis cannot produce a valid score */
+  notScorable?: NotScorableState;
+}
+
+/**
+ * Type guard to check if analysis is NOT SCORABLE
+ */
+export function isNotScorable(result: AnalysisResult): result is AnalysisResult & { notScorable: NotScorableState } {
+  return result.notScorable?.isNotScorable === true;
+}
+
+/**
+ * Detects if HTML content appears to be a Lovable auth placeholder page
+ */
+export function detectLovablePlaceholder(result: AnalysisResult): boolean {
+  const placeholderKeywords = [
+    'authenticating',
+    'get started',
+    'build software products',
+    'lovable',
+  ];
+  
+  const overview = result.summary?.overview?.toLowerCase() || '';
+  const title = result.seo?.recommendedTitle?.toLowerCase() || '';
+  const messagingScore = result.messaging?.score ?? 50;
+  const seoScore = result.seo?.score ?? 50;
+  
+  const hasPlaceholderKeywords = placeholderKeywords.some(
+    kw => overview.includes(kw) || title.includes(kw)
+  );
+  
+  // If keywords present AND both scores are very low, likely a placeholder
+  return hasPlaceholderKeywords && messagingScore <= 20 && seoScore <= 20;
 }
