@@ -13,6 +13,7 @@ interface OverallScoreProps {
   showDualScores?: boolean;
   baselineScore?: number;
   baselineUrl?: string;
+  baselineDate?: string;
 }
 
 export function OverallScore({ 
@@ -23,7 +24,8 @@ export function OverallScore({
   dualScore,
   showDualScores = true,
   baselineScore,
-  baselineUrl
+  baselineUrl,
+  baselineDate
 }: OverallScoreProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-score-excellent";
@@ -141,6 +143,7 @@ export function OverallScore({
               dualScore={dualScore} 
               baselineScore={baselineScore}
               baselineUrl={baselineUrl}
+              baselineDate={baselineDate}
             />
           </div>
         )}

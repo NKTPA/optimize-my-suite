@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Info, Server, Rocket, Sparkles, Target, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Info, Server, Rocket, Sparkles, Target, Minus, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DualScore } from "@/lib/scoringEngine";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
 
 interface DualScoreDisplayProps {
   dualScore: DualScore;
   baselineScore?: number;
   baselineUrl?: string;
+  baselineDate?: string;
   className?: string;
 }
 
@@ -18,6 +20,7 @@ export function DualScoreDisplay({
   dualScore, 
   baselineScore,
   baselineUrl,
+  baselineDate,
   className 
 }: DualScoreDisplayProps) {
   const { 
@@ -205,11 +208,27 @@ export function DualScoreDisplay({
                     {deltaVsOriginal > 0 ? "+" : ""}{deltaVsOriginal} vs Original
                   </span>
                 </Badge>
-                {effectiveBaselineUrl && (
-                  <p className="text-[10px] text-muted-foreground truncate" title={effectiveBaselineUrl}>
-                    vs {effectiveBaselineUrl}
-                  </p>
-                )}
+                
+                {/* Baseline Info */}
+                <div className="flex flex-col gap-0.5 mt-1">
+                  {baselineDate && (
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <Calendar className="w-3 h-3" />
+                      <span>Baseline set {format(new Date(baselineDate), "MMM d, yyyy")}</span>
+                    </div>
+                  )}
+                  {effectiveBaselineUrl && (
+                    <p className="text-[10px] text-muted-foreground/70 truncate" title={effectiveBaselineUrl}>
+                      {(() => {
+                        try {
+                          return new URL(effectiveBaselineUrl).hostname;
+                        } catch {
+                          return effectiveBaselineUrl;
+                        }
+                      })()}
+                    </p>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col">

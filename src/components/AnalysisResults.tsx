@@ -163,6 +163,7 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
             showDualScores={!!results.dualScore}
             baselineScore={baselineData?.score}
             baselineUrl={baselineData?.url}
+            baselineDate={baselineData?.date}
           />
 
           <div className="grid lg:grid-cols-2 gap-6 mt-6">
