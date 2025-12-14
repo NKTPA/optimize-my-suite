@@ -192,8 +192,31 @@ export function DualScoreDisplay({ dualScore, className }: DualScoreDisplayProps
         </div>
       )}
 
-      {/* Unverified Items */}
-      {unverifiedItems.length > 0 && (
+      {/* Exempted Items for Preview */}
+      {environment.isPreview && unverifiedItems.length > 0 && (
+        <div className="p-4 rounded-lg bg-amber-500/5 border border-amber-500/20">
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle2 className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <h4 className="text-sm font-medium text-amber-700 dark:text-amber-300">
+              Expected for Preview Environment — Not Penalized
+            </h4>
+          </div>
+          <ul className="space-y-2">
+            {unverifiedItems.map((item, index) => (
+              <li key={index} className="text-sm text-muted-foreground flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500/50" />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground/80 mt-3 italic">
+            These production-readiness items are typical for preview deployments and have minimal impact on your overall score.
+          </p>
+        </div>
+      )}
+
+      {/* Unverified Items for Production */}
+      {!environment.isPreview && unverifiedItems.length > 0 && (
         <div className="p-4 rounded-lg bg-muted/50 border border-border/50">
           <div className="flex items-center gap-2 mb-2">
             <AlertCircle className="w-4 h-4 text-muted-foreground" />
@@ -208,7 +231,7 @@ export function DualScoreDisplay({ dualScore, className }: DualScoreDisplayProps
             ))}
           </ul>
           <p className="text-xs text-muted-foreground/70 mt-2">
-            These items don't affect your quality score but should be addressed for production.
+            These items should be addressed for production.
           </p>
         </div>
       )}
