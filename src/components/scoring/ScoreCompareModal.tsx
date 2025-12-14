@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2, AlertTriangle, Globe, GitCompare, Info } from "lucide-react";
+import { Loader2, AlertTriangle, Globe, GitCompare, Info, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
 import { ScoreDisplay } from "./ScoreDisplay";
-
+import { generateBeforeAfterPdf } from "@/lib/generateBeforeAfterPdf";
+import { useToast } from "@/hooks/use-toast";
 interface ScoreCompareModalProps {
   open: boolean;
   onClose: () => void;
@@ -61,6 +62,7 @@ function extractCustomerDomain(url: string): string {
 
 export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: ScoreCompareModalProps) {
   const { session } = useAuth();
+  const { toast } = useToast();
   const [productionUrl, setProductionUrl] = useState(() => originalUrl || extractCustomerDomain(currentUrl));
   const [previewUrl, setPreviewUrl] = useState(currentUrl);
   const [isLoading, setIsLoading] = useState(false);
@@ -123,6 +125,29 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
     setPreviewResults(null);
     setError(null);
     onClose();
+  };
+
+  const handleExportPdf = () => {
+    if (!productionResults || !previewResults) return;
+    
+    try {
+      generateBeforeAfterPdf({
+        originalUrl: productionUrl,
+        optimizedUrl: previewUrl,
+        originalResults: productionResults,
+        optimizedResults: previewResults,
+      });
+      toast({
+        title: "PDF Exported",
+        description: "Your Before vs After report has been downloaded.",
+      });
+    } catch (err) {
+      toast({
+        title: "Export Failed",
+        description: "Unable to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Check if results are comparable
@@ -256,6 +281,18 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
                 Publish the site or use a publicly accessible URL to enable comparison.
               </AlertDescription>
             </Alert>
+          )}
+
+          {/* Export PDF Button */}
+          {productionResults && previewResults && (
+            <Button
+              onClick={handleExportPdf}
+              variant="outline"
+              className="w-full gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export Before vs After PDF Report
+            </Button>
           )}
         </div>
       </DialogContent>
