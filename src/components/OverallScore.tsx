@@ -11,6 +11,8 @@ interface OverallScoreProps {
   className?: string;
   dualScore?: DualScore;
   showDualScores?: boolean;
+  baselineScore?: number;
+  baselineUrl?: string;
 }
 
 export function OverallScore({ 
@@ -19,7 +21,9 @@ export function OverallScore({
   quickWins, 
   className,
   dualScore,
-  showDualScores = true 
+  showDualScores = true,
+  baselineScore,
+  baselineUrl
 }: OverallScoreProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-score-excellent";
@@ -133,7 +137,11 @@ export function OverallScore({
         {/* Dual Score Display */}
         {showDualScores && dualScore && (
           <div className="mt-8 pt-6 border-t border-border/50">
-            <DualScoreDisplay dualScore={dualScore} />
+            <DualScoreDisplay 
+              dualScore={dualScore} 
+              baselineScore={baselineScore}
+              baselineUrl={baselineUrl}
+            />
           </div>
         )}
       </div>
