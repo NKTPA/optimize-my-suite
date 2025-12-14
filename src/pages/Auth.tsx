@@ -111,20 +111,18 @@ const Auth = () => {
     }
 
     setIsSubmitting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
+    // Always show success message regardless of whether email exists (security best practice)
+    await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
       redirectTo: `${window.location.origin}/update-password`,
     });
     setIsSubmitting(false);
 
-    if (error) {
-      setError(error.message);
-    } else {
-      setForgotPasswordSuccess(true);
-      toast({
-        title: "Check your email",
-        description: "We've sent you a password reset link.",
-      });
-    }
+    // Always show success - prevents account enumeration attacks
+    setForgotPasswordSuccess(true);
+    toast({
+      title: "Request received",
+      description: "If this email is registered, you'll receive a reset link shortly.",
+    });
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -238,10 +236,10 @@ const Auth = () => {
                 showForgotPassword ? (
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     {forgotPasswordSuccess ? (
-                      <Alert className="border-green-200 bg-green-50 text-green-800">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <AlertDescription>
-                          Check your email for a password reset link. It may take a few minutes to arrive.
+                          If the email address you entered is registered, you'll receive a password reset email shortly. Please check your inbox and spam folder.
                         </AlertDescription>
                       </Alert>
                     ) : (
