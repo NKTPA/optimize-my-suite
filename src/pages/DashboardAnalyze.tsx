@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Globe, ArrowRight, AlertCircle, LayoutTemplate, RotateCcw } from "lucide-react";
+import { Globe, ArrowRight, AlertCircle, LayoutTemplate, RotateCcw, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -8,6 +8,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { BlueprintForm } from "@/components/BlueprintForm";
 import { BlueprintDisplay } from "@/components/BlueprintDisplay";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AnalysisResult } from "@/types/analysis";
 import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
@@ -316,6 +317,27 @@ export default function Analyze() {
                 <BlueprintForm onSubmit={handleGenerateBlueprint} isLoading={isGeneratingBlueprint} />
               </div>
             </div>
+
+            {/* Credibility Explainer - Collapsed by default */}
+            <Collapsible className="max-w-xl mx-auto mt-6">
+              <CollapsibleTrigger className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full group">
+                <span>How OptimizeMySuite scores websites</span>
+                <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <div className="bg-muted/30 border border-border/40 rounded-lg p-5 text-left">
+                  <h4 className="text-sm font-semibold text-foreground mb-3">
+                    How OptimizeMySuite Scores Websites
+                  </h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    OptimizeMySuite evaluates websites using objective, criteria-based signals across messaging clarity, conversion paths, trust signals, SEO fundamentals, and technical accessibility. The same scoring methodology is applied before and after improvements to ensure fair comparison. Pages that cannot be accessed publicly are marked as Not Scorable rather than penalized. Scores are never guessed or manually adjusted.
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-4 pt-3 border-t border-border/30">
+                    Built for agencies to justify recommendations with clear, repeatable evidence.
+                  </p>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
       </section>
