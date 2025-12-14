@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
+import { generatePdfFilename, setPdfMetadata, extractDomainFromUrl } from "./pdfMetadata";
 
 export interface BeforeAfterPdfBranding {
   logoUrl?: string | null;
@@ -891,7 +892,17 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
   
   addFooter();
 
-  // Save
-  const filename = `website-transformation-${new Date().toISOString().split("T")[0]}.pdf`;
+  // Set PDF metadata for white-label support
+  const metadataOptions = {
+    clientDomain: originalUrl,
+    clientName: clientName,
+    agencyName: branding?.footerText || agencyName,
+    isWhiteLabel,
+    reportType: "before-after" as const,
+  };
+  setPdfMetadata(doc, metadataOptions);
+  
+  // Generate white-label friendly filename
+  const filename = generatePdfFilename(metadataOptions);
   doc.save(filename);
 }
