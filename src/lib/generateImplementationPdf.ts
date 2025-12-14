@@ -72,18 +72,35 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     }
   };
 
+  // Credibility badge text (always shown for methodology transparency)
+  const CREDIBILITY_BADGE = "Objective, criteria-based scoring. No manual adjustments. Same methodology before and after.";
+  
+  // Determine if white-label mode is active (agency branding provided)
+  const isWhiteLabel = Boolean(branding?.logoUrl || branding?.footerText);
+  
   // Premium footer
   const addFooter = () => {
+    // Credibility badge line (above main footer)
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
+    doc.text(CREDIBILITY_BADGE, pageWidth / 2, pageHeight - 20, { align: "center" });
+    
     // Subtle top line
     doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
     doc.setLineWidth(0.3);
-    doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+    doc.line(margin, pageHeight - 16, pageWidth - margin, pageHeight - 16);
     
-    // Footer text
+    // Footer text - white-label logic
     doc.setFontSize(8);
     doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
-    const footerText = branding?.footerText || "Prepared by OptimizeMySuite";
-    doc.text(footerText, margin, pageHeight - 10);
+    // If branding footerText provided, use it; if white-label with no footerText, show nothing; else show default
+    const footerText = branding?.footerText 
+      ? branding.footerText 
+      : (isWhiteLabel ? "" : "Prepared by OptimizeMySuite");
+    if (footerText) {
+      doc.text(footerText, margin, pageHeight - 10);
+    }
     
     // Page number with style
     doc.setFont("helvetica", "bold");
@@ -102,19 +119,14 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   // Brand logo or mark
   let logoY = 35;
   if (branding?.logoUrl) {
+    // Agency logo provided - show it
     try {
       doc.addImage(branding.logoUrl, "PNG", margin, logoY, 40, 40);
     } catch (e) {
-      // Fallback to text mark
-      doc.setFillColor(255, 255, 255);
-      doc.circle(margin + 18, logoY + 18, 14, "F");
-      doc.setFontSize(20);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-      doc.text("O", margin + 18, logoY + 24, { align: "center" });
+      // Fallback: no logo shown if agency logo fails to load
     }
-  } else {
-    // Default elegant mark
+  } else if (!isWhiteLabel) {
+    // Default OptimizeMySuite mark - only shown when NOT in white-label mode
     doc.setFillColor(255, 255, 255);
     doc.circle(margin + 18, logoY + 18, 14, "F");
     doc.setFontSize(20);
@@ -122,6 +134,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setTextColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
     doc.text("O", margin + 18, logoY + 24, { align: "center" });
   }
+  // If white-label mode with no logo, no mark is shown (neutral presentation)
   
   // Main title
   doc.setFontSize(36);
