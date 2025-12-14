@@ -60,50 +60,50 @@ export default function Index() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero opacity-[0.03]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />
 
-        <nav className="container relative pt-6">
+        <nav className="container relative pt-6 px-4 sm:px-6">
           <div className="flex items-center justify-between">
             <HeaderBrand textFallback />
-            <div className="flex items-center gap-2">
-              <Link to="/pricing"><Button variant="ghost" size="sm">Pricing</Button></Link>
-              <Link to="/auth"><Button variant="ghost" size="sm">Login</Button></Link>
-              <Button variant="default" size="sm" onClick={() => setShowPlanModal(true)}>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link to="/pricing"><Button variant="ghost" size="sm" className="px-2 sm:px-3">Pricing</Button></Link>
+              <Link to="/auth"><Button variant="ghost" size="sm" className="px-2 sm:px-3 hidden sm:inline-flex">Login</Button></Link>
+              <Button variant="default" size="sm" className="text-xs sm:text-sm px-2 sm:px-4" onClick={() => setShowPlanModal(true)}>
                 Start Free Trial
               </Button>
             </div>
           </div>
         </nav>
 
-        <div className="container relative py-20 lg:py-28">
+        <div className="container relative py-12 sm:py-20 lg:py-28 px-4 sm:px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Sparkles className="w-4 h-4" />
-              Your Agency's Automated Website Analysis Engine
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-6 max-w-full">
+              <Sparkles className="w-4 h-4 flex-shrink-0" />
+              <span className="break-words">Your Agency's Automated Website Analysis Engine</span>
             </div>
             
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight leading-tight break-words">
               Scale Your Agency With{" "}
               <span className="text-gradient">AI-Powered</span>{" "}
               Website Audits
             </h1>
 
-            <p className="text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed px-2 sm:px-0">
               Generate client-ready reports in minutes. Perfect for SEO agencies, marketing firms, and web designers serving local businesses.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button variant="hero" size="lg" className="gap-2 min-w-[220px]" onClick={() => setShowPlanModal(true)}>
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 w-full max-w-sm sm:max-w-none mx-auto">
+              <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[220px]" onClick={() => setShowPlanModal(true)}>
                 Start 3-Day Free Trial
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Button>
-              <Link to="/auth">
-                <Button variant="outline" size="lg" className="gap-2 min-w-[160px]">
-                  <LogIn className="w-5 h-5" />
+              <Link to="/auth" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[160px]">
+                  <LogIn className="w-5 h-5 flex-shrink-0" />
                   Login
                 </Button>
               </Link>
