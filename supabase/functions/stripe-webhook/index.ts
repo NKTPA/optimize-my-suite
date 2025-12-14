@@ -25,6 +25,14 @@ serve(async (req) => {
     
     if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set");
     
+    if (!webhookSecret) {
+      logStep("STRIPE_WEBHOOK_SECRET not configured - webhook disabled");
+      return new Response(
+        JSON.stringify({ error: "Webhook not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
     
     const supabaseClient = createClient(
@@ -36,23 +44,26 @@ serve(async (req) => {
     const body = await req.text();
     const signature = req.headers.get("stripe-signature");
     
+    if (!signature) {
+      logStep("Missing stripe-signature header");
+      return new Response(
+        JSON.stringify({ error: "Missing signature" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
     let event: Stripe.Event;
     
-    if (webhookSecret && signature) {
-      try {
-        event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-        logStep("Webhook signature verified");
-      } catch (verifyErr) {
-        const errMessage = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
-        logStep("Webhook signature verification failed", { error: errMessage });
-        return new Response(JSON.stringify({ error: "Invalid signature" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    } else {
-      event = JSON.parse(body);
-      logStep("Processing without signature verification (dev mode)");
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      logStep("Webhook signature verified");
+    } catch (verifyErr) {
+      const errMessage = verifyErr instanceof Error ? verifyErr.message : String(verifyErr);
+      logStep("Webhook signature verification failed", { error: errMessage });
+      return new Response(JSON.stringify({ error: "Invalid signature" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     logStep("Event type", { type: event.type });
