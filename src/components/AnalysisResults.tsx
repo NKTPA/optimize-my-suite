@@ -26,6 +26,7 @@ import { ScoringToolsPanel } from "./ScoringToolsPanel";
 import { NotScorableDisplay } from "./scoring/NotScorableDisplay";
 import { PlaceholderWarningBanner } from "./scoring/PlaceholderWarningBanner";
 import { ScoringIntegrityTooltip } from "./scoring/ScoringIntegrityTooltip";
+import { ScoreCredibilityStatement } from "./scoring/ScoreCredibilityStatement";
 
 import { ImplementationPack } from "./ImplementationPack";
 import { Button } from "./ui/button";
@@ -208,6 +209,11 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
             baselineUrl={baselineData?.url}
             baselineDate={baselineData?.date}
           />
+
+          {/* Score Credibility Statement */}
+          <div className="mt-6">
+            <ScoreCredibilityStatement mode="short" />
+          </div>
 
           {/* Scoring Tools Panel */}
           <div className="mt-6">

@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { AnalysisResult, FindingInput } from "@/types/analysis";
+import { CREDIBILITY_SHORT } from "@/components/scoring/ScoreCredibilityStatement";
 
 // Color palette (RGB values)
 const colors = {
@@ -356,6 +357,39 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string) {
   addSectionHeader("Technical Basics");
   results.technical.findings.forEach((f) => addFinding(getFindingText(f)));
   results.technical.recommendations.forEach((r) => addBullet(r));
+
+  // ============ SCORE CREDIBILITY STATEMENT ============
+  y += 8;
+  addPageIfNeeded(40);
+  
+  // Credibility section background
+  doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  const credibilityLines = doc.splitTextToSize(CREDIBILITY_SHORT, contentWidth - 20);
+  const credibilityHeight = credibilityLines.length * 5 + 18;
+  doc.roundedRect(margin, y - 3, contentWidth, credibilityHeight, 4, 4, "F");
+  
+  // Info icon
+  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.circle(margin + 10, y + 6, 5, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text("i", margin + 10, y + 8, { align: "center" });
+  
+  // Title
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("About This Score", margin + 20, y + 8);
+  
+  // Credibility text
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  credibilityLines.forEach((line: string, index: number) => {
+    doc.text(line, margin + 10, y + 16 + index * 5);
+  });
+  y += credibilityHeight + 5;
 
   // ============ FOOTER ============
   addPageIfNeeded(25);
