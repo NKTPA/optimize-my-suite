@@ -10,45 +10,54 @@ export interface BeforeAfterPdfData {
   clientName?: string;
 }
 
-// Premium color palette (RGB values)
+// Premium executive color palette (RGB values)
 const colors = {
-  // Primary brand colors - deep blue gradient
-  primary: [37, 99, 235] as number[],
+  // Primary brand - deep sophisticated blue
+  primary: [30, 64, 175] as number[],
   primaryLight: [239, 246, 255] as number[],
-  primaryDark: [30, 64, 175] as number[],
-  primaryGradientEnd: [59, 130, 246] as number[],
+  primaryDark: [23, 37, 84] as number[],
   
-  // Success colors - confident green
+  // Success - confident green
   success: [22, 163, 74] as number[],
   successLight: [220, 252, 231] as number[],
   successDark: [21, 128, 61] as number[],
-  successVibrant: [34, 197, 94] as number[],
+  successMuted: [187, 247, 208] as number[],
   
-  // Neutral colors
-  neutral: [148, 163, 184] as number[],
-  neutralLight: [248, 250, 252] as number[],
-  neutralMuted: [203, 213, 225] as number[],
-  neutralDark: [100, 116, 139] as number[],
-  
-  // Text colors
-  textPrimary: [15, 23, 42] as number[],
-  textSecondary: [51, 65, 85] as number[],
-  textMuted: [148, 163, 184] as number[],
-  
-  // Backgrounds
-  cardBg: [248, 250, 252] as number[],
-  border: [226, 232, 240] as number[],
-  white: [255, 255, 255] as number[],
-  
-  // Before/After specific
+  // Before - muted slate/gray
   beforeBg: [241, 245, 249] as number[],
   beforeAccent: [100, 116, 139] as number[],
-  afterBg: [236, 253, 245] as number[],
+  beforeMuted: [148, 163, 184] as number[],
+  
+  // After - vibrant success
+  afterBg: [220, 252, 231] as number[],
   afterAccent: [22, 163, 74] as number[],
   
-  // Amber for NOT SCORABLE
-  amber: [217, 119, 6] as number[],
+  // Neutral palette
+  neutral50: [248, 250, 252] as number[],
+  neutral100: [241, 245, 249] as number[],
+  neutral200: [226, 232, 240] as number[],
+  neutral300: [203, 213, 225] as number[],
+  neutral400: [148, 163, 184] as number[],
+  neutral500: [100, 116, 139] as number[],
+  neutral600: [71, 85, 105] as number[],
+  neutral700: [51, 65, 85] as number[],
+  neutral800: [30, 41, 59] as number[],
+  neutral900: [15, 23, 42] as number[],
+  
+  // Text hierarchy
+  textPrimary: [15, 23, 42] as number[],
+  textSecondary: [51, 65, 85] as number[],
+  textMuted: [100, 116, 139] as number[],
+  textLight: [148, 163, 184] as number[],
+  
+  // Amber for NOT SCORABLE (never red)
+  amber: [180, 83, 9] as number[],
   amberLight: [254, 243, 199] as number[],
+  amberMuted: [253, 230, 138] as number[],
+  
+  // Utility
+  white: [255, 255, 255] as number[],
+  border: [226, 232, 240] as number[],
 };
 
 // Check if result is NOT SCORABLE
@@ -76,67 +85,42 @@ function getNotScorableStatus(results: AnalysisResult): { notScorable: boolean; 
   return { notScorable: false, reason: "" };
 }
 
-// Generate business-outcome-focused improvements
-function generateBusinessImpact(
-  original: AnalysisResult, 
-  optimized: AnalysisResult,
-  originalStatus: { notScorable: boolean },
-  optimizedStatus: { notScorable: boolean }
-): string[] {
-  if (originalStatus.notScorable || optimizedStatus.notScorable) {
-    if (originalStatus.notScorable && !optimizedStatus.notScorable) {
-      return ["Website is now publicly accessible and ready for search indexing"];
+// Generate business-outcome-focused category impacts
+function generateCategoryImpact(category: string, delta: number): { improvement: string; outcome: string } | null {
+  if (delta < 5) return null;
+  
+  const impacts: Record<string, { improvement: string; outcome: string }> = {
+    "Messaging": {
+      improvement: "Clearer value proposition and headline",
+      outcome: "Increases first-impression clarity and reduces bounce rate"
+    },
+    "Conversion": {
+      improvement: "Stronger CTAs and lead capture forms",
+      outcome: "Improves visitor-to-lead conversion paths"
+    },
+    "Design & UX": {
+      improvement: "Enhanced visual hierarchy and user experience",
+      outcome: "Keeps visitors engaged longer and exploring more pages"
+    },
+    "SEO": {
+      improvement: "Optimized metadata and content structure",
+      outcome: "Increases organic search visibility and qualified traffic"
+    },
+    "Performance": {
+      improvement: "Faster load times and optimized assets",
+      outcome: "Reduces abandonment and improves user satisfaction"
+    },
+    "Trust": {
+      improvement: "Added credibility signals and social proof",
+      outcome: "Reduces friction and increases contact form submissions"
+    },
+    "Mobile": {
+      improvement: "Responsive design and mobile-first layout",
+      outcome: "Captures on-the-go users and local mobile searches"
     }
-    return [];
-  }
+  };
   
-  const impacts: string[] = [];
-  
-  // Messaging impact
-  const msgDelta = optimized.messaging.score - original.messaging.score;
-  if (msgDelta >= 10) {
-    impacts.push("Clearer messaging increases first-impression clarity and reduces bounce rate");
-  }
-  
-  // Conversion impact
-  const convDelta = optimized.conversion.score - original.conversion.score;
-  if (convDelta >= 10) {
-    impacts.push("Stronger CTAs and lead forms improve visitor-to-lead conversion paths");
-  }
-  
-  // SEO impact
-  const seoDelta = optimized.seo.score - original.seo.score;
-  if (seoDelta >= 10) {
-    impacts.push("SEO enhancements increase organic search visibility and traffic");
-  }
-  
-  // Trust impact
-  const trustDelta = optimized.trust.score - original.trust.score;
-  if (trustDelta >= 10) {
-    impacts.push("Trust signals reduce friction and increase contact form submissions");
-  }
-  
-  // Design/UX impact
-  const designDelta = optimized.designUx.score - original.designUx.score;
-  if (designDelta >= 10) {
-    impacts.push("Improved UX keeps visitors engaged longer and exploring more pages");
-  }
-  
-  // Mobile impact
-  const mobileDelta = optimized.mobile.score - original.mobile.score;
-  if (mobileDelta >= 10) {
-    impacts.push("Mobile optimizations support on-the-go users and local searches");
-  }
-  
-  // If no specific gains, add general impact
-  if (impacts.length === 0) {
-    const overallDelta = optimized.summary.overallScore - original.summary.overallScore;
-    if (overallDelta > 0) {
-      impacts.push("Overall website quality improved, supporting better user experience");
-    }
-  }
-  
-  return impacts.slice(0, 5);
+  return impacts[category] || null;
 }
 
 // Get section data sorted by delta (largest improvement first)
@@ -155,7 +139,6 @@ function getSortedSections(
     { name: "Trust", beforeScore: original.trust?.score, afterScore: optimized.trust?.score },
   ];
   
-  // Calculate deltas and sort by largest improvement
   return sections
     .map(s => {
       const beforeNotScorable = originalStatus.notScorable || s.beforeScore === undefined;
@@ -166,13 +149,19 @@ function getSortedSections(
     .sort((a, b) => b.delta - a.delta);
 }
 
+// Truncate URL for display
+function truncateUrl(url: string, maxLength: number): string {
+  if (url.length <= maxLength) return url;
+  return url.substring(0, maxLength - 3) + "...";
+}
+
 export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
   const { originalUrl, optimizedUrl, originalResults, optimizedResults, agencyName, clientName } = data;
   
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 15;
+  const margin = 18;
   const contentWidth = pageWidth - margin * 2;
   let y = 0;
   let currentPage = 1;
@@ -185,561 +174,630 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
     ? optimizedResults.summary.overallScore - originalResults.summary.overallScore 
     : 0;
 
-  const addPageIfNeeded = (requiredSpace: number) => {
-    if (y + requiredSpace > 272) {
-      addFooter();
-      doc.addPage();
-      currentPage++;
-      y = 25;
-    }
-  };
-
   const addFooter = () => {
-    doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+    doc.setDrawColor(colors.neutral200[0], colors.neutral200[1], colors.neutral200[2]);
+    doc.setLineWidth(0.5);
+    doc.line(margin, pageHeight - 18, pageWidth - margin, pageHeight - 18);
+    
     doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     doc.text("Generated by OptimizeMySuite", margin, pageHeight - 10);
-    doc.text(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), pageWidth / 2, pageHeight - 10, { align: "center" });
+    
+    const dateStr = new Date().toLocaleDateString("en-US", { 
+      month: "long", 
+      day: "numeric", 
+      year: "numeric" 
+    });
+    doc.text(dateStr, pageWidth / 2, pageHeight - 10, { align: "center" });
     doc.text(`Page ${currentPage}`, pageWidth - margin, pageHeight - 10, { align: "right" });
   };
 
-  // ============ PAGE 1: EXECUTIVE IMPACT COVER ============
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 1: EXECUTIVE IMPACT SUMMARY (HERO PAGE)
+  // ════════════════════════════════════════════════════════════════
   
-  // Full-width gradient header
+  // Full-bleed dark header
   doc.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  doc.rect(0, 0, pageWidth, 85, "F");
+  doc.rect(0, 0, pageWidth, 75, "F");
   
-  // Gradient overlay accent
+  // Subtle gradient accent line
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.rect(0, 70, pageWidth, 15, "F");
+  doc.rect(0, 73, pageWidth, 2, "F");
   
-  // Premium logo mark
-  doc.setFillColor(255, 255, 255);
-  doc.circle(margin + 12, 25, 10, "F");
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  doc.text("O", margin + 12, 29, { align: "center" });
-  
-  // Main headline
-  doc.setFontSize(28);
+  // Main headline - large, confident typography
+  doc.setFontSize(32);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("Website Performance", margin + 28, 30);
-  doc.text("Transformation", margin + 28, 44);
+  doc.text("Website Performance", margin, 35);
+  doc.text("Transformation", margin, 52);
   
   // Subtitle
   doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(220, 230, 255);
-  doc.text("Objective, criteria-based improvement using the same scoring methodology", margin + 28, 58);
+  doc.setTextColor(200, 210, 230);
+  doc.text("Measured improvement using the same objective scoring system", margin, 66);
   
-  y = 100;
+  y = 95;
   
-  // ============ HERO DELTA CALLOUT - THE CENTERPIECE ============
-  if (canCompare && overallDelta !== 0) {
+  // ═══════ HERO DELTA CALLOUT - THE CENTERPIECE ═══════
+  if (canCompare) {
+    const beforeScore = originalResults.summary.overallScore;
+    const afterScore = optimizedResults.summary.overallScore;
     const deltaSign = overallDelta > 0 ? "+" : "";
+    
+    // Score transformation display: BEFORE → AFTER
+    const sectionWidth = contentWidth / 3;
+    const scoreY = y + 10;
+    
+    // BEFORE score block
+    doc.setFillColor(colors.beforeBg[0], colors.beforeBg[1], colors.beforeBg[2]);
+    doc.roundedRect(margin, y, sectionWidth - 5, 65, 6, 6, "F");
+    doc.setDrawColor(colors.neutral300[0], colors.neutral300[1], colors.neutral300[2]);
+    doc.setLineWidth(1);
+    doc.roundedRect(margin, y, sectionWidth - 5, 65, 6, 6, "S");
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.beforeAccent[0], colors.beforeAccent[1], colors.beforeAccent[2]);
+    doc.text("BEFORE", margin + (sectionWidth - 5) / 2, scoreY, { align: "center" });
+    
+    doc.setFontSize(48);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.neutral500[0], colors.neutral500[1], colors.neutral500[2]);
+    doc.text(beforeScore.toString(), margin + (sectionWidth - 5) / 2, scoreY + 35, { align: "center" });
+    
+    // Arrow and DELTA in center
+    const centerX = margin + sectionWidth;
+    
+    // Large arrow
+    doc.setFillColor(colors.neutral400[0], colors.neutral400[1], colors.neutral400[2]);
+    // Arrow shape pointing right
+    doc.triangle(centerX + 8, y + 32, centerX + 22, y + 32, centerX + 15, y + 22, "F");
+    doc.rect(centerX + 11, y + 32, 8, 15, "F");
+    
+    // AFTER score block
+    const afterBlockX = margin + sectionWidth * 2 + 5;
+    doc.setFillColor(colors.afterBg[0], colors.afterBg[1], colors.afterBg[2]);
+    doc.roundedRect(afterBlockX, y, sectionWidth - 5, 65, 6, 6, "F");
+    doc.setDrawColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.setLineWidth(2);
+    doc.roundedRect(afterBlockX, y, sectionWidth - 5, 65, 6, 6, "S");
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.afterAccent[0], colors.afterAccent[1], colors.afterAccent[2]);
+    doc.text("AFTER", afterBlockX + (sectionWidth - 5) / 2, scoreY, { align: "center" });
+    
+    doc.setFontSize(48);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+    doc.text(afterScore.toString(), afterBlockX + (sectionWidth - 5) / 2, scoreY + 35, { align: "center" });
+    
+    y += 80;
+    
+    // ═══════ MASSIVE IMPROVEMENT BADGE ═══════
     const badgeWidth = 160;
-    const badgeHeight = 50;
+    const badgeHeight = 48;
     const badgeX = (pageWidth - badgeWidth) / 2;
     
-    // Large prominent badge
-    if (overallDelta > 0) {
-      doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
-    } else {
-      doc.setFillColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-    }
-    doc.roundedRect(badgeX, y, badgeWidth, badgeHeight, 8, 8, "F");
+    // Green gradient effect via layered rects
+    doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.roundedRect(badgeX, y, badgeWidth, badgeHeight, 10, 10, "F");
     
-    // Delta number - HUGE
-    doc.setFontSize(32);
+    // Lighter inner highlight
+    doc.setFillColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+    doc.roundedRect(badgeX + 3, y + 3, badgeWidth - 6, badgeHeight - 6, 8, 8, "F");
+    
+    // Delta text - HUGE and dominant
+    doc.setFontSize(34);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    doc.text(`${deltaSign}${overallDelta}`, badgeX + 45, y + 32, { align: "center" });
+    doc.text(`${deltaSign}${overallDelta}`, badgeX + 50, y + 33, { align: "center" });
     
-    // Label
-    doc.setFontSize(12);
+    // "POINT IMPROVEMENT" label
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text("POINT", badgeX + 75, y + 25);
-    doc.text("IMPROVEMENT", badgeX + 75, y + 38);
+    doc.setTextColor(255, 255, 255);
+    doc.text("POINT", badgeX + 85, y + 22);
+    doc.text("IMPROVEMENT", badgeX + 85, y + 35);
     
-    // Upward arrow indicator
-    if (overallDelta > 0) {
-      doc.setFillColor(255, 255, 255);
-      // Simple triangle
-      doc.triangle(
-        badgeX + badgeWidth - 25, y + 35,
-        badgeX + badgeWidth - 20, y + 20,
-        badgeX + badgeWidth - 15, y + 35,
-        "F"
-      );
-    }
+    y += badgeHeight + 25;
     
-    y += badgeHeight + 20;
-  } else if (!canCompare) {
-    // Cannot compare state
+  } else {
+    // Cannot compare state - professional amber notice
     doc.setFillColor(colors.amberLight[0], colors.amberLight[1], colors.amberLight[2]);
-    doc.roundedRect(margin + 30, y, contentWidth - 60, 35, 6, 6, "F");
-    doc.setFontSize(12);
+    doc.roundedRect(margin + 20, y, contentWidth - 40, 50, 8, 8, "F");
+    doc.setDrawColor(colors.amber[0], colors.amber[1], colors.amber[2]);
+    doc.setLineWidth(1);
+    doc.roundedRect(margin + 20, y, contentWidth - 40, 50, 8, 8, "S");
+    
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
-    doc.text("Comparison Limited", pageWidth / 2, y + 15, { align: "center" });
-    doc.setFontSize(9);
+    doc.text("Score Comparison Limited", pageWidth / 2, y + 20, { align: "center" });
+    
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text("One or both pages could not be fully evaluated", pageWidth / 2, y + 27, { align: "center" });
-    y += 50;
-  } else {
-    y += 10;
+    doc.setTextColor(colors.neutral600[0], colors.neutral600[1], colors.neutral600[2]);
+    doc.text("One or both pages could not be fully evaluated at time of analysis", pageWidth / 2, y + 35, { align: "center" });
+    
+    y += 65;
   }
   
-  // ============ URL CARDS ============
-  const urlCardHeight = 32;
+  // ═══════ URL INFORMATION ═══════
+  const urlBlockHeight = 28;
   
-  // Before URL card
-  doc.setFillColor(colors.beforeBg[0], colors.beforeBg[1], colors.beforeBg[2]);
-  doc.roundedRect(margin, y, contentWidth, urlCardHeight, 4, 4, "F");
+  // Before URL
+  doc.setFillColor(colors.neutral100[0], colors.neutral100[1], colors.neutral100[2]);
+  doc.roundedRect(margin, y, contentWidth, urlBlockHeight, 4, 4, "F");
   
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.beforeAccent[0], colors.beforeAccent[1], colors.beforeAccent[2]);
-  doc.text("BEFORE — Original Website", margin + 10, y + 12);
+  doc.text("ORIGINAL WEBSITE", margin + 10, y + 10);
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  const origUrlDisplay = originalUrl.length > 70 ? originalUrl.substring(0, 70) + "..." : originalUrl;
-  doc.text(origUrlDisplay, margin + 10, y + 24);
+  doc.text(truncateUrl(originalUrl, 75), margin + 10, y + 21);
   
-  y += urlCardHeight + 8;
+  y += urlBlockHeight + 6;
   
-  // After URL card
-  doc.setFillColor(colors.afterBg[0], colors.afterBg[1], colors.afterBg[2]);
-  doc.roundedRect(margin, y, contentWidth, urlCardHeight, 4, 4, "F");
+  // After URL
+  doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
+  doc.roundedRect(margin, y, contentWidth, urlBlockHeight, 4, 4, "F");
   
-  doc.setFontSize(9);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.afterAccent[0], colors.afterAccent[1], colors.afterAccent[2]);
-  doc.text("AFTER — Optimized Website", margin + 10, y + 12);
+  doc.text("OPTIMIZED WEBSITE", margin + 10, y + 10);
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  const optUrlDisplay = optimizedUrl.length > 70 ? optimizedUrl.substring(0, 70) + "..." : optimizedUrl;
-  doc.text(optUrlDisplay, margin + 10, y + 24);
+  doc.text(truncateUrl(optimizedUrl, 75), margin + 10, y + 21);
   
-  y += urlCardHeight + 20;
+  y += urlBlockHeight + 15;
   
-  // ============ CREDIBILITY BADGE ============
-  doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
-  doc.roundedRect(margin + 20, y, contentWidth - 40, 24, 4, 4, "F");
+  // ═══════ CREDIBILITY LINE ═══════
+  doc.setFillColor(colors.neutral50[0], colors.neutral50[1], colors.neutral50[2]);
+  doc.roundedRect(margin, y, contentWidth, 22, 4, 4, "F");
   
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  doc.text("Same scoring system  •  No manual adjustments  •  Real measurable gains", pageWidth / 2, y + 14, { align: "center" });
+  doc.text("Same scoring methodology  •  No manual adjustments  •  Measurable gains", pageWidth / 2, y + 13, { align: "center" });
   
-  y += 35;
+  y += 30;
   
   // Client/Agency info
   if (clientName || agencyName) {
-    doc.setFontSize(10);
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.setFontSize(9);
     if (clientName) {
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
       doc.text(`Prepared for: ${clientName}`, margin, y);
-      y += 10;
+      y += 12;
     }
     if (agencyName) {
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
       doc.text(`Agency: ${agencyName}`, margin, y);
-      y += 10;
     }
   }
   
   addFooter();
   
-  // ============ PAGE 2: HEAD-TO-HEAD SCORE CARDS ============
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 2: WHERE THE BIGGEST GAINS WERE MADE
+  // ════════════════════════════════════════════════════════════════
   doc.addPage();
   currentPage++;
   y = 25;
   
-  // Page title
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("Head-to-Head Comparison", pageWidth / 2, y, { align: "center" });
-  y += 30;
-  
-  // Two large side-by-side score cards
-  const cardWidth = (contentWidth - 16) / 2;
-  const cardHeight = 110;
-  
-  // ============ BEFORE CARD - Muted/grayscale ============
-  const beforeCardX = margin;
-  
-  // Card background
-  doc.setFillColor(colors.beforeBg[0], colors.beforeBg[1], colors.beforeBg[2]);
-  doc.roundedRect(beforeCardX, y, cardWidth, cardHeight, 8, 8, "F");
-  doc.setDrawColor(colors.neutralMuted[0], colors.neutralMuted[1], colors.neutralMuted[2]);
-  doc.setLineWidth(1);
-  doc.roundedRect(beforeCardX, y, cardWidth, cardHeight, 8, 8, "S");
-  
-  // Label
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-  doc.text("BEFORE OPTIMIZATION", beforeCardX + cardWidth / 2, y + 18, { align: "center" });
-  
-  if (originalStatus.notScorable) {
-    // NOT SCORABLE - neutral amber styling
-    doc.setFillColor(colors.amberLight[0], colors.amberLight[1], colors.amberLight[2]);
-    doc.roundedRect(beforeCardX + 15, y + 35, cardWidth - 30, 40, 6, 6, "F");
-    
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
-    doc.text("NOT SCORABLE", beforeCardX + cardWidth / 2, y + 55, { align: "center" });
-    
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-    doc.text(originalStatus.reason, beforeCardX + cardWidth / 2, y + 68, { align: "center" });
-  } else {
-    // Large score with progress ring visual
-    const score = originalResults.summary.overallScore;
-    const centerX = beforeCardX + cardWidth / 2;
-    const centerY = y + 60;
-    const radius = 28;
-    
-    // Background circle
-    doc.setDrawColor(colors.neutralMuted[0], colors.neutralMuted[1], colors.neutralMuted[2]);
-    doc.setLineWidth(6);
-    doc.circle(centerX, centerY, radius, "S");
-    
-    // Progress arc (simplified as we can't do true arcs easily)
-    doc.setDrawColor(colors.beforeAccent[0], colors.beforeAccent[1], colors.beforeAccent[2]);
-    doc.setLineWidth(6);
-    // Draw partial circle based on score
-    const progress = score / 100;
-    if (progress > 0) {
-      // Simple visual indicator
-      doc.circle(centerX, centerY, radius, "S");
-    }
-    
-    // Score number
-    doc.setFontSize(36);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.beforeAccent[0], colors.beforeAccent[1], colors.beforeAccent[2]);
-    doc.text(score.toString(), centerX, centerY + 10, { align: "center" });
-  }
-  
-  // URL snippet
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  const beforeUrlShort = originalUrl.length > 32 ? originalUrl.substring(0, 32) + "..." : originalUrl;
-  doc.text(beforeUrlShort, beforeCardX + cardWidth / 2, y + cardHeight - 8, { align: "center" });
-  
-  // ============ AFTER CARD - Vibrant/success ============
-  const afterCardX = margin + cardWidth + 16;
-  
-  // Card background with success tint
-  doc.setFillColor(colors.afterBg[0], colors.afterBg[1], colors.afterBg[2]);
-  doc.roundedRect(afterCardX, y, cardWidth, cardHeight, 8, 8, "F");
-  doc.setDrawColor(colors.success[0], colors.success[1], colors.success[2]);
-  doc.setLineWidth(2);
-  doc.roundedRect(afterCardX, y, cardWidth, cardHeight, 8, 8, "S");
-  
-  // Label
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
-  doc.text("AFTER OPTIMIZATION", afterCardX + cardWidth / 2, y + 18, { align: "center" });
-  
-  if (optimizedStatus.notScorable) {
-    // NOT SCORABLE
-    doc.setFillColor(colors.amberLight[0], colors.amberLight[1], colors.amberLight[2]);
-    doc.roundedRect(afterCardX + 15, y + 35, cardWidth - 30, 40, 6, 6, "F");
-    
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
-    doc.text("NOT SCORABLE", afterCardX + cardWidth / 2, y + 55, { align: "center" });
-    
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-    doc.text(optimizedStatus.reason, afterCardX + cardWidth / 2, y + 68, { align: "center" });
-  } else {
-    // Large score with progress ring visual
-    const score = optimizedResults.summary.overallScore;
-    const centerX = afterCardX + cardWidth / 2;
-    const centerY = y + 60;
-    const radius = 28;
-    
-    // Background circle
-    doc.setDrawColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
-    doc.setLineWidth(6);
-    doc.circle(centerX, centerY, radius, "S");
-    
-    // Filled progress
-    doc.setDrawColor(colors.successVibrant[0], colors.successVibrant[1], colors.successVibrant[2]);
-    doc.setLineWidth(6);
-    doc.circle(centerX, centerY, radius, "S");
-    
-    // Score number
-    doc.setFontSize(36);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
-    doc.text(score.toString(), centerX, centerY + 10, { align: "center" });
-  }
-  
-  // URL snippet
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  const afterUrlShort = optimizedUrl.length > 32 ? optimizedUrl.substring(0, 32) + "..." : optimizedUrl;
-  doc.text(afterUrlShort, afterCardX + cardWidth / 2, y + cardHeight - 8, { align: "center" });
-  
-  y += cardHeight + 20;
-  
-  // ============ DELTA BADGE BETWEEN CARDS ============
-  if (canCompare) {
-    const deltaSign = overallDelta > 0 ? "+" : "";
-    const badgeY = y - cardHeight / 2 - 15;
-    const badgeX = pageWidth / 2;
-    
-    // Circle badge in center
-    if (overallDelta > 0) {
-      doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
-    } else if (overallDelta < 0) {
-      doc.setFillColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-    } else {
-      doc.setFillColor(colors.neutral[0], colors.neutral[1], colors.neutral[2]);
-    }
-    doc.circle(badgeX, badgeY, 18, "F");
-    
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text(`${deltaSign}${overallDelta}`, badgeX, badgeY + 5, { align: "center" });
-  }
-  
-  // Caption below cards
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "italic");
-  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  doc.text("Measured improvement using identical evaluation criteria", pageWidth / 2, y, { align: "center" });
-  
-  y += 25;
-  addFooter();
-  
-  // ============ PAGE 3: CATEGORY IMPROVEMENT VISUALIZATION ============
-  doc.addPage();
-  currentPage++;
-  y = 25;
-  
-  // Section header
-  doc.setFontSize(18);
+  // Page header
+  doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
   doc.text("Where the Biggest Gains Were Made", margin, y);
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Categories sorted by improvement magnitude", margin, y + 12);
-  y += 30;
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("Categories ranked by improvement magnitude", margin, y + 14);
+  
+  y += 35;
   
   // Get sorted sections (largest delta first)
   const sortedSections = getSortedSections(originalResults, optimizedResults, originalStatus, optimizedStatus);
   
-  const barMaxWidth = 110;
-  const barHeight = 10;
-  const rowHeight = 40;
-  const labelWidth = 55;
-  const barStartX = margin + labelWidth;
+  const rowHeight = 38;
+  const barMaxWidth = 100;
+  const barHeight = 14;
   
   sortedSections.forEach((section) => {
-    addPageIfNeeded(rowHeight + 5);
+    // Category container
+    doc.setFillColor(colors.neutral50[0], colors.neutral50[1], colors.neutral50[2]);
+    doc.roundedRect(margin, y, contentWidth, rowHeight, 6, 6, "F");
     
-    // Category background
-    doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
-    doc.roundedRect(margin, y - 5, contentWidth, rowHeight - 4, 4, 4, "F");
-    
-    // Category label
-    doc.setFontSize(11);
+    // Category name - large and bold
+    doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(section.name, margin + 8, y + 8);
+    doc.text(section.name, margin + 10, y + 14);
     
-    // BEFORE bar
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text("Before", barStartX - 3, y + 6, { align: "right" });
+    // Score cards side by side
+    const cardStartX = margin + 75;
+    const scoreCardWidth = 45;
+    const scoreCardHeight = 26;
+    const cardY = y + 6;
     
-    // Bar background
-    doc.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.roundedRect(barStartX, y, barMaxWidth, barHeight, 3, 3, "F");
+    // BEFORE score card (gray)
+    doc.setFillColor(colors.beforeBg[0], colors.beforeBg[1], colors.beforeBg[2]);
+    doc.roundedRect(cardStartX, cardY, scoreCardWidth, scoreCardHeight, 4, 4, "F");
     
     if (!section.beforeNotScorable) {
-      const beforeWidth = Math.max(2, (section.beforeScore! / 100) * barMaxWidth);
-      doc.setFillColor(colors.neutralMuted[0], colors.neutralMuted[1], colors.neutralMuted[2]);
-      doc.roundedRect(barStartX, y, beforeWidth, barHeight, 3, 3, "F");
-      
-      // Score at end
-      doc.setFontSize(10);
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-      doc.text(section.beforeScore!.toString(), barStartX + barMaxWidth + 6, y + 8);
+      doc.setTextColor(colors.beforeAccent[0], colors.beforeAccent[1], colors.beforeAccent[2]);
+      doc.text(section.beforeScore!.toString(), cardStartX + scoreCardWidth / 2, cardY + 17, { align: "center" });
     } else {
-      doc.setFontSize(8);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
-      doc.text("N/A", barStartX + barMaxWidth + 6, y + 8);
+      doc.text("N/A", cardStartX + scoreCardWidth / 2, cardY + 17, { align: "center" });
     }
     
-    y += 16;
-    
-    // AFTER bar
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text("After", barStartX - 3, y + 6, { align: "right" });
-    
-    // Bar background
-    doc.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.roundedRect(barStartX, y, barMaxWidth, barHeight, 3, 3, "F");
+    // AFTER score card (green)
+    const afterCardX = cardStartX + scoreCardWidth + 8;
+    doc.setFillColor(colors.afterBg[0], colors.afterBg[1], colors.afterBg[2]);
+    doc.roundedRect(afterCardX, cardY, scoreCardWidth, scoreCardHeight, 4, 4, "F");
+    doc.setDrawColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.setLineWidth(1.5);
+    doc.roundedRect(afterCardX, cardY, scoreCardWidth, scoreCardHeight, 4, 4, "S");
     
     if (!section.afterNotScorable) {
-      const afterWidth = Math.max(2, (section.afterScore! / 100) * barMaxWidth);
-      doc.setFillColor(colors.successVibrant[0], colors.successVibrant[1], colors.successVibrant[2]);
-      doc.roundedRect(barStartX, y, afterWidth, barHeight, 3, 3, "F");
-      
-      // Score at end
-      doc.setFontSize(10);
+      doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
-      doc.text(section.afterScore!.toString(), barStartX + barMaxWidth + 6, y + 8);
+      doc.text(section.afterScore!.toString(), afterCardX + scoreCardWidth / 2, cardY + 17, { align: "center" });
     } else {
-      doc.setFontSize(8);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
-      doc.text("N/A", barStartX + barMaxWidth + 6, y + 8);
+      doc.text("N/A", afterCardX + scoreCardWidth / 2, cardY + 17, { align: "center" });
     }
     
-    // Delta badge on the right
+    // BIG DELTA CALLOUT on the right
+    const deltaX = pageWidth - margin - 50;
+    
     if (!section.beforeNotScorable && !section.afterNotScorable) {
-      const deltaX = barStartX + barMaxWidth + 28;
       const delta = section.delta;
       
       if (delta > 0) {
-        doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
-        doc.roundedRect(deltaX, y - 12, 36, 24, 4, 4, "F");
-        doc.setFontSize(12);
+        // Positive delta - green badge
+        doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+        doc.roundedRect(deltaX, cardY, 45, scoreCardHeight, 4, 4, "F");
+        
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
-        doc.text(`+${delta}`, deltaX + 18, y + 4, { align: "center" });
+        doc.setTextColor(255, 255, 255);
+        doc.text(`+${delta}`, deltaX + 22, cardY + 17, { align: "center" });
       } else if (delta < 0) {
-        doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
-        doc.roundedRect(deltaX, y - 12, 36, 24, 4, 4, "F");
-        doc.setFontSize(12);
+        // Negative delta - muted
+        doc.setFillColor(colors.neutral300[0], colors.neutral300[1], colors.neutral300[2]);
+        doc.roundedRect(deltaX, cardY, 45, scoreCardHeight, 4, 4, "F");
+        
+        doc.setFontSize(14);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(colors.neutralDark[0], colors.neutralDark[1], colors.neutralDark[2]);
-        doc.text(`${delta}`, deltaX + 18, y + 4, { align: "center" });
+        doc.setTextColor(colors.neutral600[0], colors.neutral600[1], colors.neutral600[2]);
+        doc.text(`${delta}`, deltaX + 22, cardY + 17, { align: "center" });
       } else {
-        doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
-        doc.roundedRect(deltaX, y - 12, 36, 24, 4, 4, "F");
+        // No change
+        doc.setFillColor(colors.neutral200[0], colors.neutral200[1], colors.neutral200[2]);
+        doc.roundedRect(deltaX, cardY, 45, scoreCardHeight, 4, 4, "F");
+        
         doc.setFontSize(10);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-        doc.text("—", deltaX + 18, y + 4, { align: "center" });
+        doc.text("—", deltaX + 22, cardY + 17, { align: "center" });
       }
     }
     
-    y += rowHeight - 12;
+    y += rowHeight + 6;
   });
   
   addFooter();
   
-  // ============ PAGE 4: BUSINESS IMPACT SUMMARY ============
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 3: WHAT THESE IMPROVEMENTS UNLOCK (BUSINESS FRAMING)
+  // ════════════════════════════════════════════════════════════════
   doc.addPage();
   currentPage++;
   y = 25;
   
-  // Section header with icon
+  // Page header with accent
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.circle(margin + 10, y + 6, 8, "F");
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("$", margin + 10, y + 10, { align: "center" });
+  doc.roundedRect(margin, y - 5, 6, 30, 2, 2, "F");
   
-  doc.setFontSize(18);
+  doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("What These Improvements Unlock", margin + 25, y + 10);
-  y += 30;
+  doc.text("What These Improvements Unlock", margin + 15, y + 5);
   
-  const businessImpacts = generateBusinessImpact(originalResults, optimizedResults, originalStatus, optimizedStatus);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("Business outcomes from measurable website quality gains", margin + 15, y + 18);
   
-  if (businessImpacts.length === 0) {
+  y += 40;
+  
+  // Generate impact cards for each category with meaningful delta
+  sortedSections.forEach((section) => {
+    if (section.delta < 5) return; // Only show meaningful improvements
+    
+    const impact = generateCategoryImpact(section.name, section.delta);
+    if (!impact) return;
+    
+    // Impact card
+    doc.setFillColor(colors.neutral50[0], colors.neutral50[1], colors.neutral50[2]);
+    doc.roundedRect(margin, y, contentWidth, 45, 6, 6, "F");
+    
+    // Left accent bar (green gradient effect)
+    doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.roundedRect(margin, y, 5, 45, 2, 2, "F");
+    
+    // Category + delta badge
     doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    doc.text(section.name, margin + 15, y + 14);
+    
+    // Delta pill
+    doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
+    const pillX = margin + 15 + doc.getTextWidth(section.name) + 8;
+    doc.roundedRect(pillX, y + 5, 30, 14, 7, 7, "F");
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+    doc.text(`+${section.delta}`, pillX + 15, y + 14, { align: "center" });
+    
+    // Improvement statement
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text(impact.improvement, margin + 15, y + 28);
+    
+    // Business outcome - italicized
     doc.setFont("helvetica", "italic");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text("Unable to generate impact summary due to page access limitations.", margin, y);
-    y += 15;
-  } else {
-    businessImpacts.forEach((impact, index) => {
-      addPageIfNeeded(25);
-      
-      // Impact card
-      doc.setFillColor(index === 0 ? colors.successLight[0] : colors.neutralLight[0], 
-                       index === 0 ? colors.successLight[1] : colors.neutralLight[1], 
-                       index === 0 ? colors.successLight[2] : colors.neutralLight[2]);
-      doc.roundedRect(margin, y, contentWidth, 22, 4, 4, "F");
-      
-      // Check icon
-      doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
-      doc.circle(margin + 14, y + 11, 6, "F");
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(255, 255, 255);
-      doc.text("✓", margin + 14, y + 14, { align: "center" });
-      
-      // Impact text
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-      doc.text(impact, margin + 28, y + 14);
-      
-      y += 30;
-    });
+    doc.text(impact.outcome, margin + 15, y + 40);
+    
+    y += 52;
+  });
+  
+  // If no meaningful improvements
+  if (!sortedSections.some(s => s.delta >= 5)) {
+    doc.setFillColor(colors.amberLight[0], colors.amberLight[1], colors.amberLight[2]);
+    doc.roundedRect(margin, y, contentWidth, 40, 6, 6, "F");
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
+    doc.text("Unable to generate impact summary due to limited improvement data", pageWidth / 2, y + 24, { align: "center" });
   }
   
-  y += 15;
+  addFooter();
   
-  // ============ NOT SCORABLE EXPLANATION ============
-  addPageIfNeeded(55);
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 4: BEFORE VS AFTER BREAKDOWN (CLEAN COMPARISON)
+  // ════════════════════════════════════════════════════════════════
+  doc.addPage();
+  currentPage++;
+  y = 25;
   
-  doc.setFillColor(colors.amberLight[0], colors.amberLight[1], colors.amberLight[2]);
-  doc.roundedRect(margin, y, contentWidth, 45, 4, 4, "F");
-  
-  // Info badge
-  doc.setFillColor(colors.amber[0], colors.amber[1], colors.amber[2]);
-  doc.roundedRect(margin + 10, y + 8, 90, 16, 3, 3, "F");
-  doc.setFontSize(9);
+  // Page header
+  doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("NOT SCORABLE", margin + 55, y + 19, { align: "center" });
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Before vs After Breakdown", margin, y);
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("Side-by-side category comparison", margin, y + 14);
+  
+  y += 35;
+  
+  // Column headers
+  const colWidth = (contentWidth - 10) / 2;
+  
+  // BEFORE header
+  doc.setFillColor(colors.beforeBg[0], colors.beforeBg[1], colors.beforeBg[2]);
+  doc.roundedRect(margin, y, colWidth, 22, 4, 4, "F");
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.beforeAccent[0], colors.beforeAccent[1], colors.beforeAccent[2]);
+  doc.text("BEFORE", margin + colWidth / 2, y + 14, { align: "center" });
+  
+  // AFTER header
+  const afterColX = margin + colWidth + 10;
+  doc.setFillColor(colors.afterBg[0], colors.afterBg[1], colors.afterBg[2]);
+  doc.roundedRect(afterColX, y, colWidth, 22, 4, 4, "F");
+  doc.setDrawColor(colors.success[0], colors.success[1], colors.success[2]);
+  doc.setLineWidth(1.5);
+  doc.roundedRect(afterColX, y, colWidth, 22, 4, 4, "S");
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.afterAccent[0], colors.afterAccent[1], colors.afterAccent[2]);
+  doc.text("AFTER", afterColX + colWidth / 2, y + 14, { align: "center" });
+  
+  y += 30;
+  
+  // Category rows
+  sortedSections.forEach((section) => {
+    // Category label
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text(section.name, margin, y);
+    
+    y += 8;
+    
+    const cardHeight = 32;
+    
+    // BEFORE card
+    doc.setFillColor(colors.neutral100[0], colors.neutral100[1], colors.neutral100[2]);
+    doc.roundedRect(margin, y, colWidth, cardHeight, 4, 4, "F");
+    
+    if (!section.beforeNotScorable) {
+      // Large score
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.neutral500[0], colors.neutral500[1], colors.neutral500[2]);
+      doc.text(section.beforeScore!.toString(), margin + 15, y + 22);
+      
+      // Brief note
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      doc.text("Original score", margin + 45, y + 20);
+    } else {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
+      doc.text("NOT SCORABLE", margin + colWidth / 2, y + 20, { align: "center" });
+    }
+    
+    // AFTER card
+    doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
+    doc.roundedRect(afterColX, y, colWidth, cardHeight, 4, 4, "F");
+    
+    if (!section.afterNotScorable) {
+      // Large score
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+      doc.text(section.afterScore!.toString(), afterColX + 15, y + 22);
+      
+      // Delta note
+      if (!section.beforeNotScorable) {
+        const delta = section.delta;
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        if (delta > 0) {
+          doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
+          doc.text(`+${delta} improvement`, afterColX + 45, y + 20);
+        } else if (delta < 0) {
+          doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+          doc.text(`${delta} change`, afterColX + 45, y + 20);
+        } else {
+          doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+          doc.text("No change", afterColX + 45, y + 20);
+        }
+      }
+    } else {
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.amber[0], colors.amber[1], colors.amber[2]);
+      doc.text("NOT SCORABLE", afterColX + colWidth / 2, y + 20, { align: "center" });
+    }
+    
+    y += cardHeight + 10;
+  });
+  
+  addFooter();
+  
+  // ════════════════════════════════════════════════════════════════
+  // PAGE 5: SCORE CREDIBILITY & NOT SCORABLE EXPLANATION
+  // ════════════════════════════════════════════════════════════════
+  doc.addPage();
+  currentPage++;
+  y = 25;
+  
+  // Page header
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("How to Read These Scores", margin, y);
+  
+  y += 25;
+  
+  // Credibility section
+  doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  doc.roundedRect(margin, y, contentWidth, 80, 6, 6, "F");
+  
+  // Left accent
+  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.roundedRect(margin, y, 5, 80, 2, 2, "F");
+  
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.text("Scoring Methodology", margin + 15, y + 18);
   
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Not Scorable means the page could not be accessed publicly at the", margin + 10, y + 33);
-  doc.text("time of analysis. Scores are never guessed or penalized.", margin + 10, y + 42);
   
-  // ============ FOOTER ============
+  const credibilityPoints = [
+    "Scores are based on objective, criteria-based analysis of website content",
+    "Both before and after analyses use identical evaluation methodology",
+    "No manual adjustments or subjective modifications are applied",
+    "Results reflect measurable improvements in website quality metrics"
+  ];
+  
+  let pointY = y + 32;
+  credibilityPoints.forEach((point) => {
+    doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.circle(margin + 20, pointY - 2, 2, "F");
+    doc.text(point, margin + 28, pointY);
+    pointY += 12;
+  });
+  
+  y += 95;
+  
+  // NOT SCORABLE explanation section
+  doc.setFillColor(colors.amberLight[0], colors.amberLight[1], colors.amberLight[2]);
+  doc.roundedRect(margin, y, contentWidth, 75, 6, 6, "F");
+  
+  // Amber accent
+  doc.setFillColor(colors.amber[0], colors.amber[1], colors.amber[2]);
+  doc.roundedRect(margin, y, 5, 75, 2, 2, "F");
+  
+  // NOT SCORABLE badge
+  doc.setFillColor(colors.amber[0], colors.amber[1], colors.amber[2]);
+  doc.roundedRect(margin + 15, y + 12, 85, 18, 4, 4, "F");
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text("NOT SCORABLE", margin + 57, y + 24, { align: "center" });
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.neutral700[0], colors.neutral700[1], colors.neutral700[2]);
+  doc.text("does not mean poor performance", margin + 108, y + 24);
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.neutral600[0], colors.neutral600[1], colors.neutral600[2]);
+  doc.text("It means the page could not be accessed publicly at the time of analysis.", margin + 15, y + 45);
+  doc.text("Common causes include authentication gates, private staging environments,", margin + 15, y + 57);
+  doc.text("or temporary access restrictions. Scores are never guessed or penalized.", margin + 15, y + 69);
+  
+  y += 95;
+  
+  // Final trust statement
+  doc.setFillColor(colors.neutral50[0], colors.neutral50[1], colors.neutral50[2]);
+  doc.roundedRect(margin, y, contentWidth, 35, 6, 6, "F");
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("This report provides an objective comparison based on standardized criteria.", pageWidth / 2, y + 15, { align: "center" });
+  doc.text("The methodology ensures consistent, reliable measurement of improvement.", pageWidth / 2, y + 27, { align: "center" });
+  
   addFooter();
 
   // Save
