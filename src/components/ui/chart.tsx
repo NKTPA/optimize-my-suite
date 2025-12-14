@@ -58,6 +58,16 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Validate that a color value is safe (hex, hsl, rgb, or named color)
+// This prevents XSS via malicious CSS injection
+function isValidCssColor(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  // Allow hex colors, hsl/hsla, rgb/rgba, and common named colors
+  const safeColorPattern = /^(#[0-9a-fA-F]{3,8}|hsl\([^)]+\)|hsla\([^)]+\)|rgb\([^)]+\)|rgba\([^)]+\)|[a-zA-Z]+)$/;
+  return safeColorPattern.test(trimmed) && !trimmed.includes('<') && !trimmed.includes('>');
+}
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,26 +75,49 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
-  );
+  // Build CSS custom properties safely using useEffect to inject styles
+  // This avoids dangerouslySetInnerHTML entirely
+  React.useEffect(() => {
+    const styleId = `chart-style-${id}`;
+    let styleElement = document.getElementById(styleId) as HTMLStyleElement | null;
+    
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = styleId;
+      document.head.appendChild(styleElement);
+    }
+
+    const cssRules = Object.entries(THEMES)
+      .map(([theme, prefix]) => {
+        const variables = colorConfig
+          .map(([key, itemConfig]) => {
+            const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+            // Validate color before including it
+            if (color && isValidCssColor(color)) {
+              return `  --color-${key}: ${color};`;
+            }
+            return null;
+          })
+          .filter(Boolean)
+          .join('\n');
+        
+        return variables ? `${prefix} [data-chart=${id}] {\n${variables}\n}` : '';
+      })
+      .filter(Boolean)
+      .join('\n');
+
+    styleElement.textContent = cssRules;
+
+    return () => {
+      // Cleanup on unmount
+      const element = document.getElementById(styleId);
+      if (element) {
+        element.remove();
+      }
+    };
+  }, [id, colorConfig]);
+
+  return null;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;

@@ -16,8 +16,27 @@ const PLAN_LIMITS: Record<string, number> = {
   scale: 500,
 };
 
+// Redact sensitive fields from log details
+function redactSensitive(details?: unknown): unknown {
+  if (!details || typeof details !== 'object') return details;
+  
+  const sensitiveFields = ['email', 'userId', 'user_id', 'customerId', 'customer_id', 'stripe_customer_id', 
+    'stripe_subscription_id', 'subscriptionId', 'subscription_id', 'workspaceId', 'workspace_id', 'token'];
+  
+  const redacted = { ...(details as Record<string, unknown>) };
+  for (const field of sensitiveFields) {
+    if (field in redacted && redacted[field]) {
+      const value = String(redacted[field]);
+      // Redact but keep first 4 chars for debugging
+      redacted[field] = value.length > 4 ? value.slice(0, 4) + '***' : '***';
+    }
+  }
+  return redacted;
+}
+
 function logStep(step: string, details?: unknown) {
-  const detailsStr = details ? `: ${JSON.stringify(details)}` : "";
+  const safeDetails = redactSensitive(details);
+  const detailsStr = safeDetails ? `: ${JSON.stringify(safeDetails)}` : "";
   console.log(`[analyze-website] ${step}${detailsStr}`);
 }
 
@@ -228,24 +247,81 @@ function isValidPublicUrl(urlString: string): { valid: boolean; error?: string }
     
     const hostname = url.hostname.toLowerCase();
     
-    // Block localhost and loopback
-    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') {
+    // Block localhost and all loopback variants
+    if (
+      hostname === 'localhost' || 
+      hostname === '::1' ||
+      hostname === '0.0.0.0' ||
+      hostname.startsWith('127.') || // Block entire 127.0.0.0/8 range
+      hostname === '0:0:0:0:0:0:0:1' // IPv6 loopback expanded form
+    ) {
       return { valid: false, error: "Cannot analyze localhost URLs" };
     }
     
-    // Block private IP ranges
+    // Block private IP ranges (IPv4)
     const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (ipv4Match) {
-      const [, a, b, c] = ipv4Match.map(Number);
+      const [, a, b, c, d] = ipv4Match.map(Number);
+      // Validate IP octets are in valid range
+      if (a > 255 || b > 255 || c > 255 || d > 255) {
+        return { valid: false, error: "Invalid IP address format" };
+      }
+      // Block 0.0.0.0/8 (current network)
+      if (a === 0) return { valid: false, error: "Cannot analyze reserved network URLs" };
+      // Block 10.0.0.0/8 (private)
       if (a === 10) return { valid: false, error: "Cannot analyze private network URLs" };
+      // Block 172.16.0.0/12 (private)
       if (a === 172 && b >= 16 && b <= 31) return { valid: false, error: "Cannot analyze private network URLs" };
+      // Block 192.168.0.0/16 (private)
       if (a === 192 && b === 168) return { valid: false, error: "Cannot analyze private network URLs" };
-      if (a === 169 && b === 254) return { valid: false, error: "Cannot analyze link-local URLs" };
+      // Block 169.254.0.0/16 (link-local) - includes cloud metadata at 169.254.169.254
+      if (a === 169 && b === 254) return { valid: false, error: "Cannot analyze link-local or cloud metadata URLs" };
+      // Block 127.0.0.0/8 (loopback - additional check)
+      if (a === 127) return { valid: false, error: "Cannot analyze localhost URLs" };
+      // Block 100.64.0.0/10 (Carrier-grade NAT)
+      if (a === 100 && b >= 64 && b <= 127) return { valid: false, error: "Cannot analyze private network URLs" };
+    }
+    
+    // Block IPv6 private/reserved addresses
+    if (hostname.includes(':')) {
+      const lowerHostname = hostname.toLowerCase();
+      // Block fc00::/7 (Unique local addresses - private)
+      if (lowerHostname.startsWith('fc') || lowerHostname.startsWith('fd')) {
+        return { valid: false, error: "Cannot analyze private IPv6 URLs" };
+      }
+      // Block fe80::/10 (Link-local)
+      if (lowerHostname.startsWith('fe8') || lowerHostname.startsWith('fe9') || 
+          lowerHostname.startsWith('fea') || lowerHostname.startsWith('feb')) {
+        return { valid: false, error: "Cannot analyze link-local IPv6 URLs" };
+      }
+      // Block ::1 variants (loopback)
+      if (lowerHostname === '::1' || lowerHostname === '0:0:0:0:0:0:0:1') {
+        return { valid: false, error: "Cannot analyze localhost URLs" };
+      }
     }
     
     // Block internal hostnames
-    if (hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.localhost')) {
+    if (
+      hostname.endsWith('.local') || 
+      hostname.endsWith('.internal') || 
+      hostname.endsWith('.localhost') ||
+      hostname.endsWith('.localdomain') ||
+      hostname.endsWith('.corp') ||
+      hostname.endsWith('.home') ||
+      hostname.endsWith('.lan')
+    ) {
       return { valid: false, error: "Cannot analyze internal network URLs" };
+    }
+    
+    // Block cloud metadata endpoints (explicit hostnames)
+    const metadataHosts = [
+      'metadata.google.internal',
+      'metadata.gke.internal',
+      'instance-data',
+      'fd00:ec2::254', // AWS IPv6 metadata
+    ];
+    if (metadataHosts.some(host => hostname === host || hostname.endsWith('.' + host))) {
+      return { valid: false, error: "Cannot analyze cloud metadata URLs" };
     }
     
     return { valid: true };
