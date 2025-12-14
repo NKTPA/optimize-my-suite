@@ -287,6 +287,25 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+
+    // Gracefully handle auth/session-related errors so the UI doesn't break
+    if (errorMessage.includes("Auth session missing") || errorMessage.includes("Authentication error")) {
+      logStep("Auth/session error in catch block - returning unauthenticated state", { message: errorMessage });
+      return new Response(JSON.stringify({
+        subscribed: false,
+        plan: "starter",
+        subscription_status: "session_expired",
+        subscription_end: null,
+        usage_limit: 0,
+        isOwner: false,
+        requiresAuth: true,
+        sessionExpired: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     logStep("ERROR in check-subscription", { message: errorMessage });
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
