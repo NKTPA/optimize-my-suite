@@ -1,10 +1,20 @@
 import { ImplementationPlan } from "@/types/implementation";
+import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 
 /**
  * Generates a comprehensive Lovable rebuild prompt from an Implementation Pack
  * This prompt can be copy-pasted directly into Lovable to rebuild a website
+ * 
+ * CRITICAL: The URL must be the original analyzed customer domain, never a Lovable
+ * preview URL or deployment URL. This function validates and sanitizes the URL.
  */
 export function generateLovableRebuildPrompt(plan: ImplementationPlan, url: string): string {
+  // GUARDRAIL: Validate that URL is not a Lovable/deployment URL
+  if (!isValidAnalysisSourceUrl(url)) {
+    console.error("[Lovable Prompt] BLOCKED: Attempted to use contaminated URL:", url);
+    // Use sanitized fallback - this will show an error message instead of wrong URL
+    url = sanitizeAnalysisUrl(url, "[ERROR: Original website URL not available - do not use this prompt]");
+  }
   const services = plan.keyPages.servicesPage?.sections
     ?.map((s) => s.serviceName)
     .join(", ") || "various services";

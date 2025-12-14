@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
 import { generateLovableRebuildPrompt } from "./generateLovablePrompt";
+import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 
 // Branding options for white-label PDFs
 export interface PdfBranding {
@@ -41,6 +42,9 @@ const sectionIcons: Record<string, string> = {
 };
 
 export function generateImplementationPdf(plan: ImplementationPlan, url: string, branding?: PdfBranding) {
+  // GUARDRAIL: Validate that URL is not a Lovable/deployment URL
+  const validatedUrl = isValidAnalysisSourceUrl(url) ? url : sanitizeAnalysisUrl(url, "Original website URL unavailable");
+  
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -324,13 +328,13 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setTextColor(255, 255, 255);
   doc.text("Implementation Pack", titleStartX, 22);
   
-  // URL and date (subheader)
+  // URL and date (subheader) - uses validated URL
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  const displayUrl = url.length > 50 ? url.substring(0, 50) + "..." : url;
-  doc.text(`${displayUrl}  •  ${new Date().toLocaleDateString()}`, margin + 24, 32);
+  const displayUrl = validatedUrl.length > 50 ? validatedUrl.substring(0, 50) + "..." : validatedUrl;
+  doc.text(`${displayUrl}  •  ${new Date().toLocaleDateString()}`, margin + 24, y + 35);
   
-  y = 55;
+  y = 58;
 
   // ============ INTRO CARD ============
   doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
@@ -558,40 +562,75 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Copy & Paste into Lovable:", margin, y);
   y += 8;
   
-  // Generate the Lovable prompt
-  const lovablePrompt = generateLovableRebuildPrompt(plan, url);
+  // Generate the Lovable prompt - uses validated URL
+  const lovablePrompt = generateLovableRebuildPrompt(plan, validatedUrl);
   
-  // Prompt container with monospace text
+  // Split prompt into lines for PDF rendering - FULL PROMPT, NO TRUNCATION
   const promptLines = doc.splitTextToSize(lovablePrompt, contentWidth - 10);
-  const promptHeight = Math.min(promptLines.length * 4 + 10, 150); // Cap height
   
-  addPageIfNeeded(promptHeight);
-  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-  doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-  doc.roundedRect(margin, y - 3, contentWidth, promptHeight, 3, 3, "FD");
+  // Calculate required height for full prompt (no truncation)
+  const lineHeight = 4;
+  const paddingTop = 6;
+  const paddingBottom = 6;
+  const promptHeight = (promptLines.length * lineHeight) + paddingTop + paddingBottom;
   
-  doc.setFontSize(7);
-  doc.setFont("courier", "normal");
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  // Add pages as needed to fit the entire prompt
+  let linesRemaining = promptLines.length;
+  let lineIndex = 0;
   
-  // Only show first portion in PDF with truncation note
-  const maxPdfLines = 35;
-  const displayLines = promptLines.slice(0, maxPdfLines);
-  let lineY = y + 3;
-  displayLines.forEach((line: string) => {
-    if (lineY < y + promptHeight - 10) {
-      doc.text(line, margin + 5, lineY);
-      lineY += 4;
+  while (linesRemaining > 0) {
+    // Calculate how many lines fit on current page
+    const availableHeight = 270 - y;
+    const linesPerPage = Math.floor((availableHeight - paddingTop - paddingBottom) / lineHeight);
+    const linesToRender = Math.min(linesRemaining, linesPerPage);
+    
+    if (linesToRender <= 0) {
+      // Not enough space, add new page
+      addFooter();
+      doc.addPage();
+      currentPage++;
+      y = 20;
+      continue;
     }
-  });
-  
-  if (promptLines.length > maxPdfLines) {
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text("... [Full prompt available in web interface]", margin + 5, y + promptHeight - 8);
+    
+    // Draw container for this page's portion
+    const containerHeight = (linesToRender * lineHeight) + paddingTop + paddingBottom;
+    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+    doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+    doc.roundedRect(margin, y - 3, contentWidth, containerHeight, 3, 3, "FD");
+    
+    // Render lines
+    doc.setFontSize(7);
+    doc.setFont("courier", "normal");
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    
+    let lineY = y + paddingTop - 1;
+    for (let i = 0; i < linesToRender; i++) {
+      doc.text(promptLines[lineIndex + i], margin + 5, lineY);
+      lineY += lineHeight;
+    }
+    
+    y += containerHeight + 3;
+    lineIndex += linesToRender;
+    linesRemaining -= linesToRender;
+    
+    // If more lines remain, add a new page
+    if (linesRemaining > 0) {
+      addFooter();
+      doc.addPage();
+      currentPage++;
+      y = 20;
+      
+      // Add continuation label
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      doc.text("Lovable Rebuild Prompt (continued):", margin, y);
+      y += 10;
+    }
   }
   
-  y += promptHeight + 5;
+  y += 5;
 
   // ============ FINAL FOOTER ============
   addFooter();

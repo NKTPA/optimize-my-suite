@@ -14,6 +14,7 @@ import {
   Code2,
 } from "lucide-react";
 import { generateLovableRebuildPrompt } from "@/lib/generateLovablePrompt";
+import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "@/lib/urlValidation";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
@@ -21,7 +22,7 @@ import { useWorkspace } from "@/contexts/WorkspaceContext";
 
 interface ImplementationPackProps {
   plan: ImplementationPlan;
-  url: string;
+  url: string; // Must be the original analyzed URL, never a Lovable/preview URL
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -81,7 +82,14 @@ function Section({
 
 function LovableRebuildSection({ plan, url }: { plan: ImplementationPlan; url: string }) {
   const [copied, setCopied] = useState(false);
-  const prompt = generateLovableRebuildPrompt(plan, url);
+  
+  // GUARDRAIL: Validate URL before generating prompt
+  const validatedUrl = isValidAnalysisSourceUrl(url) 
+    ? url 
+    : sanitizeAnalysisUrl(url, "[ERROR: Invalid URL - cannot generate rebuild prompt]");
+  
+  const prompt = generateLovableRebuildPrompt(plan, validatedUrl);
+  const isUrlInvalid = !isValidAnalysisSourceUrl(url);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(prompt);
@@ -98,6 +106,16 @@ function LovableRebuildSection({ plan, url }: { plan: ImplementationPlan; url: s
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* URL Contamination Warning */}
+        {isUrlInvalid && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+            <p className="text-sm text-destructive font-medium">
+              ⚠️ Warning: The original website URL appears to be a preview/deployment URL. 
+              This prompt should only be used with the customer's actual domain.
+            </p>
+          </div>
+        )}
+        
         {/* Disclaimer */}
         <div className="bg-accent/10 border border-accent/20 rounded-lg p-3">
           <p className="text-sm text-muted-foreground">

@@ -17,8 +17,32 @@ const PLAN_LIMITS: Record<string, number> = {
   scale: 500,
 };
 
+// Blocked URL patterns that should NEVER be used as "Original Website"
+const BLOCKED_URL_PATTERNS = [
+  'lovable.app',
+  'lovable.dev',
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  'preview.',
+  '.local',
+];
+
+// Validate that URL is not a deployment/preview URL
+function isValidAnalysisSourceUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const normalizedUrl = url.toLowerCase().trim();
+  for (const pattern of BLOCKED_URL_PATTERNS) {
+    if (normalizedUrl.includes(pattern)) {
+      console.error(`[URL Validation] BLOCKED contaminated URL: ${url}`);
+      return false;
+    }
+  }
+  return true;
+}
+
 const IMPLEMENTATION_PROMPT = `
-You are an expert web developer and digital marketing specialist who implements websites for small HOME-SERVICES businesses (HVAC, plumbing, roofing, electrical, landscaping, med spa, dental, etc.).
+You are an expert web developer and digital marketing specialist who implements websites for small HOME-SERVICES businesses (HVAC, plumbing, roofing, electrical, landscaping, med spa, dental, etc).
 
 You receive:
 1) A comprehensive website analysis (JSON) with scores and findings across messaging, conversion, design, mobile, performance, SEO, trust, and technical sections.
@@ -211,6 +235,17 @@ serve(async (req) => {
     if (!analysisResult) {
       return new Response(
         JSON.stringify({ error: "Analysis result is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // GUARDRAIL: Validate URL is not a Lovable/deployment URL
+    if (!isValidAnalysisSourceUrl(url)) {
+      console.error("[Implementation Plan] BLOCKED: Attempted to generate pack for contaminated URL:", url);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid URL: Cannot generate implementation pack for preview/deployment URLs. Use the original customer website URL." 
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
