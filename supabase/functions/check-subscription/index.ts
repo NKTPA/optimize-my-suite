@@ -7,8 +7,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+// Redact sensitive fields from log details
+const redactSensitive = (details?: unknown): unknown => {
+  if (!details || typeof details !== 'object') return details;
+  
+  const sensitiveFields = ['email', 'userId', 'user_id', 'customerId', 'customer_id', 'stripe_customer_id', 
+    'stripe_subscription_id', 'subscriptionId', 'subscription_id', 'workspaceId', 'workspace_id', 'priceId'];
+  
+  const redacted = { ...(details as Record<string, unknown>) };
+  for (const field of sensitiveFields) {
+    if (field in redacted && redacted[field]) {
+      const value = String(redacted[field]);
+      // Redact but keep first 4 chars for debugging
+      redacted[field] = value.length > 4 ? value.slice(0, 4) + '***' : '***';
+    }
+  }
+  return redacted;
+};
+
+const logStep = (step: string, details?: unknown) => {
+  const safeDetails = redactSensitive(details);
+  const detailsStr = safeDetails ? ` - ${JSON.stringify(safeDetails)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
