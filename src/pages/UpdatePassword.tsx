@@ -168,7 +168,7 @@ const UpdatePassword = () => {
               <HeaderBrand variant="auth" textFallback />
             </div>
             <p className="text-muted-foreground">
-              Create a new password for your account
+              Secure your agency dashboard with a new password
             </p>
           </div>
 
@@ -193,10 +193,10 @@ const UpdatePassword = () => {
 
               {success ? (
                 <div className="space-y-4">
-                  <Alert className="border-green-200 bg-green-50 text-green-800">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                     <AlertDescription>
-                      Your password has been updated successfully. Redirecting to login...
+                      Your password has been updated successfully. Redirecting to your agency dashboard...
                     </AlertDescription>
                   </Alert>
                   <Button asChild className="w-full">
