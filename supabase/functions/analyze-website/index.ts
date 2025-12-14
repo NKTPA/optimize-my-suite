@@ -254,6 +254,150 @@ function isValidPublicUrl(urlString: string): { valid: boolean; error?: string }
   }
 }
 
+// NOT SCORABLE detection thresholds
+const MIN_HTML_SIZE_BYTES = 1000; // Less than 1KB is likely a shell
+const MIN_BODY_TEXT_LENGTH = 100; // Less than 100 chars of actual text
+
+// Lovable placeholder detection keywords
+const LOVABLE_PLACEHOLDER_KEYWORDS = [
+  'authenticating',
+  'get started',
+  'build software products',
+  'lovable',
+];
+
+interface NotScorableResult {
+  isNotScorable: true;
+  reason: 'auth_gate' | 'insufficient_html' | 'blocked_fetch' | 'redirect_loop' | 'placeholder_page' | 'js_only_shell' | 'login_required';
+  reasonDisplay: string;
+  finalUrl?: string;
+  httpStatus?: number;
+  htmlSizeKb?: number;
+  fixInstructions: string[];
+}
+
+/**
+ * Detects if the fetched HTML is a Lovable auth placeholder page
+ */
+function detectLovablePlaceholderPage(html: string, url: string): boolean {
+  const lowerHtml = html.toLowerCase();
+  const lowerUrl = url.toLowerCase();
+  
+  // Must be a Lovable domain
+  if (!lowerUrl.includes('lovable.app') && !lowerUrl.includes('lovable.dev')) {
+    return false;
+  }
+  
+  // Check for placeholder keywords
+  const hasKeywords = LOVABLE_PLACEHOLDER_KEYWORDS.some(kw => lowerHtml.includes(kw));
+  
+  // Check for minimal body content (JS shell)
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : '';
+  const textOnly = bodyContent.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  
+  return hasKeywords && textOnly.length < 500;
+}
+
+/**
+ * Checks if the HTML content is sufficient for analysis
+ * Returns NotScorableResult if not scorable, null if OK to proceed
+ */
+function checkContentSufficiency(html: string, url: string, httpStatus?: number): NotScorableResult | null {
+  const htmlSizeBytes = new TextEncoder().encode(html).length;
+  const htmlSizeKb = htmlSizeBytes / 1024;
+  
+  // Check for Lovable placeholder page first
+  if (detectLovablePlaceholderPage(html, url)) {
+    return {
+      isNotScorable: true,
+      reason: 'placeholder_page',
+      reasonDisplay: 'This URL shows a Lovable authentication or placeholder page, not the actual website content. The site may require login or may not be published yet.',
+      finalUrl: url,
+      httpStatus,
+      htmlSizeKb,
+      fixInstructions: [
+        'Publish the site to make it publicly accessible',
+        'Use the public deployment URL (not preview-- URL)',
+        'Connect a custom domain for production analysis',
+        'If using authentication, ensure the homepage is publicly accessible',
+      ],
+    };
+  }
+  
+  // Check for insufficient HTML size
+  if (htmlSizeBytes < MIN_HTML_SIZE_BYTES) {
+    return {
+      isNotScorable: true,
+      reason: 'insufficient_html',
+      reasonDisplay: 'The page returned too little HTML content to analyze. This may indicate a JavaScript-only shell, a redirect, or a blocked page.',
+      finalUrl: url,
+      httpStatus,
+      htmlSizeKb,
+      fixInstructions: [
+        'Ensure the page has server-side rendered content',
+        'Check if the page requires JavaScript to load content',
+        'Verify the URL is correct and publicly accessible',
+        'Try accessing the URL in an incognito browser window',
+      ],
+    };
+  }
+  
+  // Extract and check body text content
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const bodyHtml = bodyMatch ? bodyMatch[1] : html;
+  const bodyText = bodyHtml
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  if (bodyText.length < MIN_BODY_TEXT_LENGTH) {
+    // Check if it looks like a login/auth page
+    const lowerHtml = html.toLowerCase();
+    const hasLoginIndicators = 
+      lowerHtml.includes('login') || 
+      lowerHtml.includes('sign in') || 
+      lowerHtml.includes('authenticate') ||
+      lowerHtml.includes('password');
+    
+    if (hasLoginIndicators) {
+      return {
+        isNotScorable: true,
+        reason: 'login_required',
+        reasonDisplay: 'This page appears to require login/authentication. We cannot analyze protected pages.',
+        finalUrl: url,
+        httpStatus,
+        htmlSizeKb,
+        fixInstructions: [
+          'Use the public-facing URL that visitors see without logging in',
+          'Ensure the homepage does not require authentication',
+          'If this is a preview environment, publish the site first',
+          'Consider setting up a public landing page',
+        ],
+      };
+    }
+    
+    return {
+      isNotScorable: true,
+      reason: 'js_only_shell',
+      reasonDisplay: 'The page contains very little readable text content. It may be a JavaScript-only application that requires client-side rendering.',
+      finalUrl: url,
+      httpStatus,
+      htmlSizeKb,
+      fixInstructions: [
+        'Implement server-side rendering (SSR) for better SEO',
+        'Add static HTML content that loads before JavaScript',
+        'Ensure the page has meaningful content without JavaScript',
+        'Consider using a pre-rendering service',
+      ],
+    };
+  }
+  
+  return null; // Content is sufficient
+}
+
 // Extract data from HTML
 function extractDataFromHtml(html: string, url: string) {
   const getMetaContent = (name: string) => {
@@ -664,10 +808,78 @@ serve(async (req) => {
     
     if (!html!) {
       logStep("ERROR: All fetch attempts failed", { error: lastError?.message });
-      return new Response(
-        JSON.stringify({ error: "Could not access this website. The site may have bot protection enabled. Please check the URL and try again." }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      
+      // Return NOT SCORABLE result instead of error
+      const notScorableResult = {
+        summary: {
+          overallScore: 0,
+          overview: "Unable to analyze this website.",
+          quickWins: [],
+        },
+        notScorable: {
+          isNotScorable: true,
+          reason: fetchBlocked ? 'blocked_fetch' : 'blocked_fetch',
+          reasonDisplay: 'Could not access this website. The site may have bot protection enabled, require authentication, or be temporarily unavailable.',
+          finalUrl: url,
+          httpStatus: 0,
+          htmlSizeKb: 0,
+          fixInstructions: [
+            'Verify the URL is correct and publicly accessible',
+            'Try accessing the URL in an incognito browser window',
+            'Check if the site has bot protection (Cloudflare, etc.)',
+            'If this is a preview URL, try the production URL instead',
+          ],
+        },
+        messaging: { score: 0, findings: [], recommendedHeadline: '', recommendedSubheadline: '', elevatorPitch: '' },
+        conversion: { score: 0, findings: [], recommendations: [], sampleButtons: [] },
+        designUx: { score: 0, findings: [], recommendations: [] },
+        mobile: { score: 0, findings: [], recommendations: [] },
+        performance: { score: 0, findings: [], heavyImages: [], recommendations: [] },
+        seo: { score: 0, findings: [], recommendedTitle: '', recommendedMetaDescription: '', recommendedH1: '', keywords: [], checklist: [] },
+        trust: { score: 0, findings: [], whyChooseUs: [], testimonialsBlock: '' },
+        technical: { findings: [], recommendations: [] },
+        aiServicePitch: { paragraph: '', bullets: [] },
+        environment,
+        analysisSourceUrl: url,
+      };
+      
+      return new Response(JSON.stringify(notScorableResult), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200, // Return 200 with NOT SCORABLE state, not error
+      });
+    }
+
+    // ========================================
+    // CHECK CONTENT SUFFICIENCY (NOT SCORABLE detection)
+    // ========================================
+    const contentCheck = checkContentSufficiency(html, url);
+    if (contentCheck) {
+      logStep("NOT SCORABLE: Insufficient content", { reason: contentCheck.reason });
+      
+      const notScorableResult = {
+        summary: {
+          overallScore: 0,
+          overview: contentCheck.reasonDisplay,
+          quickWins: contentCheck.fixInstructions.slice(0, 3),
+        },
+        notScorable: contentCheck,
+        messaging: { score: 0, findings: [], recommendedHeadline: '', recommendedSubheadline: '', elevatorPitch: '' },
+        conversion: { score: 0, findings: [], recommendations: [], sampleButtons: [] },
+        designUx: { score: 0, findings: [], recommendations: [] },
+        mobile: { score: 0, findings: [], recommendations: [] },
+        performance: { score: 0, findings: [], heavyImages: [], recommendations: [] },
+        seo: { score: 0, findings: [], recommendedTitle: '', recommendedMetaDescription: '', recommendedH1: '', keywords: [], checklist: [] },
+        trust: { score: 0, findings: [], whyChooseUs: [], testimonialsBlock: '' },
+        technical: { findings: [], recommendations: [] },
+        aiServicePitch: { paragraph: '', bullets: [] },
+        environment,
+        analysisSourceUrl: url,
+      };
+      
+      return new Response(JSON.stringify(notScorableResult), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
     }
 
     // Extract data from HTML

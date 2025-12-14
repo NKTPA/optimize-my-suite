@@ -16,13 +16,16 @@ import {
   Loader2,
   RotateCcw,
 } from "lucide-react";
-import { AnalysisResult } from "@/types/analysis";
+import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
 import { ImplementationPlan } from "@/types/implementation";
 import { OverallScore } from "./OverallScore";
 import { AnalysisSection } from "./AnalysisSection";
 import { FindingsList } from "./FindingsList";
 import { RecommendationCard } from "./RecommendationCard";
 import { ScoringToolsPanel } from "./ScoringToolsPanel";
+import { NotScorableDisplay } from "./scoring/NotScorableDisplay";
+import { PlaceholderWarningBanner } from "./scoring/PlaceholderWarningBanner";
+import { ScoringIntegrityTooltip } from "./scoring/ScoringIntegrityTooltip";
 
 import { ImplementationPack } from "./ImplementationPack";
 import { Button } from "./ui/button";
@@ -100,43 +103,82 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
     }
   };
 
+  // Check if this is a NOT SCORABLE result
+  const notScorable = isNotScorable(results);
+  const isPlaceholder = !notScorable && detectLovablePlaceholder(results);
+
+  // If NOT SCORABLE, show the NOT SCORABLE display
+  if (notScorable) {
+    return (
+      <div className="space-y-8 opacity-0 animate-fade-in">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <ScoringIntegrityTooltip />
+          {onReset && (
+            <Button onClick={onReset} variant="secondary" className="gap-2">
+              <RotateCcw className="w-4 h-4" />
+              Start New Analysis
+            </Button>
+          )}
+        </div>
+
+        <NotScorableDisplay state={results.notScorable} url={url} />
+
+        {/* Scoring Tools Panel - still show for testing other URLs */}
+        <ScoringToolsPanel
+          currentUrl={url}
+          currentResults={results}
+          originalUrl={baselineData?.url}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 opacity-0 animate-fade-in">
       {/* Action Buttons */}
-      <div className="flex flex-wrap justify-end gap-3">
-        {onReset && (
-          <Button
-            onClick={onReset}
-            variant="secondary"
-            className="gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Start New Analysis
-          </Button>
-        )}
-        <Button
-          onClick={handleGenerateImplementation}
-          variant="outline"
-          className="gap-2"
-          disabled={isGenerating}
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
-            </>
-          ) : (
-            <>
-              <Cog className="w-4 h-4" />
-              Generate Implementation Plan
-            </>
+      <div className="flex flex-wrap justify-between items-center gap-3">
+        <ScoringIntegrityTooltip />
+        <div className="flex flex-wrap gap-3">
+          {onReset && (
+            <Button
+              onClick={onReset}
+              variant="secondary"
+              className="gap-2"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Start New Analysis
+            </Button>
           )}
-        </Button>
-        <Button onClick={handleExportPdf} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
-          Export PDF Report
-        </Button>
+          <Button
+            onClick={handleGenerateImplementation}
+            variant="outline"
+            className="gap-2"
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Cog className="w-4 h-4" />
+                Generate Implementation Plan
+              </>
+            )}
+          </Button>
+          <Button onClick={handleExportPdf} variant="outline" className="gap-2">
+            <Download className="w-4 h-4" />
+            Export PDF Report
+          </Button>
+        </div>
       </div>
+
+      {/* Placeholder Warning Banner */}
+      {isPlaceholder && (
+        <PlaceholderWarningBanner className="mb-4" />
+      )}
 
       {/* Error Message */}
       {implementationError && (

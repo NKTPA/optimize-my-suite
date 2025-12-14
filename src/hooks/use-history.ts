@@ -58,9 +58,16 @@ export const useHistory = () => {
     async (url: string, result: AnalysisResult) => {
       if (!user) return null;
 
-      const snippet =
-        result.summary?.overview?.slice(0, 150) ||
-        "Website analysis completed with actionable recommendations.";
+      // Check if this is a NOT SCORABLE result
+      const isNotScorableResult = result.notScorable?.isNotScorable === true;
+      
+      const snippet = isNotScorableResult
+        ? `NOT SCORABLE: ${result.notScorable?.reasonDisplay?.slice(0, 100) || 'Unable to analyze this page.'}`
+        : (result.summary?.overview?.slice(0, 150) ||
+           "Website analysis completed with actionable recommendations.");
+
+      // For NOT SCORABLE, don't store a numeric score
+      const overallScore = isNotScorableResult ? null : (result.summary?.overallScore ?? null);
 
       try {
         const { data, error } = await supabase
@@ -69,7 +76,7 @@ export const useHistory = () => {
             user_id: user.id,
             url,
             type: "analysis" as const,
-            overall_score: result.summary?.overallScore ?? null,
+            overall_score: overallScore,
             snippet: snippet + (snippet.length >= 150 ? "..." : ""),
             analysis_result: JSON.parse(JSON.stringify(result)),
           }])
@@ -87,7 +94,7 @@ export const useHistory = () => {
           url,
           type: "analysis",
           createdAt: data.created_at,
-          overallScore: result.summary?.overallScore,
+          overallScore: overallScore ?? undefined,
           snippet: snippet + (snippet.length >= 150 ? "..." : ""),
           analysisResult: result,
         };
