@@ -14,6 +14,7 @@ import { BlueprintFormData, WebsiteBlueprint } from "@/types/blueprint";
 import { HistoryItem } from "@/types/history";
 import { useToast } from "@/hooks/use-toast";
 import { useHistory } from "@/hooks/use-history";
+import { useMemo } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { UsageLimitModal } from "@/components/entitlements/UsageLimitModal";
@@ -24,7 +25,7 @@ export default function Analyze() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, session, isLoading: authLoading } = useAuth();
-  const { addAnalysis } = useHistory();
+  const { addAnalysis, getBaselineForUrl } = useHistory();
   const { toast } = useToast();
   const { canUseFeature, incrementUsage, getRemainingUsage, isTrialExpired } = useWorkspace();
   
@@ -334,7 +335,14 @@ export default function Analyze() {
           </div>
         )}
 
-        {results && !isLoading && <AnalysisResults results={results} url={analyzedUrl} onReset={handleReset} />}
+        {results && !isLoading && (
+          <AnalysisResults 
+            results={results} 
+            url={analyzedUrl} 
+            onReset={handleReset}
+            baselineData={getBaselineForUrl(analyzedUrl)}
+          />
+        )}
 
         {blueprint && !isGeneratingBlueprint && (
           <>
