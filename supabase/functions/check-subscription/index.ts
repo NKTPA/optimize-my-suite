@@ -41,18 +41,49 @@ serve(async (req) => {
     );
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("No authorization header - returning unauthenticated state");
+      return new Response(JSON.stringify({ 
+        subscribed: false,
+        plan: "starter",
+        subscription_status: "unauthenticated",
+        subscription_end: null,
+        usage_limit: 0,
+        isOwner: false,
+        requiresAuth: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    
+    // Handle auth errors gracefully - user may need to re-login
+    if (userError || !userData?.user?.email) {
+      logStep("Auth validation failed - session may be expired", { error: userError?.message });
+      return new Response(JSON.stringify({ 
+        subscribed: false,
+        plan: "starter",
+        subscription_status: "session_expired",
+        subscription_end: null,
+        usage_limit: 0,
+        isOwner: false,
+        requiresAuth: true,
+        sessionExpired: true,
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+    
     const user = userData.user;
-    if (!user?.email) throw new Error("User not authenticated or email not available");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Check if user is the platform owner (server-side check)
-    const isOwner = ownerEmail ? user.email.toLowerCase() === ownerEmail : false;
+    const isOwner = ownerEmail && user.email ? user.email.toLowerCase() === ownerEmail : false;
     if (isOwner) {
       logStep("Owner override detected - granting full access");
     }
