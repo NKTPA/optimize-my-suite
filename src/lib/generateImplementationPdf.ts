@@ -31,15 +31,15 @@ const colors = {
   white: [255, 255, 255],
 };
 
-// Icon symbols for different sections
+// Icon labels for different sections (simple letters that work with standard fonts)
 const sectionIcons: Record<string, string> = {
-  hero: "★",
-  pages: "📄",
-  forms: "✓",
-  seo: "🔍",
-  design: "◆",
-  technical: "⚙",
-  checklist: "☑",
+  hero: "H",
+  pages: "P",
+  forms: "F",
+  seo: "S",
+  design: "D",
+  technical: "T",
+  checklist: "C",
 };
 
 export function generateImplementationPdf(plan: ImplementationPlan, url: string, branding?: PdfBranding) {
@@ -88,12 +88,12 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     doc.circle(margin + 12, y + 6, 5, "F");
     
-    // Icon symbol
-    doc.setFontSize(8);
+    // Icon letter (centered in circle)
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(255, 255, 255);
-    const icon = sectionIcons[iconKey] || "•";
-    doc.text(icon, margin + 12, y + 8, { align: "center" });
+    const icon = sectionIcons[iconKey] || "X";
+    doc.text(icon, margin + 12, y + 7.5, { align: "center" });
     
     // Title
     doc.setFontSize(14);
@@ -309,18 +309,20 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     } catch (e) {
       // Fallback to icon if logo fails
       doc.setFillColor(255, 255, 255);
-      doc.circle(margin + 10, 20, 8, "F");
-      doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-      doc.setFontSize(12);
-      doc.text("✦", margin + 10, 23, { align: "center" });
+      doc.circle(margin + 17, 20, 10, "F");
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      doc.text("O", margin + 17, 23, { align: "center" });
     }
   } else {
-    // Default icon
+    // Default icon - letter "O" for OptimizeMySuite
     doc.setFillColor(255, 255, 255);
-    doc.circle(margin + 10, 20, 8, "F");
-    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    doc.setFontSize(12);
-    doc.text("✦", margin + 10, 23, { align: "center" });
+    doc.circle(margin + 17, 20, 10, "F");
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.text("O", margin + 17, 23, { align: "center" });
   }
   
   // Header title
@@ -341,13 +343,14 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
   doc.roundedRect(margin, y - 5, contentWidth, 22, 4, 4, "F");
   
-  // Check icon
+  // Check icon - draw a checkmark shape
   doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
   doc.circle(margin + 12, y + 6, 6, "F");
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("✓", margin + 12, y + 8, { align: "center" });
+  // Draw checkmark using lines
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(1.2);
+  doc.line(margin + 9, y + 6, margin + 11.5, y + 8.5);
+  doc.line(margin + 11.5, y + 8.5, margin + 15, y + 3.5);
   
   // Intro text
   doc.setFontSize(11);
@@ -422,10 +425,10 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.roundedRect(margin, y - 3, contentWidth, 24, 4, 4, "F");
   doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
   doc.circle(margin + 12, y + 8, 6, "F");
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("☎", margin + 12, y + 10, { align: "center" });
+  doc.text("P", margin + 12, y + 10, { align: "center" }); // P for Phone
   doc.setFontSize(9);
   doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
   doc.text("PRIMARY PHONE", margin + 24, y + 5);
