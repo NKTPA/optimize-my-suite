@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Sparkles, ArrowRight, Building2, ShieldCheck, TrendingUp, BadgeCheck, Zap } from "lucide-react";
+import { Check, Sparkles, ArrowRight, Building2, ShieldCheck, TrendingUp, BadgeCheck, Zap, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const plans = [
   {
@@ -374,6 +375,28 @@ export default function Pricing() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Scoring Credibility Explainer */}
+      <section className="container pb-16">
+        <div className="max-w-3xl mx-auto">
+          <Collapsible>
+            <CollapsibleTrigger className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full group">
+              <span>How scoring credibility works</span>
+              <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <div className="bg-muted/30 border border-border/40 rounded-lg p-5 text-left">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  OptimizeMySuite evaluates websites using objective, criteria-based signals across messaging clarity, conversion paths, trust signals, SEO fundamentals, and technical accessibility. The same scoring methodology is applied before and after improvements to ensure fair comparison. Pages that cannot be accessed publicly are marked as Not Scorable rather than penalized. Scores are never guessed or manually adjusted.
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-4 pt-3 border-t border-border/30">
+                  Built for agencies to justify recommendations with clear, repeatable evidence.
+                </p>
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </section>
 

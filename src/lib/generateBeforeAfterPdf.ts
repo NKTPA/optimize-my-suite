@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
+import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 
 export interface BeforeAfterPdfData {
   originalUrl: string;
@@ -751,28 +752,28 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
   doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(...colors.primary);
-  doc.text("Scoring Methodology", margin + 15, y + 20);
+  doc.text("Scoring Methodology & Credibility", margin + 15, y + 20);
   
-  const points = [
-    "Objective, criteria-based analysis",
-    "Identical methodology for both analyses",
-    "No manual adjustments applied",
-    "Measurable quality metrics"
-  ];
-  
+  // Canonical credibility body text
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...colors.textSecondary);
   
-  let pointY = y + 38;
-  points.forEach((point) => {
-    doc.setFillColor(...colors.success);
-    doc.circle(margin + 22, pointY - 2, 2, "F");
-    doc.text(point, margin + 32, pointY);
-    pointY += 14;
+  const credBodyLines = doc.splitTextToSize(CREDIBILITY_BODY, contentWidth - 30);
+  let credY = y + 35;
+  credBodyLines.forEach((line: string) => {
+    doc.text(line, margin + 15, credY);
+    credY += 5;
   });
   
-  y += 100;
+  // Footer line
+  credY += 8;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(...colors.textMuted);
+  doc.text(CREDIBILITY_FOOTER, margin + 15, credY);
+  
+  y += 90;
   
   // NOT SCORABLE section
   doc.setFillColor(...colors.amberLight);
