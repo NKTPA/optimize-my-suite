@@ -5,10 +5,9 @@ import {
   TrendingDown, 
   Minus,
   Info, 
-  ToggleLeft, 
-  ToggleRight,
   Target,
-  Sparkles
+  Sparkles,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DualScore } from "@/lib/scoringEngine";
@@ -16,11 +15,13 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
 
 interface ScoreInsightsPanelProps {
   dualScore: DualScore;
   baselineScore?: number;
   baselineUrl?: string;
+  baselineDate?: string;
   className?: string;
   onDemoModeChange?: (enabled: boolean) => void;
 }
@@ -29,6 +30,7 @@ export function ScoreInsightsPanel({
   dualScore, 
   baselineScore,
   baselineUrl,
+  baselineDate,
   className,
   onDemoModeChange
 }: ScoreInsightsPanelProps) {
@@ -165,16 +167,31 @@ export function ScoreInsightsPanel({
             <span className="text-xs text-muted-foreground">vs Original</span>
           </div>
           {deltaVsOriginal !== null ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-1.5">
               <Badge 
                 variant="outline" 
-                className={cn("text-sm font-bold px-2 py-0.5", getDeltaColor(deltaVsOriginal))}
+                className={cn("text-sm font-bold px-2 py-0.5 w-fit", getDeltaColor(deltaVsOriginal))}
               >
                 <span className="flex items-center gap-1">
                   {getDeltaIcon(deltaVsOriginal)}
                   {deltaVsOriginal > 0 ? "+" : ""}{deltaVsOriginal} vs Original
                 </span>
               </Badge>
+              
+              {/* Baseline Info */}
+              <div className="flex flex-col gap-0.5 mt-1">
+                {baselineDate && (
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <Calendar className="w-3 h-3" />
+                    <span>Baseline set {format(new Date(baselineDate), "MMM d, yyyy")}</span>
+                  </div>
+                )}
+                {baselineUrl && (
+                  <p className="text-[10px] text-muted-foreground/70 truncate" title={baselineUrl}>
+                    {new URL(baselineUrl).hostname}
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col">
@@ -185,11 +202,6 @@ export function ScoreInsightsPanel({
                 Analyze customer domain first
               </span>
             </div>
-          )}
-          {baselineUrl && deltaVsOriginal !== null && (
-            <p className="text-[10px] text-muted-foreground mt-1 truncate" title={baselineUrl}>
-              vs {baselineUrl}
-            </p>
           )}
         </div>
       </div>
