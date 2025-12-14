@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Loader2, AlertTriangle, Globe, GitCompare } from "lucide-react";
+import { Loader2, AlertTriangle, Globe, GitCompare, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { AnalysisResult } from "@/types/analysis";
+import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
 import { ScoreDisplay } from "./ScoreDisplay";
 
 interface ScoreCompareModalProps {
@@ -15,18 +16,29 @@ interface ScoreCompareModalProps {
   originalUrl?: string;
 }
 
-function isLovablePlaceholderPage(results: AnalysisResult): boolean {
-  const summaryText = (results.summary?.overview || "").toLowerCase();
-  const titleText = (results.seo?.recommendedTitle || "").toLowerCase();
+// Check if a result is NOT SCORABLE or a placeholder
+function isResultNotComparable(results: AnalysisResult): { notComparable: boolean; reason: string } {
+  if (isNotScorable(results)) {
+    const reasonMap: Record<string, string> = {
+      auth_gate: "Authentication required",
+      insufficient_html: "Insufficient content",
+      blocked_fetch: "Access blocked",
+      redirect_loop: "Redirect loop detected",
+      placeholder_page: "Placeholder page",
+      js_only_shell: "JavaScript-only shell",
+      login_required: "Login required",
+    };
+    return { 
+      notComparable: true, 
+      reason: reasonMap[results.notScorable?.reason || ""] || "Not scorable"
+    };
+  }
   
-  const placeholderKeywords = ["authenticating", "lovable", "get started", "sign in", "loading"];
-  const hasPlaceholderKeyword = placeholderKeywords.some(
-    kw => summaryText.includes(kw) || titleText.includes(kw)
-  );
+  if (detectLovablePlaceholder(results)) {
+    return { notComparable: true, reason: "Lovable placeholder page detected" };
+  }
   
-  const hasLowScores = results.messaging?.score === 0 || results.seo?.score === 0;
-  
-  return hasPlaceholderKeyword && hasLowScores;
+  return { notComparable: false, reason: "" };
 }
 
 function extractCustomerDomain(url: string): string {
@@ -113,8 +125,12 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
     onClose();
   };
 
-  const prodIsPlaceholder = productionResults ? isLovablePlaceholderPage(productionResults) : false;
-  const prevIsPlaceholder = previewResults ? isLovablePlaceholderPage(previewResults) : false;
+  // Check if results are comparable
+  const prodStatus = productionResults ? isResultNotComparable(productionResults) : null;
+  const prevStatus = previewResults ? isResultNotComparable(previewResults) : null;
+  
+  const canCompare = productionResults && previewResults && 
+    !prodStatus?.notComparable && !prevStatus?.notComparable;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -122,10 +138,10 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GitCompare className="w-5 h-5 text-primary" />
-            Compare Production vs Preview Scores
+            Before vs After Score Comparison
           </DialogTitle>
           <DialogDescription>
-            Analyze both environments side-by-side to compare scores and section deltas.
+            Compare production and preview/staging environments side-by-side.
           </DialogDescription>
         </DialogHeader>
 
@@ -133,7 +149,7 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="production-url" className="text-sm font-medium">
-                Production URL
+                Original / Production URL
               </label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -150,7 +166,7 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
 
             <div className="space-y-2">
               <label htmlFor="preview-url-compare" className="text-sm font-medium">
-                Preview/Staging URL
+                Rebuilt / Preview URL
               </label>
               <div className="relative">
                 <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -191,52 +207,55 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
 
           {(productionResults || previewResults) && (
             <div className="grid sm:grid-cols-2 gap-4">
+              {/* Production/Original Column */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-foreground">Production</h3>
-                {prodIsPlaceholder && (
-                  <Alert variant="destructive" className="bg-warning/10 border-warning text-warning-foreground text-xs p-3">
-                    <AlertTriangle className="w-3 h-3 text-warning" />
-                    <AlertDescription className="text-warning/90 text-xs">
-                      Lovable placeholder page detected
-                    </AlertDescription>
-                  </Alert>
-                )}
-                {productionResults && (
-                  <ScoreDisplay results={productionResults} label="Production" compact />
-                )}
+                <h3 className="font-semibold text-sm text-foreground">Original</h3>
+                {prodStatus?.notComparable ? (
+                  <NotScorableBadge reason={prodStatus.reason} />
+                ) : productionResults ? (
+                  <ScoreDisplay results={productionResults} label="Original" compact />
+                ) : null}
               </div>
 
+              {/* Preview/Rebuilt Column */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm text-foreground">Preview</h3>
-                {prevIsPlaceholder && (
-                  <Alert variant="destructive" className="bg-warning/10 border-warning text-warning-foreground text-xs p-3">
-                    <AlertTriangle className="w-3 h-3 text-warning" />
-                    <AlertDescription className="text-warning/90 text-xs">
-                      Lovable placeholder page detected
-                    </AlertDescription>
-                  </Alert>
-                )}
-                {previewResults && (
-                  <ScoreDisplay results={previewResults} label="Preview" compact />
-                )}
+                <h3 className="font-semibold text-sm text-foreground">Rebuilt</h3>
+                {prevStatus?.notComparable ? (
+                  <NotScorableBadge reason={prevStatus.reason} />
+                ) : previewResults ? (
+                  <ScoreDisplay results={previewResults} label="Rebuilt" compact />
+                ) : null}
               </div>
             </div>
           )}
 
-          {productionResults && previewResults && (
+          {/* Section Deltas - only show if both are comparable */}
+          {canCompare && (
             <div className="border-t border-border pt-4">
-              <h4 className="font-semibold text-sm mb-3">Section Deltas</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <h4 className="font-semibold text-sm mb-3">Section Deltas (Rebuilt vs Original)</h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 <DeltaItem label="Messaging" prodScore={productionResults.messaging.score} prevScore={previewResults.messaging.score} />
                 <DeltaItem label="Conversion" prodScore={productionResults.conversion.score} prevScore={previewResults.conversion.score} />
                 <DeltaItem label="Design" prodScore={productionResults.designUx.score} prevScore={previewResults.designUx.score} />
                 <DeltaItem label="Mobile" prodScore={productionResults.mobile.score} prevScore={previewResults.mobile.score} />
-                <DeltaItem label="Performance" prodScore={productionResults.performance.score} prevScore={previewResults.performance.score} />
                 <DeltaItem label="SEO" prodScore={productionResults.seo.score} prevScore={previewResults.seo.score} />
                 <DeltaItem label="Trust" prodScore={productionResults.trust.score} prevScore={previewResults.trust.score} />
-                <DeltaItem label="Overall" prodScore={productionResults.summary.overallScore} prevScore={previewResults.summary.overallScore} />
+                <DeltaItem label="Overall" prodScore={productionResults.summary.overallScore} prevScore={previewResults.summary.overallScore} isOverall />
               </div>
             </div>
+          )}
+
+          {/* Warning when comparison is not available */}
+          {(prodStatus?.notComparable || prevStatus?.notComparable) && productionResults && previewResults && (
+            <Alert className="bg-amber-500/10 border-amber-500/30">
+              <Info className="w-4 h-4 text-amber-600" />
+              <AlertTitle className="text-amber-700 dark:text-amber-400">Comparison Unavailable</AlertTitle>
+              <AlertDescription className="text-amber-600/90 dark:text-amber-400/90 text-sm">
+                One or both URLs returned NOT SCORABLE. This means the page couldn't be fully analyzed 
+                (e.g., it's behind a login, blocked, or has insufficient content). 
+                Publish the site or use a publicly accessible URL to enable comparison.
+              </AlertDescription>
+            </Alert>
           )}
         </div>
       </DialogContent>
@@ -244,17 +263,48 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
   );
 }
 
-function DeltaItem({ label, prodScore, prevScore }: { label: string; prodScore: number; prevScore: number }) {
+/**
+ * NOT SCORABLE Badge for comparison view
+ */
+function NotScorableBadge({ reason }: { reason: string }) {
+  return (
+    <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 text-center space-y-2">
+      <Badge 
+        variant="outline" 
+        className="text-sm px-3 py-1 border-amber-500/50 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+      >
+        NOT SCORABLE
+      </Badge>
+      <p className="text-xs text-muted-foreground">{reason}</p>
+      <p className="text-xs text-amber-600/80 dark:text-amber-400/80">
+        This is not a negative score — the page simply couldn't be analyzed.
+      </p>
+    </div>
+  );
+}
+
+function DeltaItem({ 
+  label, 
+  prodScore, 
+  prevScore, 
+  isOverall = false 
+}: { 
+  label: string; 
+  prodScore: number; 
+  prevScore: number;
+  isOverall?: boolean;
+}) {
   const delta = prevScore - prodScore;
   const deltaColor = delta > 0 ? "text-success" : delta < 0 ? "text-destructive" : "text-muted-foreground";
   const deltaSign = delta > 0 ? "+" : "";
+  const deltaBg = delta > 0 ? "bg-success/10" : delta < 0 ? "bg-destructive/10" : "bg-muted/50";
 
   return (
-    <div className="bg-muted/50 rounded-lg p-2 space-y-1">
-      <div className="text-muted-foreground font-medium">{label}</div>
-      <div className="flex items-center justify-between">
-        <span className="text-foreground">{prodScore} → {prevScore}</span>
-        <span className={`font-semibold ${deltaColor}`}>
+    <div className={`rounded-lg p-2 space-y-1 ${isOverall ? 'col-span-2 sm:col-span-1 border-2 border-primary/20 bg-primary/5' : deltaBg}`}>
+      <div className={`font-medium ${isOverall ? 'text-primary' : 'text-muted-foreground'}`}>{label}</div>
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-foreground text-xs">{prodScore} → {prevScore}</span>
+        <span className={`font-bold ${deltaColor} ${isOverall ? 'text-base' : ''}`}>
           {deltaSign}{delta}
         </span>
       </div>

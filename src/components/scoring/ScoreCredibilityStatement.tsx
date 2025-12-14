@@ -9,7 +9,7 @@ interface ScoreCredibilityStatementProps {
 }
 
 // Approved Score Credibility language
-export const CREDIBILITY_SHORT = `Our scores are based on objective, industry-standard criteria for website performance, user experience, and conversion optimization. Each factor is weighted according to its proven impact on business outcomes for local service businesses.`;
+export const CREDIBILITY_SHORT = `Our scores are based on objective, industry-standard criteria for website performance, user experience, and conversion optimization. Each factor is weighted according to its proven impact on business outcomes for local service businesses. We only score pages we can fully access—sites behind logins, paywalls, or with insufficient content are marked 'Not Scorable' rather than receiving an artificial score.`;
 
 export const CREDIBILITY_STANDARD = {
   intro: "How We Calculate Your Score",
@@ -20,6 +20,7 @@ export const CREDIBILITY_STANDARD = {
     "Scores reflect real-world factors that directly impact lead generation and customer conversion",
     "We only score pages we can fully access—sites behind logins, paywalls, or with insufficient content are marked 'Not Scorable' rather than receiving an artificial score",
     "Preview and staging environments are evaluated separately from production sites to ensure fair comparisons",
+    "'Not Scorable' is not a negative score—it simply means we couldn't access enough content to provide an accurate analysis",
   ],
   footer: "This approach ensures your score represents genuine strengths and opportunities, not guesswork.",
 };
