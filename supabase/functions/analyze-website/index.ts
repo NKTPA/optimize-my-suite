@@ -21,6 +21,201 @@ function logStep(step: string, details?: unknown) {
   console.log(`[analyze-website] ${step}${detailsStr}`);
 }
 
+// ============================================
+// ENVIRONMENT DETECTION
+// ============================================
+type EnvironmentType = 
+  | 'production_custom_domain'
+  | 'production_subdomain'
+  | 'deployment_preview'
+  | 'localhost_private';
+
+type DeploymentProvider = 
+  | 'lovable'
+  | 'vercel'
+  | 'netlify'
+  | 'cloudflare_pages'
+  | 'github_pages'
+  | 'render'
+  | 'railway'
+  | 'unknown'
+  | 'none';
+
+interface EnvironmentInfo {
+  type: EnvironmentType;
+  isPreview: boolean;
+  provider: DeploymentProvider;
+  hostname: string;
+  previewExemptions: string[];
+}
+
+const PREVIEW_PATTERNS: { pattern: RegExp; provider: DeploymentProvider }[] = [
+  { pattern: /\.lovable\.app$/i, provider: 'lovable' },
+  { pattern: /\.lovable\.dev$/i, provider: 'lovable' },
+  { pattern: /\.vercel\.app$/i, provider: 'vercel' },
+  { pattern: /\.netlify\.app$/i, provider: 'netlify' },
+  { pattern: /\.pages\.dev$/i, provider: 'cloudflare_pages' },
+  { pattern: /\.github\.io$/i, provider: 'github_pages' },
+  { pattern: /\.onrender\.com$/i, provider: 'render' },
+  { pattern: /\.up\.railway\.app$/i, provider: 'railway' },
+  { pattern: /preview\./i, provider: 'unknown' },
+  { pattern: /staging\./i, provider: 'unknown' },
+  { pattern: /dev\./i, provider: 'unknown' },
+  { pattern: /test\./i, provider: 'unknown' },
+];
+
+function detectEnvironment(url: string): EnvironmentInfo {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname.toLowerCase();
+
+    // Check for deployment preview domains
+    for (const { pattern, provider } of PREVIEW_PATTERNS) {
+      if (pattern.test(hostname)) {
+        return {
+          type: 'deployment_preview',
+          isPreview: true,
+          provider,
+          hostname,
+          previewExemptions: [
+            'custom_domain',
+            'canonical_mismatch',
+            'noindex_meta',
+            'robots_txt_blocking',
+            'sitemap_missing',
+            'google_analytics_missing',
+            'structured_data_missing',
+          ],
+        };
+      }
+    }
+
+    // Check if it's a subdomain
+    const parts = hostname.split('.');
+    if (parts.length > 2) {
+      return {
+        type: 'production_subdomain',
+        isPreview: false,
+        provider: 'none',
+        hostname,
+        previewExemptions: [],
+      };
+    }
+
+    return {
+      type: 'production_custom_domain',
+      isPreview: false,
+      provider: 'none',
+      hostname,
+      previewExemptions: [],
+    };
+  } catch {
+    return {
+      type: 'production_custom_domain',
+      isPreview: false,
+      provider: 'none',
+      hostname: '',
+      previewExemptions: [],
+    };
+  }
+}
+
+// ============================================
+// DUAL SCORING ENGINE
+// ============================================
+interface DualScore {
+  websiteQualityScore: number;
+  productionReadinessScore: number;
+  overallScore: number;
+  environment: EnvironmentInfo;
+  unverifiedItems: string[];
+}
+
+function calculateDualScores(
+  analysisResult: Record<string, unknown>,
+  url: string
+): DualScore {
+  const environment = detectEnvironment(url);
+  
+  // Weight multipliers based on environment
+  const qualityWeight = environment.isPreview ? 0.85 : 0.70;
+  const readinessWeight = environment.isPreview ? 0.15 : 0.30;
+
+  // Extract scores with defaults
+  const getScore = (path: string): number => {
+    const parts = path.split('.');
+    let value: unknown = analysisResult;
+    for (const part of parts) {
+      if (value && typeof value === 'object' && part in value) {
+        value = (value as Record<string, unknown>)[part];
+      } else {
+        return 50;
+      }
+    }
+    return typeof value === 'number' ? value : 50;
+  };
+
+  // Quality scores
+  const conversionScore = getScore('conversion.score');
+  const messagingScore = getScore('messaging.score');
+  const designScore = getScore('designUx.score');
+  const trustScore = getScore('trust.score');
+  const mobileScore = getScore('mobile.score');
+
+  // Readiness scores
+  const seoScore = getScore('seo.score');
+  const performanceScore = getScore('performance.score');
+
+  // Calculate quality score (60% conversion, 25% messaging, 15% trust/UX)
+  const trustUxCombined = (designScore + trustScore + mobileScore) / 3;
+  const websiteQualityScore = Math.round(
+    conversionScore * 0.60 +
+    messagingScore * 0.25 +
+    trustUxCombined * 0.15
+  );
+
+  // Calculate readiness score
+  let indexingScore = seoScore;
+  let analyticsScore = 70;
+  let structuredDataScore = 60;
+
+  if (environment.isPreview) {
+    // Don't penalize preview sites for production-readiness items
+    indexingScore = Math.max(indexingScore, 70);
+    analyticsScore = 80;
+    structuredDataScore = 70;
+  }
+
+  const productionReadinessScore = Math.round(
+    indexingScore * 0.35 +
+    performanceScore * 0.25 +
+    analyticsScore * 0.20 +
+    structuredDataScore * 0.20
+  );
+
+  // Calculate overall score based on environment weights
+  const overallScore = Math.round(
+    websiteQualityScore * qualityWeight +
+    productionReadinessScore * readinessWeight
+  );
+
+  // Build unverified items list
+  const unverifiedItems: string[] = [];
+  if (environment.isPreview) {
+    unverifiedItems.push('Custom domain configuration');
+    unverifiedItems.push('Production analytics setup');
+    unverifiedItems.push('Search engine indexing');
+  }
+
+  return {
+    websiteQualityScore,
+    productionReadinessScore,
+    overallScore,
+    environment,
+    unverifiedItems,
+  };
+}
+
 // Validate URL to prevent SSRF attacks
 function isValidPublicUrl(urlString: string): { valid: boolean; error?: string } {
   try {
@@ -42,13 +237,9 @@ function isValidPublicUrl(urlString: string): { valid: boolean; error?: string }
     const ipv4Match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
     if (ipv4Match) {
       const [, a, b, c] = ipv4Match.map(Number);
-      // 10.x.x.x
       if (a === 10) return { valid: false, error: "Cannot analyze private network URLs" };
-      // 172.16.x.x - 172.31.x.x
       if (a === 172 && b >= 16 && b <= 31) return { valid: false, error: "Cannot analyze private network URLs" };
-      // 192.168.x.x
       if (a === 192 && b === 168) return { valid: false, error: "Cannot analyze private network URLs" };
-      // 169.254.x.x (link-local)
       if (a === 169 && b === 254) return { valid: false, error: "Cannot analyze link-local URLs" };
     }
     
@@ -86,30 +277,21 @@ function extractDataFromHtml(html: string, url: string) {
     return matches;
   };
 
-  // Extract title
   const title = getTagContent('title');
-
-  // Extract meta description
   const metaDescription = getMetaContent('description');
-
-  // Extract headings
   const h1s = getAllTags('h1');
   const h2s = getAllTags('h2');
 
-  // Extract phone numbers
   const phoneRegex = /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g;
   const phoneNumbers = [...new Set(html.match(phoneRegex) || [])];
 
-  // Extract emails
   const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
   const emails = [...new Set(html.match(emailRegex) || [])].filter(e => !e.includes('example.com'));
 
-  // Extract CTA buttons
   const ctaPatterns = /(?:call|book|schedule|contact|quote|estimate|get started|free|request)[^<]*(?:<\/(?:a|button)>)/gi;
   const ctaMatches = html.match(ctaPatterns) || [];
   const ctaButtons = ctaMatches.map(m => m.replace(/<[^>]*>/g, '').trim()).filter(Boolean).slice(0, 10);
 
-  // Check for forms
   const hasForm = /<form[^>]*>/i.test(html);
   const formFields = (html.match(/<input[^>]*name=["']([^"']+)["']/gi) || [])
     .map(m => {
@@ -118,7 +300,6 @@ function extractDataFromHtml(html: string, url: string) {
     })
     .filter(Boolean);
 
-  // Extract images
   const imgRegex = /<img[^>]*src=["']([^"']+)["'][^>]*(?:alt=["']([^"']*)?["'])?/gi;
   const images: { src: string; alt: string }[] = [];
   let imgMatch;
@@ -129,23 +310,13 @@ function extractDataFromHtml(html: string, url: string) {
     });
   }
 
-  // Count images missing alt text
   const imagesWithoutAlt = images.filter(img => !img.alt).length;
-
-  // Extract script count
   const scriptMatches = html.match(/<script[^>]*src=["'][^"']+["']/gi) || [];
   const externalScripts = scriptMatches.length;
-
-  // Check for SSL
   const hasSSL = url.startsWith('https://');
-
-  // Check for viewport meta
   const hasViewport = /<meta[^>]*name=["']viewport["']/i.test(html);
-
-  // Check for favicon
   const hasFavicon = /<link[^>]*rel=["'](?:icon|shortcut icon)["']/i.test(html);
 
-  // Extract body text (simplified)
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   const bodyHtml = bodyMatch ? bodyMatch[1] : html;
   const bodyText = bodyHtml
@@ -156,7 +327,6 @@ function extractDataFromHtml(html: string, url: string) {
     .trim()
     .slice(0, 3000);
 
-  // Try to extract business info
   const addressPattern = /\d+\s+[\w\s]+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd)[^<]{0,100}/gi;
   const addresses = html.match(addressPattern) || [];
 
@@ -206,6 +376,8 @@ TASK:
 3) Write at a 7th–8th grade reading level. Avoid jargon.
 4) Focus on QUICK, PRACTICAL fixes, not theory.
 5) Tailor your advice to home-services: urgent jobs, local customers, trust, and speed.
+
+IMPORTANT: For preview/staging sites (like *.lovable.app, *.vercel.app, *.netlify.app), focus on content quality, messaging, and UX. Don't penalize for missing production items like analytics, canonical URLs, or custom domains - these will be added when the site goes live.
 
 OUTPUT:
 Return ONLY a valid JSON object with the following shape (no extra commentary):
@@ -296,18 +468,15 @@ serve(async (req) => {
 
     const token = authHeader.replace("Bearer ", "");
     
-    // Create Supabase client with service role for admin operations
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Create client with user's token to verify authentication
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } }
     });
 
-    // Verify the user's token
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
     if (userError || !user) {
       logStep("ERROR: Invalid token", { error: userError?.message });
@@ -326,7 +495,6 @@ serve(async (req) => {
     const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
     
     if (!isOwner) {
-      // Get or create workspace using shared helper
       const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
       
       if (isWorkspaceError(workspaceResult)) {
@@ -344,7 +512,6 @@ serve(async (req) => {
         status: workspace.subscription_status 
       });
 
-      // Check subscription status
       const status = workspace.subscription_status;
       const trialEndsAt = workspace.trial_ends_at ? new Date(workspace.trial_ends_at) : null;
       const now = new Date();
@@ -365,7 +532,6 @@ serve(async (req) => {
         );
       }
 
-      // Get or create usage record
       const usage = await getOrCreateWorkspaceUsage(supabaseAdmin, workspace.id);
       const currentUsage = usage?.analyses_used || 0;
       const planLimit = PLAN_LIMITS[workspace.plan] || PLAN_LIMITS.starter;
@@ -385,7 +551,6 @@ serve(async (req) => {
         );
       }
 
-      // Increment usage (before processing to prevent race conditions)
       const { error: incrementError } = await supabaseAdmin
         .from("workspace_usage")
         .update({ 
@@ -396,7 +561,6 @@ serve(async (req) => {
 
       if (incrementError) {
         logStep("WARNING: Failed to increment usage", { error: incrementError.message });
-        // Don't fail the request, but log the error
       } else {
         logStep("Usage incremented", { newUsage: currentUsage + 1 });
       }
@@ -416,7 +580,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate URL to prevent SSRF
     const urlValidation = isValidPublicUrl(url);
     if (!urlValidation.valid) {
       logStep("ERROR: Invalid URL", { url, error: urlValidation.error });
@@ -425,6 +588,14 @@ serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Detect environment for fair scoring
+    const environment = detectEnvironment(url);
+    logStep("Environment detected", { 
+      type: environment.type, 
+      isPreview: environment.isPreview,
+      provider: environment.provider 
+    });
 
     logStep("Analyzing URL", { url });
 
@@ -439,11 +610,12 @@ serve(async (req) => {
     ];
     
     let lastError: Error | null = null;
+    let fetchBlocked = false;
     
     for (const userAgent of userAgents) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const response = await fetch(url, {
           headers: {
@@ -468,8 +640,7 @@ serve(async (req) => {
         if (response.ok) {
           html = await response.text();
           
-          // Limit response size to prevent memory issues
-          if (html.length > 5000000) { // 5MB limit
+          if (html.length > 5000000) {
             html = html.slice(0, 5000000);
             logStep("WARNING: HTML truncated to 5MB");
           }
@@ -479,6 +650,7 @@ serve(async (req) => {
         } else if (response.status === 403 || response.status === 503) {
           logStep("Fetch blocked, trying next UA", { status: response.status });
           lastError = new Error(`Website returned ${response.status}`);
+          fetchBlocked = true;
           continue;
         } else {
           throw new Error(`Failed to fetch website: ${response.status}`);
@@ -511,6 +683,11 @@ serve(async (req) => {
       throw new Error("AI service not configured");
     }
 
+    // Include environment context in the AI prompt
+    const environmentContext = environment.isPreview 
+      ? `\n\nNOTE: This is a PREVIEW/STAGING environment (${environment.provider}). Score the content quality fairly but don't penalize for missing production items like analytics, canonical URLs, custom domains, or robots.txt blocking.`
+      : '';
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -523,7 +700,7 @@ serve(async (req) => {
           { role: "system", content: ANALYSIS_PROMPT },
           {
             role: "user",
-            content: `Analyze this website: ${url}
+            content: `Analyze this website: ${url}${environmentContext}
 
 Extracted Data:
 ${JSON.stringify(extractedData, null, 2)}
@@ -564,26 +741,22 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
     // Parse the JSON response
     let analysisResult;
     try {
-      // Remove markdown code blocks if present
       let jsonContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
       
-      // Try to extract JSON from potential wrapping text
       const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         jsonContent = jsonMatch[0];
       }
       
-      // Fix common JSON issues
       jsonContent = jsonContent
-        .replace(/,\s*}/g, '}')  // Remove trailing commas before }
-        .replace(/,\s*]/g, ']')  // Remove trailing commas before ]
-        .replace(/[\x00-\x1F\x7F]/g, ' '); // Remove control characters
+        .replace(/,\s*}/g, '}')
+        .replace(/,\s*]/g, ']')
+        .replace(/[\x00-\x1F\x7F]/g, ' ');
       
       analysisResult = JSON.parse(jsonContent);
     } catch (parseError) {
       logStep("ERROR: JSON parse failed", { error: parseError instanceof Error ? parseError.message : String(parseError) });
       
-      // Return a minimal valid result instead of failing completely
       analysisResult = {
         summary: {
           overallScore: 50,
@@ -603,7 +776,33 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
       };
     }
 
-    logStep("Analysis complete", { url, score: analysisResult.summary?.overallScore });
+    // Calculate dual scores
+    const dualScore = calculateDualScores(analysisResult, url);
+    
+    // Add dual scoring to the result
+    analysisResult.dualScore = dualScore;
+    analysisResult.environment = environment;
+    analysisResult.analysisSourceUrl = url;
+    
+    // Update overall score with the fair-weighted version
+    if (analysisResult.summary) {
+      analysisResult.summary.websiteQualityScore = dualScore.websiteQualityScore;
+      analysisResult.summary.productionReadinessScore = dualScore.productionReadinessScore;
+      // Use the dual score's overall score for fair weighting
+      analysisResult.summary.overallScore = dualScore.overallScore;
+    }
+    
+    // Add unverified items indicator
+    analysisResult.hasUnverifiedChecks = dualScore.unverifiedItems.length > 0;
+    analysisResult.unverifiedItems = dualScore.unverifiedItems;
+
+    logStep("Analysis complete", { 
+      url, 
+      overallScore: dualScore.overallScore,
+      qualityScore: dualScore.websiteQualityScore,
+      readinessScore: dualScore.productionReadinessScore,
+      isPreview: environment.isPreview
+    });
 
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
