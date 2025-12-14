@@ -219,6 +219,42 @@ export const useHistory = () => {
     [history]
   );
 
+  // Get baseline (oldest) analysis score for a given URL domain
+  const getBaselineForUrl = useCallback(
+    (url: string): { score: number; url: string; date: string } | null => {
+      try {
+        const inputDomain = new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+        
+        // Find all analyses for this domain (excluding preview domains)
+        const domainAnalyses = history
+          .filter((item) => {
+            if (item.type !== "analysis" || !item.overallScore) return false;
+            try {
+              const itemDomain = new URL(item.url).hostname.replace(/^www\./, "").toLowerCase();
+              // Exclude preview/staging domains from baseline
+              const isPreview = /(lovable\.app|vercel\.app|netlify\.app|preview\.|staging\.)/i.test(item.url);
+              return itemDomain === inputDomain && !isPreview;
+            } catch {
+              return false;
+            }
+          })
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+        if (domainAnalyses.length === 0) return null;
+
+        const oldest = domainAnalyses[0];
+        return {
+          score: oldest.overallScore!,
+          url: oldest.url,
+          date: oldest.createdAt,
+        };
+      } catch {
+        return null;
+      }
+    },
+    [history]
+  );
+
   return {
     history,
     isLoading,
@@ -228,6 +264,7 @@ export const useHistory = () => {
     getItem,
     clearHistory,
     filterHistory,
+    getBaselineForUrl,
     refetch: fetchHistory,
   };
 };

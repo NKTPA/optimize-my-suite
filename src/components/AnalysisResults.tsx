@@ -34,9 +34,10 @@ interface AnalysisResultsProps {
   results: AnalysisResult;
   url: string;
   onReset?: () => void;
+  baselineData?: { score: number; url: string; date: string } | null;
 }
 
-export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps) {
+export function AnalysisResults({ results, url, onReset, baselineData }: AnalysisResultsProps) {
   const [implementationPlan, setImplementationPlan] = useState<ImplementationPlan | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [implementationError, setImplementationError] = useState<string | null>(null);
@@ -160,6 +161,8 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
             quickWins={results.summary.quickWins}
             dualScore={results.dualScore}
             showDualScores={!!results.dualScore}
+            baselineScore={baselineData?.score}
+            baselineUrl={baselineData?.url}
           />
 
           <div className="grid lg:grid-cols-2 gap-6 mt-6">
