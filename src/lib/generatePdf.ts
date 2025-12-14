@@ -1,38 +1,98 @@
 import jsPDF from "jspdf";
 import { AnalysisResult, FindingInput } from "@/types/analysis";
-import { CREDIBILITY_SHORT, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
-import { generatePdfFilename, setPdfMetadata, PdfMetadataOptions } from "./pdfMetadata";
+import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
+import { generatePdfFilename, setPdfMetadata, PdfMetadataOptions, extractDomainFromUrl } from "./pdfMetadata";
 
 // Branding options for white-label PDFs
 export interface AnalysisPdfBranding {
   logoUrl?: string | null;
   footerText?: string | null;
   agencyName?: string | null;
+  clientName?: string | null;
 }
 
-// Color palette (RGB values)
+// Premium consulting-grade color palette (RGB values)
 const colors = {
-  primary: [59, 130, 246], // Blue
+  primary: [37, 99, 235], // Professional blue
+  primaryDark: [30, 64, 175], // Deeper blue for headers
   primaryLight: [239, 246, 255], // Light blue background
-  success: [34, 197, 94], // Green
+  success: [22, 163, 74], // Green
   successLight: [240, 253, 244],
-  warning: [251, 191, 36], // Amber/Yellow
+  warning: [217, 119, 6], // Amber (more muted)
   warningLight: [254, 252, 232],
-  danger: [239, 68, 68], // Red
+  danger: [220, 38, 38], // Red (not alarming)
   dangerLight: [254, 242, 242],
-  textPrimary: [30, 41, 59], // Slate 800
-  textSecondary: [71, 85, 105], // Slate 600
-  textMuted: [148, 163, 184], // Slate 400
+  textPrimary: [15, 23, 42], // Slate 900
+  textSecondary: [51, 65, 85], // Slate 700
+  textMuted: [100, 116, 139], // Slate 500
   cardBg: [248, 250, 252], // Slate 50
   border: [226, 232, 240], // Slate 200
   white: [255, 255, 255],
+  accent: [99, 102, 241], // Indigo accent
+};
+
+// Business impact descriptions for each category
+const CATEGORY_BUSINESS_CONTEXT: Record<string, {
+  impacts: string;
+  whyMatters: string;
+  lowScoreRisks: string;
+  improvements: string;
+}> = {
+  messaging: {
+    impacts: "First impressions, bounce rate, and visitor engagement",
+    whyMatters: "Visitors decide within 3-5 seconds whether to stay or leave. Clear messaging ensures they understand your value instantly.",
+    lowScoreRisks: "High bounce rates, confused visitors, missed opportunities to connect with qualified leads",
+    improvements: "Stronger first impressions, lower bounce rate, increased time-on-site, and improved lead quality"
+  },
+  conversion: {
+    impacts: "Lead generation, form completions, and revenue opportunities",
+    whyMatters: "Even high-traffic websites fail without clear conversion paths. Every missing CTA is a missed customer.",
+    lowScoreRisks: "Lost leads, poor form completion rates, unclear next steps for visitors",
+    improvements: "Higher lead capture rates, more form submissions, clearer customer journey"
+  },
+  designUx: {
+    impacts: "User trust, navigation ease, and professional credibility",
+    whyMatters: "Design is often the first trust signal. Poor UX frustrates users and signals unprofessionalism.",
+    lowScoreRisks: "Reduced trust, higher abandonment, perception of being outdated or unreliable",
+    improvements: "Professional appearance, improved navigation, better user engagement"
+  },
+  mobile: {
+    impacts: "Mobile traffic conversion, local search visibility, and user accessibility",
+    whyMatters: "Over 60% of web traffic is mobile. Poor mobile experience directly impacts rankings and conversions.",
+    lowScoreRisks: "Lost mobile customers, lower search rankings, frustrated users on phones and tablets",
+    improvements: "Better mobile conversion rates, improved local SEO, accessible experience on all devices"
+  },
+  performance: {
+    impacts: "Page speed, user patience, and search engine rankings",
+    whyMatters: "Every second of delay reduces conversions by 7%. Speed is both a ranking factor and UX essential.",
+    lowScoreRisks: "Higher bounce rates, lower search rankings, frustrated visitors who leave before content loads",
+    improvements: "Faster load times, better SEO performance, improved user experience"
+  },
+  seo: {
+    impacts: "Search visibility, organic traffic, and lead acquisition cost",
+    whyMatters: "Organic search is often the largest traffic source. Poor SEO means invisible to potential customers.",
+    lowScoreRisks: "Lower search rankings, reduced organic traffic, higher dependence on paid advertising",
+    improvements: "Better search rankings, increased organic visibility, reduced customer acquisition costs"
+  },
+  trust: {
+    impacts: "Customer confidence, conversion rates, and brand perception",
+    whyMatters: "Trust signals convert browsers into buyers. Without credibility markers, visitors hesitate to take action.",
+    lowScoreRisks: "Lower conversion rates, customer hesitation, lost sales to competitors with better trust signals",
+    improvements: "Higher conversion rates, increased customer confidence, competitive advantage"
+  },
+  technical: {
+    impacts: "Website reliability, accessibility, and search indexability",
+    whyMatters: "Technical issues prevent search engines from properly indexing and users from accessing content.",
+    lowScoreRisks: "Broken functionality, accessibility barriers, indexing problems affecting visibility",
+    improvements: "Reliable functionality, better accessibility, improved search engine indexing"
+  }
 };
 
 // Helper to get text from FindingInput
 const getFindingText = (f: FindingInput): string =>
   typeof f === "string" ? f : f.text;
 
-// Get color based on score
+// Get color based on score (more muted for professional look)
 const getScoreColor = (score: number): number[] => {
   if (score >= 70) return colors.success;
   if (score >= 50) return colors.warning;
@@ -49,407 +109,792 @@ const getGradeLabel = (score: number): string => {
   if (score >= 90) return "Excellent";
   if (score >= 70) return "Good";
   if (score >= 50) return "Needs Work";
-  return "Critical";
+  return "Needs Attention";
+};
+
+const getGradeDescription = (score: number): string => {
+  if (score >= 90) return "This website demonstrates strong performance across key evaluation criteria.";
+  if (score >= 70) return "This website shows solid fundamentals with opportunities for targeted improvement.";
+  if (score >= 50) return "This website has structural issues limiting its effectiveness. Focused improvements recommended.";
+  return "This website requires attention in multiple areas that may be impacting business outcomes.";
+};
+
+// Sanitize finding text for professional presentation
+const sanitizeFindingText = (text: string): string => {
+  // Replace technical error messages with professional language
+  const replacements: [RegExp, string][] = [
+    [/could not (fully )?analyze/gi, "Limited data available from automated scan"],
+    [/error\s*:?\s*/gi, "Note: "],
+    [/failed to/gi, "Unable to"],
+    [/cannot\s+/gi, "Unable to "],
+    [/n\/a/gi, "Not available"],
+    [/null|undefined/gi, "Not specified"],
+  ];
+  
+  let result = text;
+  for (const [pattern, replacement] of replacements) {
+    result = result.replace(pattern, replacement);
+  }
+  return result;
 };
 
 export function generateAnalysisPdf(results: AnalysisResult, url: string, branding?: AnalysisPdfBranding) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 15;
+  const margin = 18;
   const contentWidth = pageWidth - margin * 2;
   let y = 20;
   let currentPage = 1;
-
-  // Credibility badge text (always shown for methodology transparency)
-  const CREDIBILITY_BADGE = "Objective, criteria-based scoring. No manual adjustments. Same methodology before and after.";
   
-  // Determine if white-label mode is active (agency branding provided)
+  // Extract domain for display
+  const clientDomain = extractDomainFromUrl(url);
+  const clientDisplayName = branding?.clientName || clientDomain;
+  
+  // Determine if white-label mode is active
   const isWhiteLabel = Boolean(branding?.logoUrl || branding?.footerText || branding?.agencyName);
+  const authorName = isWhiteLabel 
+    ? (branding?.agencyName || branding?.footerText || "Your Agency") 
+    : "OptimizeMySuite";
+
+  const addNewPage = () => {
+    addPageFooter();
+    doc.addPage();
+    currentPage++;
+    y = 25;
+  };
 
   const addPageIfNeeded = (requiredSpace: number) => {
-    if (y + requiredSpace > 260) {
-      // Add footer before new page
-      addPageFooter();
-      doc.addPage();
-      currentPage++;
-      y = 20;
+    if (y + requiredSpace > pageHeight - 35) {
+      addNewPage();
     }
   };
   
-  // Page footer with credibility badge
+  // Minimal, elegant page footer
   const addPageFooter = () => {
-    // Credibility badge line
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(CREDIBILITY_BADGE, pageWidth / 2, pageHeight - 18, { align: "center" });
-    
-    // Footer line
+    // Subtle divider line
     doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
     doc.setLineWidth(0.3);
-    doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+    doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
     
-    // Footer text - white-label logic
+    // Footer text
     doc.setFontSize(8);
-    const footerText = branding?.footerText 
-      ? branding.footerText 
-      : (isWhiteLabel ? "" : "OptimizeMySuite");
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    
+    const footerText = branding?.footerText || (isWhiteLabel ? "" : "");
     if (footerText) {
       doc.text(footerText, margin, pageHeight - 8);
     }
     
-    // Page number
-    doc.setFont("helvetica", "bold");
-    doc.text(`${currentPage}`, pageWidth - margin, pageHeight - 8, { align: "right" });
+    // Page number on right
+    doc.text(`Page ${currentPage}`, pageWidth - margin, pageHeight - 8, { align: "right" });
   };
 
-  // Draw circular score indicator
-  const drawScoreCircle = (x: number, centerY: number, score: number, size: number = 25) => {
+  // Draw premium score indicator
+  const drawScoreCircle = (x: number, centerY: number, score: number, size: number = 28) => {
     const scoreColor = getScoreColor(score);
     const bgColor = getScoreColorLight(score);
     
-    // Background circle
+    // Outer glow effect
     doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+    doc.circle(x, centerY, size + 4, "F");
+    
+    // Main circle
+    doc.setFillColor(colors.white[0], colors.white[1], colors.white[2]);
     doc.circle(x, centerY, size, "F");
     
-    // Arc for score (simplified as colored ring)
+    // Score ring
     doc.setDrawColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-    doc.setLineWidth(3);
-    doc.circle(x, centerY, size - 2, "S");
+    doc.setLineWidth(4);
+    doc.circle(x, centerY, size - 3, "S");
     
     // Score text
-    doc.setFontSize(18);
+    doc.setFontSize(24);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-    doc.text(score.toString(), x, centerY + 2, { align: "center" });
+    doc.text(score.toString(), x, centerY + 3, { align: "center" });
     
-    // Label
-    doc.setFontSize(6);
-    doc.setFont("helvetica", "normal");
-    doc.text(getGradeLabel(score).toUpperCase(), x, centerY + 9, { align: "center" });
+    // Grade label
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text(getGradeLabel(score).toUpperCase(), x, centerY + 12, { align: "center" });
   };
 
-  // Draw score bar
-  const drawScoreBar = (x: number, barY: number, width: number, score: number) => {
+  // Draw score bar with gradient effect
+  const drawScoreBar = (x: number, barY: number, width: number, score: number, height: number = 8) => {
     const scoreColor = getScoreColor(score);
-    const barHeight = 6;
     
     // Background bar
     doc.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.roundedRect(x, barY, width, barHeight, 3, 3, "F");
+    doc.roundedRect(x, barY, width, height, 4, 4, "F");
     
     // Score bar
-    const scoreWidth = (score / 100) * width;
+    const scoreWidth = Math.max((score / 100) * width, 8);
     doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-    doc.roundedRect(x, barY, scoreWidth, barHeight, 3, 3, "F");
+    doc.roundedRect(x, barY, scoreWidth, height, 4, 4, "F");
   };
 
-  // Section header with icon placeholder and background
-  const addSectionHeader = (title: string, score?: number) => {
-    addPageIfNeeded(35);
+  // Premium section header with business context
+  const addCategorySection = (
+    title: string, 
+    score: number, 
+    categoryKey: string,
+    findings: FindingInput[],
+    recommendations?: string[]
+  ) => {
+    addPageIfNeeded(75);
     
-    // Section card background
+    const context = CATEGORY_BUSINESS_CONTEXT[categoryKey];
+    
+    // Section header card
     doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(margin, y - 5, contentWidth, score ? 30 : 20, 4, 4, "F");
+    doc.roundedRect(margin, y - 5, contentWidth, 45, 4, 4, "F");
     
-    // Icon placeholder (colored circle)
-    doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-    doc.circle(margin + 10, y + 5, 6, "F");
-    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    doc.circle(margin + 10, y + 5, 3, "F");
+    // Left accent bar
+    const scoreColor = getScoreColor(score);
+    doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+    doc.rect(margin, y - 5, 4, 45, "F");
     
     // Title
-    doc.setFontSize(13);
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(title, margin + 22, y + 7);
+    doc.text(title, margin + 12, y + 5);
     
-    if (score !== undefined) {
-      // Score on right
-      doc.setFontSize(16);
-      doc.setFont("helvetica", "bold");
-      const scoreColor = getScoreColor(score);
-      doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-      doc.text(`${score}`, pageWidth - margin - 15, y + 5, { align: "right" });
+    // Score display
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+    doc.text(`${score}`, pageWidth - margin - 25, y + 5, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text("/100", pageWidth - margin - 10, y + 5, { align: "right" });
+    
+    // Score bar
+    drawScoreBar(margin + 12, y + 12, contentWidth - 70, score, 6);
+    
+    // Business impact subtitle
+    if (context) {
       doc.setFontSize(9);
-      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      doc.text("/100", pageWidth - margin - 5, y + 5, { align: "right" });
-      
-      // Score bar
-      drawScoreBar(margin + 22, y + 14, contentWidth - 60, score);
-      y += 35;
-    } else {
-      y += 25;
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+      doc.text(`Impacts: ${context.impacts}`, margin + 12, y + 28);
     }
-  };
-
-  // Add finding with info icon style
-  const addFinding = (text: string) => {
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(text, contentWidth - 20);
-    const blockHeight = lines.length * 5 + 10;
-    addPageIfNeeded(blockHeight);
     
-    // Light background card
-    doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-    doc.roundedRect(margin, y - 3, contentWidth, blockHeight, 3, 3, "F");
+    y += 50;
     
-    // Info icon (circle with i)
-    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    doc.circle(margin + 8, y + 4, 4, "F");
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text("i", margin + 8, y + 6, { align: "center" });
+    // Why This Matters box
+    if (context && score < 70) {
+      addPageIfNeeded(35);
+      doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+      doc.roundedRect(margin, y - 3, contentWidth, 28, 3, 3, "F");
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      doc.text("Why This Matters", margin + 8, y + 5);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+      const whyLines = doc.splitTextToSize(context.whyMatters, contentWidth - 16);
+      whyLines.slice(0, 2).forEach((line: string, i: number) => {
+        doc.text(line, margin + 8, y + 13 + i * 4.5);
+      });
+      y += 32;
+    }
     
-    // Text
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    lines.forEach((line: string, index: number) => {
-      doc.text(line, margin + 18, y + 5 + index * 5);
-    });
-    y += blockHeight + 3;
-  };
-
-  // Numbered item (for quick wins)
-  const addNumberedItem = (num: number, text: string) => {
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(text, contentWidth - 25);
-    const blockHeight = lines.length * 5 + 6;
-    addPageIfNeeded(blockHeight);
-    
-    // Number circle
-    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-    doc.circle(margin + 8, y + 3, 5, "F");
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text(num.toString(), margin + 8, y + 5, { align: "center" });
-    
-    // Text
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    lines.forEach((line: string, index: number) => {
-      doc.text(line, margin + 20, y + 5 + index * 5);
-    });
-    y += blockHeight;
-  };
-
-  // Simple bullet text
-  const addBullet = (text: string) => {
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    const lines = doc.splitTextToSize(text, contentWidth - 15);
-    lines.forEach((line: string, index: number) => {
-      addPageIfNeeded(6);
-      if (index === 0) {
+    // Findings
+    if (findings.length > 0) {
+      findings.forEach((f) => {
+        const text = sanitizeFindingText(getFindingText(f));
+        addPageIfNeeded(18);
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        const lines = doc.splitTextToSize(text, contentWidth - 20);
+        const blockHeight = Math.min(lines.length, 3) * 4.5 + 8;
+        
+        // Bullet point
         doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-        doc.circle(margin + 3, y - 1, 1.5, "F");
-      }
-      doc.text(line, margin + 10, y);
-      y += 5;
-    });
-    y += 2;
-  };
-
-  // Recommendation text
-  const addRecommendation = (label: string, text: string) => {
-    addPageIfNeeded(20);
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(label, margin, y);
-    y += 6;
+        doc.circle(margin + 5, y + 3, 2, "F");
+        
+        // Text
+        doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+        lines.slice(0, 3).forEach((line: string, index: number) => {
+          doc.text(line, margin + 12, y + 5 + index * 4.5);
+        });
+        y += blockHeight;
+      });
+    }
     
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    const lines = doc.splitTextToSize(text, contentWidth - 5);
-    lines.forEach((line: string) => {
-      addPageIfNeeded(5);
-      doc.text(line, margin + 5, y);
-      y += 5;
-    });
-    y += 3;
+    // Recommendations
+    if (recommendations && recommendations.length > 0) {
+      y += 3;
+      recommendations.slice(0, 3).forEach((r) => {
+        addPageIfNeeded(12);
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+        
+        const lines = doc.splitTextToSize(`→ ${r}`, contentWidth - 15);
+        lines.slice(0, 2).forEach((line: string, index: number) => {
+          doc.text(line, margin + 8, y + index * 4.5);
+        });
+        y += lines.slice(0, 2).length * 4.5 + 2;
+      });
+    }
+    
+    y += 8;
   };
 
-  // ============ HEADER ============
-  // Blue header bar
-  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.rect(0, 0, pageWidth, 35, "F");
+  // ============ PAGE 1: EXECUTIVE COVER ============
   
-  // Header icon
-  doc.setFillColor(255, 255, 255);
-  doc.circle(margin + 8, 17, 6, "F");
-  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.setFontSize(10);
-  doc.text("↗", margin + 8, 19, { align: "center" });
+  // Full-page premium header
+  doc.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
+  doc.rect(0, 0, pageWidth, 85, "F");
   
-  // Header title
-  doc.setFontSize(18);
+  // Accent stripe
+  doc.setFillColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  doc.rect(0, 85, pageWidth, 3, "F");
+  
+  // Main title
+  doc.setFontSize(28);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("Website Analysis Summary", margin + 20, 20);
+  doc.text("Website Performance Audit", pageWidth / 2, 38, { align: "center" });
   
-  // URL and date (subheader)
-  doc.setFontSize(9);
+  // Subtitle
+  doc.setFontSize(12);
   doc.setFont("helvetica", "normal");
-  doc.text(`${url}  •  ${new Date().toLocaleDateString()}`, margin + 20, 28);
+  doc.text("Objective Website Analysis Using Consistent Scoring Criteria", pageWidth / 2, 52, { align: "center" });
   
-  y = 50;
-
-  // ============ OVERALL SCORE SECTION ============
-  // Score circle on left
-  drawScoreCircle(margin + 25, y + 25, results.summary.overallScore);
+  // Divider
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.line(pageWidth / 2 - 40, 62, pageWidth / 2 + 40, 62);
   
-  // Overview text on right
+  // URL
   doc.setFontSize(11);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  const overviewLines = doc.splitTextToSize(results.summary.overview, contentWidth - 65);
-  overviewLines.slice(0, 5).forEach((line: string, i: number) => {
-    doc.text(line, margin + 55, y + 10 + i * 6);
-  });
-  
-  y += 60;
-
-  // ============ QUICK WINS ============
-  // Quick wins card with yellow/amber accent
-  addPageIfNeeded(50);
-  const quickWinsHeight = results.summary.quickWins.length * 18 + 25;
-  doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
-  doc.roundedRect(margin, y - 5, contentWidth, quickWinsHeight, 4, 4, "F");
-  
-  // Lightning icon
-  doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-  doc.circle(margin + 10, y + 5, 5, "F");
-  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("⚡", margin + 10, y + 7, { align: "center" });
+  doc.text(clientDomain, pageWidth / 2, 74, { align: "center" });
   
-  // Title
+  y = 105;
+  
+  // Client/Agency info box
+  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+  doc.roundedRect(margin, y, contentWidth, 50, 4, 4, "F");
+  
+  // Left column
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("PREPARED FOR", margin + 12, y + 14);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("Quick Wins (Fix in 24 hours)", margin + 22, y + 7);
-  
-  y += 18;
-  results.summary.quickWins.forEach((win, index) => {
-    addNumberedItem(index + 1, win);
-  });
-  y += 10;
-
-  // ============ CATEGORY SECTIONS ============
-  
-  // Messaging & Offer Clarity
-  addSectionHeader("Messaging & Offer Clarity", results.messaging.score);
-  results.messaging.findings.forEach((f) => addFinding(getFindingText(f)));
-  addRecommendation("Recommended Headline:", results.messaging.recommendedHeadline);
-  addRecommendation("Recommended Subheadline:", results.messaging.recommendedSubheadline);
-  y += 5;
-
-  // Conversion & Lead Capture
-  addSectionHeader("Conversion & Lead Capture", results.conversion.score);
-  results.conversion.findings.forEach((f) => addFinding(getFindingText(f)));
-  results.conversion.recommendations.forEach((r) => addBullet(r));
-  y += 5;
-
-  // Design & UX
-  addSectionHeader("Design & User Experience", results.designUx.score);
-  results.designUx.findings.forEach((f) => addFinding(getFindingText(f)));
-  results.designUx.recommendations.forEach((r) => addBullet(r));
-  y += 5;
-
-  // Mobile Experience
-  addSectionHeader("Mobile Experience", results.mobile.score);
-  results.mobile.findings.forEach((f) => addFinding(getFindingText(f)));
-  results.mobile.recommendations.forEach((r) => addBullet(r));
-  y += 5;
-
-  // Performance
-  addSectionHeader("Speed & Performance", results.performance.score);
-  results.performance.findings.forEach((f) => addFinding(getFindingText(f)));
-  if (results.performance.heavyImages.length > 0) {
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text("Heavy Images Detected:", margin, y);
-    y += 6;
-    results.performance.heavyImages.forEach((img) => addBullet(img));
-  }
-  results.performance.recommendations.forEach((r) => addBullet(r));
-  y += 5;
-
-  // SEO
-  addSectionHeader("SEO & Local SEO", results.seo.score);
-  results.seo.findings.forEach((f) => addFinding(getFindingText(f)));
-  addRecommendation("Recommended Title Tag:", results.seo.recommendedTitle);
-  addRecommendation("Recommended Meta Description:", results.seo.recommendedMetaDescription);
-  addRecommendation("Target Keywords:", results.seo.keywords.join(", "));
-  y += 5;
-
-  // Trust
-  addSectionHeader("Trust & Credibility", results.trust.score);
-  results.trust.findings.forEach((f) => addFinding(getFindingText(f)));
-  results.trust.whyChooseUs.forEach((item) => addBullet(item));
-  y += 5;
-
-  // Technical
-  addSectionHeader("Technical Basics");
-  results.technical.findings.forEach((f) => addFinding(getFindingText(f)));
-  results.technical.recommendations.forEach((r) => addBullet(r));
-
-  // ============ SCORE CREDIBILITY STATEMENT ============
-  y += 8;
-  addPageIfNeeded(40);
-  
-  // Credibility section background
-  doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  const credibilityLines = doc.splitTextToSize(CREDIBILITY_SHORT, contentWidth - 20);
-  const credibilityHeight = credibilityLines.length * 5 + 18;
-  doc.roundedRect(margin, y - 3, contentWidth, credibilityHeight, 4, 4, "F");
-  
-  // Info icon
-  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.circle(margin + 10, y + 6, 5, "F");
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("i", margin + 10, y + 8, { align: "center" });
-  
-  // Title
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("About This Score", margin + 20, y + 8);
-  
-  // Credibility text
+  doc.text(clientDisplayName, margin + 12, y + 26);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  credibilityLines.forEach((line: string, index: number) => {
-    doc.text(line, margin + 10, y + 16 + index * 5);
+  doc.text(url.substring(0, 50), margin + 12, y + 36);
+  
+  // Right column
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("PREPARED BY", pageWidth / 2 + 10, y + 14);
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text(authorName, pageWidth / 2 + 10, y + 26);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  doc.text(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), pageWidth / 2 + 10, y + 36);
+  
+  y += 65;
+  
+  // Overall Score Display
+  const overallScore = results.summary.overallScore;
+  drawScoreCircle(pageWidth / 2, y + 35, overallScore, 35);
+  
+  y += 80;
+  
+  // Score label
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("OVERALL PERFORMANCE SCORE", pageWidth / 2, y, { align: "center" });
+  
+  y += 20;
+  
+  // Score interpretation
+  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+  doc.roundedRect(margin, y - 5, contentWidth, 35, 4, 4, "F");
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  const gradeDesc = getGradeDescription(overallScore);
+  const gradeLines = doc.splitTextToSize(gradeDesc, contentWidth - 20);
+  gradeLines.forEach((line: string, i: number) => {
+    doc.text(line, pageWidth / 2, y + 7 + i * 5, { align: "center" });
   });
-  y += credibilityHeight + 5;
-
-  // ============ FOOTER ============
+  
+  addPageFooter();
+  
+  // ============ PAGE 2: EXECUTIVE SUMMARY ============
+  addNewPage();
+  
+  // Section header
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Executive Summary", margin, y);
+  
+  // Accent line
+  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.rect(margin, y + 5, 50, 2, "F");
+  
+  y += 20;
+  
+  // Overview paragraph
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  
+  // Build executive summary based on score and findings
+  let executiveSummary = results.summary.overview;
+  if (overallScore < 50) {
+    executiveSummary = `This audit identifies several structural issues that may reduce conversion efficiency, search visibility, and trust. While the site is functional, it underperforms relative to industry standards and may fail to clearly communicate value within the critical first impression window. ${executiveSummary}`;
+  } else if (overallScore < 70) {
+    executiveSummary = `This audit reveals opportunities for improvement across key performance areas. The website has a solid foundation but would benefit from targeted optimizations to increase lead capture and search visibility. ${executiveSummary}`;
+  } else {
+    executiveSummary = `This website demonstrates strong fundamentals across most evaluation criteria. The following analysis highlights areas performing well and opportunities for continued optimization. ${executiveSummary}`;
+  }
+  
+  const summaryLines = doc.splitTextToSize(executiveSummary, contentWidth);
+  summaryLines.slice(0, 8).forEach((line: string, i: number) => {
+    doc.text(line, margin, y + i * 6);
+  });
+  
+  y += summaryLines.slice(0, 8).length * 6 + 15;
+  
+  // Category scores overview grid
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Performance by Category", margin, y);
+  y += 12;
+  
+  const categories = [
+    { name: "Messaging", score: results.messaging.score },
+    { name: "Conversion", score: results.conversion.score },
+    { name: "Design & UX", score: results.designUx.score },
+    { name: "Mobile", score: results.mobile.score },
+    { name: "Performance", score: results.performance.score },
+    { name: "SEO", score: results.seo.score },
+    { name: "Trust", score: results.trust.score },
+  ];
+  
+  // Two-column layout
+  const colWidth = (contentWidth - 10) / 2;
+  categories.forEach((cat, index) => {
+    const col = index % 2;
+    const xPos = margin + col * (colWidth + 10);
+    
+    if (col === 0 && index > 0) y += 18;
+    
+    // Category name
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text(cat.name, xPos, y);
+    
+    // Score bar
+    drawScoreBar(xPos, y + 4, colWidth - 30, cat.score, 6);
+    
+    // Score number
+    const scoreColor = getScoreColor(cat.score);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(scoreColor[0], scoreColor[1], scoreColor[2]);
+    doc.text(`${cat.score}`, xPos + colWidth - 15, y, { align: "right" });
+  });
+  
+  y += 30;
+  
+  // Key risks section (if score < 70)
+  if (overallScore < 70) {
+    addPageIfNeeded(50);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    doc.text("Primary Risk Areas", margin, y);
+    y += 10;
+    
+    // Find lowest scoring categories
+    const sortedCats = [...categories].sort((a, b) => a.score - b.score);
+    const risks = sortedCats.slice(0, 3);
+    
+    risks.forEach((risk) => {
+      const context = CATEGORY_BUSINESS_CONTEXT[risk.name.toLowerCase().replace(/\s*&\s*/g, "").replace("ux", "Ux")];
+      addPageIfNeeded(15);
+      
+      doc.setFillColor(colors.dangerLight[0], colors.dangerLight[1], colors.dangerLight[2]);
+      doc.roundedRect(margin, y - 3, contentWidth, 12, 2, 2, "F");
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.danger[0], colors.danger[1], colors.danger[2]);
+      doc.text(`${risk.name}: ${risk.score}/100`, margin + 5, y + 5);
+      
+      if (context) {
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+        const riskText = doc.splitTextToSize(` — ${context.lowScoreRisks}`, contentWidth - 60);
+        doc.text(riskText[0] || "", margin + 55, y + 5);
+      }
+      
+      y += 16;
+    });
+  }
+  
+  y += 10;
+  
+  // ============ IMMEDIATE OPPORTUNITIES (Quick Wins) ============
+  addPageIfNeeded(60);
+  
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Immediate Opportunities", margin, y);
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("High Impact, Low Effort Improvements", margin, y + 8);
+  
+  y += 18;
+  
+  results.summary.quickWins.slice(0, 5).forEach((win, index) => {
+    addPageIfNeeded(22);
+    
+    // Card background
+    doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
+    
+    const winLines = doc.splitTextToSize(win, contentWidth - 30);
+    const cardHeight = Math.min(winLines.length, 2) * 5 + 12;
+    doc.roundedRect(margin, y - 3, contentWidth, cardHeight, 3, 3, "F");
+    
+    // Number badge
+    doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.circle(margin + 10, y + 5, 6, "F");
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text((index + 1).toString(), margin + 10, y + 7, { align: "center" });
+    
+    // Win text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    winLines.slice(0, 2).forEach((line: string, i: number) => {
+      doc.text(line, margin + 22, y + 5 + i * 5);
+    });
+    
+    y += cardHeight + 4;
+  });
+  
+  // ============ SCORE INTERPRETATION PANEL ============
+  addNewPage();
+  
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("How to Interpret This Score", margin, y);
+  
+  y += 15;
+  
+  // Interpretation box
+  doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  doc.roundedRect(margin, y - 5, contentWidth, 75, 4, 4, "F");
+  
+  // Left accent
+  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.rect(margin, y - 5, 4, 75, "F");
+  
+  const interpretationPoints = [
+    "Scores are criteria-based, not subjective opinions",
+    "No manual adjustments are made to any scores",
+    "The same methodology is applied before and after improvements",
+    "Pages that cannot be accessed publicly are marked 'Not Scorable' rather than penalized",
+    "Missing or unavailable data is treated conservatively, never inflated"
+  ];
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  
+  interpretationPoints.forEach((point, i) => {
+    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.circle(margin + 15, y + 6 + i * 13, 2, "F");
+    doc.text(point, margin + 22, y + 8 + i * 13);
+  });
+  
+  y += 90;
+  
+  // Score scale reference
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Score Scale Reference", margin, y);
+  y += 12;
+  
+  const scoreScales = [
+    { range: "90-100", label: "Excellent", color: colors.success, desc: "Strong performance across all criteria" },
+    { range: "70-89", label: "Good", color: colors.success, desc: "Solid foundation with optimization opportunities" },
+    { range: "50-69", label: "Needs Work", color: colors.warning, desc: "Structural issues limiting effectiveness" },
+    { range: "0-49", label: "Needs Attention", color: colors.danger, desc: "Multiple areas requiring immediate focus" },
+  ];
+  
+  scoreScales.forEach((scale) => {
+    doc.setFillColor(scale.color[0], scale.color[1], scale.color[2]);
+    doc.roundedRect(margin, y - 2, 50, 12, 2, 2, "F");
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text(`${scale.range}: ${scale.label}`, margin + 25, y + 5, { align: "center" });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text(scale.desc, margin + 58, y + 5);
+    
+    y += 16;
+  });
+  
+  y += 15;
+  
+  // ============ CATEGORY BREAKDOWNS ============
+  
+  addCategorySection(
+    "Messaging & Offer Clarity",
+    results.messaging.score,
+    "messaging",
+    results.messaging.findings,
+    [
+      `Recommended Headline: ${results.messaging.recommendedHeadline}`,
+      `Recommended Subheadline: ${results.messaging.recommendedSubheadline}`
+    ]
+  );
+  
+  addCategorySection(
+    "Conversion & Lead Capture",
+    results.conversion.score,
+    "conversion",
+    results.conversion.findings,
+    results.conversion.recommendations
+  );
+  
+  addCategorySection(
+    "Design & User Experience",
+    results.designUx.score,
+    "designUx",
+    results.designUx.findings,
+    results.designUx.recommendations
+  );
+  
+  addCategorySection(
+    "Mobile Experience",
+    results.mobile.score,
+    "mobile",
+    results.mobile.findings,
+    results.mobile.recommendations
+  );
+  
+  addCategorySection(
+    "Speed & Performance",
+    results.performance.score,
+    "performance",
+    results.performance.findings,
+    results.performance.recommendations
+  );
+  
+  addCategorySection(
+    "SEO & Local Search",
+    results.seo.score,
+    "seo",
+    results.seo.findings,
+    [
+      `Recommended Title: ${results.seo.recommendedTitle}`,
+      `Recommended Meta: ${results.seo.recommendedMetaDescription}`,
+      `Target Keywords: ${results.seo.keywords.join(", ")}`
+    ]
+  );
+  
+  addCategorySection(
+    "Trust & Credibility",
+    results.trust.score,
+    "trust",
+    results.trust.findings,
+    results.trust.whyChooseUs
+  );
+  
+  // Technical (no score)
+  addPageIfNeeded(50);
+  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+  doc.roundedRect(margin, y - 5, contentWidth, 25, 4, 4, "F");
+  doc.setFillColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.rect(margin, y - 5, 4, 25, "F");
+  
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Technical Fundamentals", margin + 12, y + 8);
+  
+  y += 30;
+  
+  results.technical.findings.forEach((f) => {
+    const text = sanitizeFindingText(getFindingText(f));
+    addPageIfNeeded(15);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.circle(margin + 5, y + 1, 2, "F");
+    const lines = doc.splitTextToSize(text, contentWidth - 15);
+    lines.slice(0, 2).forEach((line: string, i: number) => {
+      doc.text(line, margin + 12, y + 3 + i * 4.5);
+    });
+    y += lines.slice(0, 2).length * 4.5 + 4;
+  });
+  
+  results.technical.recommendations.slice(0, 3).forEach((r) => {
+    addPageIfNeeded(12);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    const lines = doc.splitTextToSize(`→ ${r}`, contentWidth - 10);
+    lines.slice(0, 2).forEach((line: string, i: number) => {
+      doc.text(line, margin + 8, y + i * 4.5);
+    });
+    y += lines.slice(0, 2).length * 4.5 + 2;
+  });
+  
+  // ============ WHAT THIS AUDIT ENABLES (Agency Positioning) ============
+  addNewPage();
+  
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("What This Audit Enables", margin, y);
+  
+  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.rect(margin, y + 5, 60, 2, "F");
+  
+  y += 20;
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  doc.text("This analysis provides the foundation for strategic improvements across several areas:", margin, y);
+  
+  y += 15;
+  
+  const enablesItems = [
+    {
+      title: "Website Redesign Justification",
+      desc: "Data-driven evidence to support investment in website improvements with clear before/after benchmarks"
+    },
+    {
+      title: "SEO Strategy Development",
+      desc: "Identified gaps in search optimization that can be addressed through targeted SEO work"
+    },
+    {
+      title: "Conversion Rate Optimization",
+      desc: "Clear opportunities to improve lead capture and reduce friction in the customer journey"
+    },
+    {
+      title: "Ongoing Performance Monitoring",
+      desc: "Baseline metrics to measure improvement over time and demonstrate ROI"
+    }
+  ];
+  
+  enablesItems.forEach((item) => {
+    addPageIfNeeded(35);
+    
+    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+    doc.roundedRect(margin, y - 3, contentWidth, 28, 3, 3, "F");
+    
+    doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+    doc.circle(margin + 10, y + 8, 4, "F");
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text("✓", margin + 10, y + 10, { align: "center" });
+    
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    doc.text(item.title, margin + 20, y + 6);
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    const descLines = doc.splitTextToSize(item.desc, contentWidth - 28);
+    descLines.slice(0, 2).forEach((line: string, i: number) => {
+      doc.text(line, margin + 20, y + 14 + i * 4);
+    });
+    
+    y += 33;
+  });
+  
+  // ============ METHODOLOGY CREDIBILITY ============
+  y += 10;
+  addPageIfNeeded(60);
+  
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text("Scoring Methodology", margin, y);
+  y += 10;
+  
+  doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  const credLines = doc.splitTextToSize(CREDIBILITY_BODY, contentWidth - 16);
+  const credHeight = credLines.length * 4.5 + 20;
+  doc.roundedRect(margin, y - 3, contentWidth, credHeight, 4, 4, "F");
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  credLines.forEach((line: string, i: number) => {
+    doc.text(line, margin + 8, y + 8 + i * 4.5);
+  });
+  
+  y += credHeight - 8;
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text(CREDIBILITY_FOOTER, margin + 8, y);
+  
+  // Final footer
   addPageFooter();
 
-  // Set PDF metadata for white-label support
+  // Set PDF metadata
   const metadataOptions: PdfMetadataOptions = {
     clientDomain: url,
+    clientName: branding?.clientName,
     agencyName: branding?.agencyName || branding?.footerText || undefined,
     isWhiteLabel,
     reportType: "analysis",
   };
   setPdfMetadata(doc, metadataOptions);
   
-  // Generate white-label friendly filename
+  // Generate filename
   const filename = generatePdfFilename(metadataOptions);
   doc.save(filename);
 }

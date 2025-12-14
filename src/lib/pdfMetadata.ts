@@ -12,6 +12,15 @@ export interface PdfMetadataOptions {
 }
 
 /**
+ * Report type display names for PDF titles
+ */
+const REPORT_TITLES: Record<string, string> = {
+  "analysis": "Website Performance Audit",
+  "implementation": "Implementation Strategy Pack",
+  "before-after": "Website Transformation Report",
+};
+
+/**
  * Extract domain name from URL for use in filenames
  */
 export function extractDomainFromUrl(url: string): string {
@@ -60,14 +69,13 @@ export function getClientIdentifier(options: PdfMetadataOptions): string {
  */
 export function generatePdfFilename(options: PdfMetadataOptions): string {
   const clientId = getClientIdentifier(options);
+  const reportTitle = REPORT_TITLES[options.reportType] || "Website Report";
   
-  const reportTitles: Record<string, string> = {
-    "analysis": "Website Performance Report",
-    "implementation": "Implementation Strategy Pack",
-    "before-after": "Website Transformation Report",
-  };
-  
-  const reportTitle = reportTitles[options.reportType] || "Website Report";
+  // Format: Website-Audit-[ClientDomain]-[Date].pdf for analysis
+  if (options.reportType === "analysis") {
+    const dateStr = new Date().toISOString().split("T")[0];
+    return `Website-Audit-${clientId}-${dateStr}.pdf`;
+  }
   
   return `${clientId} — ${reportTitle}.pdf`;
 }
@@ -77,15 +85,7 @@ export function generatePdfFilename(options: PdfMetadataOptions): string {
  */
 export function generatePdfTitle(options: PdfMetadataOptions): string {
   const clientId = getClientIdentifier(options);
-  
-  const reportTitles: Record<string, string> = {
-    "analysis": "Website Performance Report",
-    "implementation": "Implementation Strategy Pack",
-    "before-after": "Website Transformation Report",
-  };
-  
-  const reportTitle = reportTitles[options.reportType] || "Website Report";
-  
+  const reportTitle = REPORT_TITLES[options.reportType] || "Website Report";
   return `${clientId} — ${reportTitle}`;
 }
 
