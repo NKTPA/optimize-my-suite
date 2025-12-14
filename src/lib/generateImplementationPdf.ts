@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
 import { generateLovableRebuildPrompt } from "./generateLovablePrompt";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
-import { CREDIBILITY_STANDARD } from "@/components/scoring/ScoreCredibilityStatement";
+import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 
 // Branding options for white-label PDFs
 export interface PdfBranding {
@@ -920,47 +920,41 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   y += 90;
   
   // ============ SCORE CREDIBILITY STATEMENT ============
-  addPageIfNeeded(90);
+  addPageIfNeeded(70);
   
   // Section header
   doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  doc.roundedRect(margin, y, contentWidth, 26, 4, 4, "F");
+  doc.roundedRect(margin, y, contentWidth, 22, 4, 4, "F");
   
   // Shield icon
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.circle(margin + 15, y + 13, 8, "F");
-  doc.setFontSize(12);
+  doc.circle(margin + 15, y + 11, 7, "F");
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("S", margin + 15, y + 16, { align: "center" }); // S for Shield
+  doc.text("S", margin + 15, y + 14, { align: "center" }); // S for Shield
   
   // Title
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  doc.text(CREDIBILITY_STANDARD.intro, margin + 30, y + 15);
-  y += 35;
+  doc.text(CREDIBILITY_STANDARD.intro, margin + 28, y + 14);
+  y += 30;
   
-  // Description
+  // Body text - the canonical credibility statement
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  const descLines = doc.splitTextToSize(CREDIBILITY_STANDARD.description, contentWidth - 10);
-  descLines.forEach((line: string, i: number) => {
+  const credBodyLines = doc.splitTextToSize(CREDIBILITY_BODY, contentWidth - 10);
+  credBodyLines.forEach((line: string, i: number) => {
     doc.text(line, margin + 5, y + i * 5);
   });
-  y += descLines.length * 5 + 10;
-  
-  // Bullets
-  CREDIBILITY_STANDARD.bullets.forEach((bullet) => {
-    addConsultantBullet(bullet, colors.primary);
-  });
+  y += credBodyLines.length * 5 + 12;
   
   // Footer card
-  y += 8;
-  addPageIfNeeded(25);
+  addPageIfNeeded(22);
   doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-  const credFooterLines = doc.splitTextToSize(CREDIBILITY_STANDARD.footer, contentWidth - 20);
+  const credFooterLines = doc.splitTextToSize(CREDIBILITY_FOOTER, contentWidth - 20);
   const credFooterHeight = credFooterLines.length * 5 + 14;
   doc.roundedRect(margin, y, contentWidth, credFooterHeight, 4, 4, "F");
   doc.setFontSize(10);

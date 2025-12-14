@@ -8,21 +8,20 @@ interface ScoreCredibilityStatementProps {
   className?: string;
 }
 
-// Approved Score Credibility language
-export const CREDIBILITY_SHORT = `Our scores are based on objective, industry-standard criteria for website performance, user experience, and conversion optimization. Each factor is weighted according to its proven impact on business outcomes for local service businesses. We only score pages we can fully access—sites behind logins, paywalls, or with insufficient content are marked 'Not Scorable' rather than receiving an artificial score.`;
+// Approved Score Credibility language - CANONICAL COPY (used across app, PDFs, and pricing)
+// DO NOT MODIFY without updating all references
+export const CREDIBILITY_BODY = `OptimizeMySuite evaluates websites using objective, criteria-based signals across messaging clarity, conversion paths, trust signals, SEO fundamentals, and technical accessibility. The same scoring methodology is applied before and after improvements to ensure fair comparison. Pages that cannot be accessed publicly are marked as Not Scorable rather than penalized. Scores are never guessed or manually adjusted.`;
+
+export const CREDIBILITY_FOOTER = `Built for agencies to justify recommendations with clear, repeatable evidence.`;
+
+// Legacy export - now uses canonical copy
+export const CREDIBILITY_SHORT = CREDIBILITY_BODY;
 
 export const CREDIBILITY_STANDARD = {
-  intro: "How We Calculate Your Score",
-  description: "Our scoring methodology is designed to provide actionable, defensible insights based on proven best practices:",
-  bullets: [
-    "We evaluate 8 key areas: Messaging, Conversion, Design, Mobile, Performance, SEO, Trust, and Technical fundamentals",
-    "Each category is scored 0-100 based on industry-standard benchmarks and research-backed criteria",
-    "Scores reflect real-world factors that directly impact lead generation and customer conversion",
-    "We only score pages we can fully access—sites behind logins, paywalls, or with insufficient content are marked 'Not Scorable' rather than receiving an artificial score",
-    "Preview and staging environments are evaluated separately from production sites to ensure fair comparisons",
-    "'Not Scorable' is not a negative score—it simply means we couldn't access enough content to provide an accurate analysis",
-  ],
-  footer: "This approach ensures your score represents genuine strengths and opportunities, not guesswork.",
+  intro: "Scoring Methodology & Credibility",
+  description: CREDIBILITY_BODY,
+  bullets: [] as string[], // No bullets - body copy is the complete statement
+  footer: CREDIBILITY_FOOTER,
 };
 
 /**
@@ -37,9 +36,14 @@ export function ScoreCredibilityStatement({
     return (
       <div className={`flex items-start gap-3 bg-muted/50 rounded-lg p-4 ${className}`}>
         <Info className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {CREDIBILITY_SHORT}
-        </p>
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {CREDIBILITY_BODY}
+          </p>
+          <p className="text-xs text-muted-foreground/70 pt-2 border-t border-border/30">
+            {CREDIBILITY_FOOTER}
+          </p>
+        </div>
       </div>
     );
   }
@@ -53,22 +57,11 @@ export function ScoreCredibilityStatement({
             <h4 className="font-semibold text-foreground">
               {CREDIBILITY_STANDARD.intro}
             </h4>
-            <p className="text-sm text-muted-foreground">
-              {CREDIBILITY_STANDARD.description}
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {CREDIBILITY_BODY}
             </p>
-            <ul className="space-y-2">
-              {CREDIBILITY_STANDARD.bullets.map((bullet, index) => (
-                <li
-                  key={index}
-                  className="flex items-start gap-2 text-sm text-muted-foreground"
-                >
-                  <span className="text-primary font-bold mt-0.5">•</span>
-                  <span>{bullet}</span>
-                </li>
-              ))}
-            </ul>
             <p className="text-sm text-muted-foreground italic border-t border-primary/10 pt-3 mt-3">
-              {CREDIBILITY_STANDARD.footer}
+              {CREDIBILITY_FOOTER}
             </p>
           </div>
         </div>
