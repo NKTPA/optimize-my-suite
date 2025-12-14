@@ -158,6 +158,8 @@ export function AnalysisResults({ results, url, onReset }: AnalysisResultsProps)
             score={results.summary.overallScore}
             overview={results.summary.overview}
             quickWins={results.summary.quickWins}
+            dualScore={results.dualScore}
+            showDualScores={!!results.dualScore}
           />
 
           <div className="grid lg:grid-cols-2 gap-6 mt-6">
