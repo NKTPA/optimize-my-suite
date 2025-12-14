@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { ScoreCredibilityStatement } from "./scoring/ScoreCredibilityStatement";
 
 interface ImplementationPackProps {
   plan: ImplementationPlan;
@@ -438,6 +439,9 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Score Credibility Statement */}
+      <ScoreCredibilityStatement mode="standard" className="mt-2" />
 
       {/* Lovable Website Rebuild Prompts - Optional Section */}
       <LovableRebuildSection plan={plan} url={url} />

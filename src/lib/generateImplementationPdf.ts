@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
 import { generateLovableRebuildPrompt } from "./generateLovablePrompt";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
+import { CREDIBILITY_STANDARD } from "@/components/scoring/ScoreCredibilityStatement";
 
 // Branding options for white-label PDFs
 export interface PdfBranding {
@@ -514,6 +515,60 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   plan.executionChecklist.forEach((item, i) => {
     addNumberedItem(i + 1, item);
   });
+
+  // ============ SCORE CREDIBILITY STATEMENT ============
+  y += 8;
+  addPageIfNeeded(80);
+  
+  // Section header
+  doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
+  doc.roundedRect(margin, y - 5, contentWidth, 22, 4, 4, "F");
+  
+  // Shield icon
+  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.circle(margin + 12, y + 6, 6, "F");
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text("✓", margin + 12, y + 8, { align: "center" });
+  
+  // Title
+  doc.setFontSize(13);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+  doc.text(CREDIBILITY_STANDARD.intro, margin + 24, y + 9);
+  y += 28;
+  
+  // Description
+  addPageIfNeeded(25);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  const descLines = doc.splitTextToSize(CREDIBILITY_STANDARD.description, contentWidth - 10);
+  descLines.forEach((line: string, index: number) => {
+    doc.text(line, margin + 5, y + index * 5);
+  });
+  y += descLines.length * 5 + 8;
+  
+  // Bullets
+  CREDIBILITY_STANDARD.bullets.forEach((bullet) => {
+    addBulletItem(bullet, colors.primary);
+  });
+  
+  // Footer text
+  y += 5;
+  addPageIfNeeded(20);
+  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+  const credFooterLines = doc.splitTextToSize(CREDIBILITY_STANDARD.footer, contentWidth - 16);
+  const credFooterHeight = credFooterLines.length * 5 + 10;
+  doc.roundedRect(margin, y - 3, contentWidth, credFooterHeight, 3, 3, "F");
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "italic");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  credFooterLines.forEach((line: string, index: number) => {
+    doc.text(line, margin + 8, y + 5 + index * 5);
+  });
+  y += credFooterHeight + 8;
 
   // ============ LOVABLE REBUILD PROMPTS (OPTIONAL) ============
   y += 10;
