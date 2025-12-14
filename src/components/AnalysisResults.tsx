@@ -22,6 +22,7 @@ import { OverallScore } from "./OverallScore";
 import { AnalysisSection } from "./AnalysisSection";
 import { FindingsList } from "./FindingsList";
 import { RecommendationCard } from "./RecommendationCard";
+import { ScoringToolsPanel } from "./ScoringToolsPanel";
 
 import { ImplementationPack } from "./ImplementationPack";
 import { Button } from "./ui/button";
@@ -165,6 +166,15 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
             baselineUrl={baselineData?.url}
             baselineDate={baselineData?.date}
           />
+
+          {/* Scoring Tools Panel */}
+          <div className="mt-6">
+            <ScoringToolsPanel
+              currentUrl={url}
+              currentResults={results}
+              originalUrl={baselineData?.url}
+            />
+          </div>
 
           <div className="grid lg:grid-cols-2 gap-6 mt-6">
             {/* Messaging & Offer Clarity */}
