@@ -202,8 +202,11 @@ const Auth = () => {
             <div className="flex justify-center mb-4">
               <HeaderBrand variant="auth" textFallback />
             </div>
-            <p className="text-muted-foreground">
-              Audit client websites instantly. Win more retainers.
+            <p className="text-muted-foreground mb-2">
+              Proof-based website audits for marketing agencies.
+            </p>
+            <p className="text-sm text-foreground/70">
+              Close more deals. Defend your retainers. Prove your value.
             </p>
           </div>
 
@@ -225,14 +228,14 @@ const Auth = () => {
                 <TabsContent value="login" className="mt-4">
                   <CardTitle className="text-lg">Welcome back</CardTitle>
                   <CardDescription>
-                    Login to access your agency dashboard
+                    Access your agency dashboard and client reports
                   </CardDescription>
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-4">
-                  <CardTitle className="text-lg">Create Agency Account</CardTitle>
+                  <CardTitle className="text-lg">Create Your Agency Account</CardTitle>
                   <CardDescription>
-                    Start auditing client websites in minutes
+                    3-day free trial. No credit card required.
                   </CardDescription>
                 </TabsContent>
               </Tabs>

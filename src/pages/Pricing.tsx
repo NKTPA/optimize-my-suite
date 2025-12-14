@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, Sparkles, ArrowRight, Building2 } from "lucide-react";
+import { Check, Sparkles, ArrowRight, Building2, ShieldCheck, TrendingUp, BadgeCheck, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +13,9 @@ const plans = [
     name: "Starter",
     price: 49,
     priceId: STRIPE_PRICE_IDS.starter,
-    description: "Perfect for solo consultants and small agencies",
+    description: "For solo consultants testing the waters",
+    whoIsFor: "Perfect if you're a freelancer or solo consultant who wants to add website audits to your service offering.",
+    businessOutcome: "Close 1-2 additional website projects per month",
     features: [
       "25 analyses per month",
       "25 implementation packs",
@@ -23,14 +25,16 @@ const plans = [
       "Blueprint generator",
       "Email support",
     ],
-    cta: "Choose Starter",
+    cta: "Start Free Trial",
     popular: false,
   },
   {
     name: "Pro",
     price: 149,
     priceId: STRIPE_PRICE_IDS.pro,
-    description: "For growing agencies scaling their services",
+    description: "For growing agencies scaling client work",
+    whoIsFor: "Built for agencies with 5-20 clients who need consistent, branded deliverables and team collaboration.",
+    businessOutcome: "Systematically prove value to retain more accounts",
     features: [
       "150 analyses per month",
       "150 implementation packs",
@@ -41,14 +45,16 @@ const plans = [
       "Client tagging tools",
       "Priority support",
     ],
-    cta: "Choose Pro",
+    cta: "Start Free Trial",
     popular: true,
   },
   {
     name: "Scale",
     price: 399,
     priceId: STRIPE_PRICE_IDS.scale,
-    description: "Enterprise-ready for high-volume agencies",
+    description: "For high-volume agencies and white-label resellers",
+    whoIsFor: "Designed for agencies running 50+ audits per month, or those reselling audits to other agencies.",
+    businessOutcome: "Build recurring revenue with productized audit services",
     features: [
       "500 analyses per month",
       "500 implementation packs",
@@ -58,7 +64,7 @@ const plans = [
       "Dedicated success manager",
       "Early access to new features",
     ],
-    cta: "Choose Scale",
+    cta: "Start Free Trial",
     popular: false,
   },
 ];
@@ -76,6 +82,24 @@ const comparisonFeatures = [
   { feature: "API access", starter: false, pro: false, scale: true },
   { feature: "Dedicated success manager", starter: false, pro: false, scale: true },
   { feature: "Support", starter: "Email", pro: "Priority", scale: "Dedicated" },
+];
+
+const valueProps = [
+  {
+    icon: TrendingUp,
+    title: "One Closed Deal Pays for Months",
+    description: "A single website project you close with OptimizeMySuite covers 3-12 months of subscription costs. The math works.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Client-Facing Quality Guaranteed",
+    description: "Every report is designed to be shared directly with clients. No system logs, no technical jargon — just professional deliverables.",
+  },
+  {
+    icon: Zap,
+    title: "Built for Agency Workflows",
+    description: "Batch analysis, white-labeling, team collaboration, and history management. Everything agencies actually need.",
+  },
 ];
 
 export default function Pricing() {
@@ -146,17 +170,38 @@ export default function Pricing() {
       </nav>
 
       {/* Hero */}
-      <section className="container py-16 lg:py-24 text-center">
+      <section className="container py-16 lg:py-20 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
           <Sparkles className="w-4 h-4" />
-          Simple, Transparent Pricing
+          Pricing That Pays for Itself
         </div>
         <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-          Pricing That Scales With Your Agency
+          Invest in Proof. Close More Deals.
         </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Choose a plan that fits your workflow. Run website audits, deliver white-label reports, and generate optimization packs at scale.
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
+          Choose a plan that matches your agency's volume. Every tier includes the same professional-grade features — just more capacity.
         </p>
+        <p className="text-sm text-foreground/70 font-medium max-w-xl mx-auto">
+          Start with a 3-day free trial. No credit card required. Cancel anytime.
+        </p>
+      </section>
+
+      {/* Value Props */}
+      <section className="container pb-12">
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {valueProps.map((prop, index) => {
+            const Icon = prop.icon;
+            return (
+              <div key={index} className="p-5 rounded-xl bg-card border border-border/50 text-center">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mx-auto mb-3">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{prop.title}</h3>
+                <p className="text-sm text-muted-foreground">{prop.description}</p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       {/* Pricing Cards */}
@@ -177,11 +222,22 @@ export default function Pricing() {
                 </div>
               )}
               <div className="mb-6 mt-2">
-                <h3 className="text-xl font-bold text-foreground mb-2">{plan.name}</h3>
+                <h3 className="text-xl font-bold text-foreground mb-1">{plan.name}</h3>
                 <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                <div className="flex items-baseline gap-1">
+                <div className="flex items-baseline gap-1 mb-3">
                   <span className={`text-4xl font-bold ${plan.popular ? "text-primary" : "text-foreground"}`}>${plan.price}</span>
                   <span className="text-muted-foreground">/month</span>
+                </div>
+                <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <p className="text-xs text-muted-foreground mb-1">Who this is for:</p>
+                  <p className="text-sm text-foreground/80">{plan.whoIsFor}</p>
+                </div>
+              </div>
+
+              <div className="mb-4 p-3 rounded-lg bg-secondary/50">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  {plan.businessOutcome}
                 </div>
               </div>
 
@@ -203,10 +259,39 @@ export default function Pricing() {
                 {loadingPlan === plan.name ? "Loading..." : plan.cta}
               </Button>
               <p className="text-xs text-center text-muted-foreground mt-3">
-                {plan.popular ? "Start your 3-day free trial" : "No credit card required to start"}
+                3-day free trial • No credit card required
               </p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ROI Justification */}
+      <section className="container pb-16">
+        <div className="max-w-3xl mx-auto p-6 sm:p-8 rounded-2xl bg-card border border-border/50 shadow-card">
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-foreground mb-2">The Math Makes Sense</h2>
+            <p className="text-muted-foreground">Here's why agencies keep paying for OptimizeMySuite:</p>
+          </div>
+          
+          <div className="grid sm:grid-cols-3 gap-6 text-center">
+            <div className="p-4 rounded-xl bg-secondary/50">
+              <p className="text-3xl font-bold text-primary mb-1">$49-$399</p>
+              <p className="text-sm text-muted-foreground">Monthly cost</p>
+            </div>
+            <div className="p-4 rounded-xl bg-secondary/50">
+              <p className="text-3xl font-bold text-foreground mb-1">$2,000+</p>
+              <p className="text-sm text-muted-foreground">Avg. website project value</p>
+            </div>
+            <div className="p-4 rounded-xl bg-primary/10">
+              <p className="text-3xl font-bold text-primary mb-1">10-40x</p>
+              <p className="text-sm text-muted-foreground">ROI per closed deal</p>
+            </div>
+          </div>
+          
+          <p className="text-sm text-center text-foreground/70 mt-6">
+            One website project you close with OptimizeMySuite pays for 5-40 months of subscription. Most agencies see ROI within their first week.
+          </p>
         </div>
       </section>
 
@@ -216,7 +301,7 @@ export default function Pricing() {
           <h2 className="text-2xl font-bold text-foreground text-center mb-8">
             Compare All Features
           </h2>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border border-border/50 bg-card">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-border">
@@ -259,6 +344,39 @@ export default function Pricing() {
         </div>
       </section>
 
+      {/* Trust Section */}
+      <section className="container pb-16">
+        <div className="max-w-3xl mx-auto">
+          <div className="p-6 rounded-2xl bg-secondary/30 border border-border/50">
+            <div className="flex items-start gap-4">
+              <div className="p-3 rounded-xl bg-primary/10 text-primary flex-shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Designed to Be Client-Facing</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Every report, score, and PDF is built to be shared directly with your clients. No technical jargon, no system logs — just professional deliverables that make your agency look good.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <BadgeCheck className="w-4 h-4 text-primary" />
+                    Criteria-based scoring you can explain
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <BadgeCheck className="w-4 h-4 text-primary" />
+                    Consistent methodology across all audits
+                  </li>
+                  <li className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <BadgeCheck className="w-4 h-4 text-primary" />
+                    White-label ready out of the box
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Book a Demo CTA */}
       <section className="container pb-20">
         <div className="max-w-3xl mx-auto text-center p-8 rounded-2xl bg-primary/5 border border-primary/20">
@@ -267,7 +385,7 @@ export default function Pricing() {
             Need a Custom Solution?
           </h2>
           <p className="text-muted-foreground mb-6">
-            Talk to our team about enterprise pricing, custom integrations, and dedicated support.
+            Talk to our team about enterprise pricing, custom integrations, and dedicated support for high-volume agencies.
           </p>
           <Button variant="outline" size="lg" className="gap-2">
             Book a Demo
@@ -281,7 +399,7 @@ export default function Pricing() {
         <div className="container">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">OptimizeMySuite</span> — Website audits & optimization for marketing agencies
+              <span className="font-semibold text-foreground">OptimizeMySuite</span> — Proof-based website audits for marketing agencies
             </p>
             <div className="flex items-center gap-4">
               <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
