@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
@@ -49,6 +50,7 @@ const Auth = () => {
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
   // Signup form state
   const [signupAgencyName, setSignupAgencyName] = useState("");
@@ -336,6 +338,19 @@ const Auth = () => {
                           {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="remember-me"
+                        checked={rememberMe}
+                        onCheckedChange={(checked) => setRememberMe(checked === true)}
+                      />
+                      <label
+                        htmlFor="remember-me"
+                        className="text-sm text-muted-foreground cursor-pointer select-none"
+                      >
+                        Remember me
+                      </label>
                     </div>
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                       {isSubmitting ? (
