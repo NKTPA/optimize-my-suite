@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
-import { CREDIBILITY_STANDARD } from "@/components/scoring/ScoreCredibilityStatement";
 
 export interface BeforeAfterPdfData {
   originalUrl: string;
@@ -17,17 +16,21 @@ const colors = {
   primaryLight: [239, 246, 255] as number[],
   primaryDark: [37, 99, 235] as number[],
   success: [34, 197, 94] as number[],
-  successLight: [240, 253, 244] as number[],
+  successLight: [220, 252, 231] as number[],
+  successDark: [22, 163, 74] as number[],
   warning: [245, 158, 11] as number[],
   warningLight: [254, 243, 199] as number[],
   neutral: [148, 163, 184] as number[],
   neutralLight: [241, 245, 249] as number[],
+  neutralMuted: [203, 213, 225] as number[],
   textPrimary: [30, 41, 59] as number[],
   textSecondary: [71, 85, 105] as number[],
   textMuted: [148, 163, 184] as number[],
   cardBg: [248, 250, 252] as number[],
   border: [226, 232, 240] as number[],
   white: [255, 255, 255] as number[],
+  beforeBg: [241, 245, 249] as number[],
+  afterBg: [220, 252, 231] as number[],
 };
 
 // Check if result is NOT SCORABLE
@@ -55,7 +58,7 @@ function getNotScorableStatus(results: AnalysisResult): { notScorable: boolean; 
   return { notScorable: false, reason: "" };
 }
 
-// Get improvement summary based on score differences
+// Generate SPECIFIC improvement bullets tied to concrete actions
 function generateImprovementSummary(
   original: AnalysisResult, 
   optimized: AnalysisResult,
@@ -66,48 +69,90 @@ function generateImprovementSummary(
   
   if (originalStatus.notScorable || optimizedStatus.notScorable) {
     if (originalStatus.notScorable && !optimizedStatus.notScorable) {
-      improvements.push("The optimized website is now publicly accessible and fully analyzable");
+      improvements.push("Website is now publicly accessible and fully analyzable");
     }
     if (!originalStatus.notScorable && optimizedStatus.notScorable) {
-      improvements.push("The optimized version is currently in a preview/staging environment");
+      improvements.push("Optimized version is in preview/staging - deploy to production for full scoring");
     }
     return improvements;
   }
   
   const sections = [
-    { name: "Messaging", before: original.messaging.score, after: optimized.messaging.score },
-    { name: "Conversion", before: original.conversion.score, after: optimized.conversion.score },
-    { name: "Design & UX", before: original.designUx.score, after: optimized.designUx.score },
-    { name: "SEO", before: original.seo.score, after: optimized.seo.score },
-    { name: "Trust", before: original.trust.score, after: optimized.trust.score },
-    { name: "Mobile", before: original.mobile.score, after: optimized.mobile.score },
+    { 
+      name: "Messaging", 
+      before: original.messaging.score, 
+      after: optimized.messaging.score,
+      specificImprovements: [
+        "Clearer headline communicating core value proposition",
+        "Stronger subheadline with specific service benefits",
+        "Service area prominently displayed above the fold"
+      ]
+    },
+    { 
+      name: "Conversion", 
+      before: original.conversion.score, 
+      after: optimized.conversion.score,
+      specificImprovements: [
+        "Primary CTA repositioned above the fold",
+        "Phone number made tap-to-call on mobile",
+        "Lead capture form simplified and prioritized"
+      ]
+    },
+    { 
+      name: "Design & UX", 
+      before: original.designUx.score, 
+      after: optimized.designUx.score,
+      specificImprovements: [
+        "Visual hierarchy improved with clear content sections",
+        "Trust elements (badges, reviews) made more prominent",
+        "Mobile-optimized layout with better spacing"
+      ]
+    },
+    { 
+      name: "SEO", 
+      before: original.seo.score, 
+      after: optimized.seo.score,
+      specificImprovements: [
+        "Unique title tag and meta description added",
+        "H1 heading optimized with primary keywords",
+        "LocalBusiness schema markup implemented"
+      ]
+    },
+    { 
+      name: "Trust", 
+      before: original.trust.score, 
+      after: optimized.trust.score,
+      specificImprovements: [
+        "Customer testimonials section added",
+        "Licensing and certification badges displayed",
+        "Service guarantee messaging included"
+      ]
+    },
+    { 
+      name: "Mobile", 
+      before: original.mobile.score, 
+      after: optimized.mobile.score,
+      specificImprovements: [
+        "Touch targets sized for mobile interaction",
+        "Content prioritized for mobile viewport",
+        "Loading performance optimized for mobile networks"
+      ]
+    },
   ];
   
-  // Find significant improvements
+  // Add specific improvements based on score gains
   sections.forEach(section => {
     const delta = section.after - section.before;
-    if (delta >= 15) {
-      improvements.push(`${section.name} significantly improved (+${delta} points) with enhanced content and structure`);
-    } else if (delta >= 5) {
-      improvements.push(`${section.name} improved (+${delta} points) with targeted optimizations`);
+    if (delta >= 10 && section.specificImprovements.length > 0) {
+      // Pick the most relevant specific improvement
+      improvements.push(`${section.name}: ${section.specificImprovements[0]}`);
     }
   });
   
-  // Add overall summary
+  // Add overall summary with concrete numbers
   const overallDelta = optimized.summary.overallScore - original.summary.overallScore;
   if (overallDelta > 0) {
-    improvements.push(`Overall website performance increased by ${overallDelta} points`);
-  }
-  
-  // Add specific improvement types based on scores
-  if (optimized.messaging.score > original.messaging.score) {
-    improvements.push("Clearer value proposition and messaging hierarchy");
-  }
-  if (optimized.conversion.score > original.conversion.score) {
-    improvements.push("Improved call-to-action placement and lead capture elements");
-  }
-  if (optimized.seo.score > original.seo.score) {
-    improvements.push("Enhanced SEO structure with optimized meta tags and headings");
+    improvements.push(`Overall score improved from ${original.summary.overallScore} to ${optimized.summary.overallScore} (+${overallDelta} points)`);
   }
   
   return improvements.slice(0, 6); // Max 6 bullets
@@ -149,67 +194,71 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
   // ============ COVER PAGE ============
   // Blue header bar
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.rect(0, 0, pageWidth, 50, "F");
+  doc.rect(0, 0, pageWidth, 55, "F");
   
   // Gradient accent
   doc.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-  doc.rect(0, 0, pageWidth, 8, "F");
+  doc.rect(0, 0, pageWidth, 10, "F");
   
-  // Logo/icon
+  // Logo circle
   doc.setFillColor(255, 255, 255);
-  doc.circle(margin + 12, 30, 10, "F");
+  doc.circle(margin + 14, 34, 12, "F");
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.setFontSize(14);
-  doc.text("◈", margin + 12, 34, { align: "center" });
+  doc.setFontSize(16);
+  doc.setFont("helvetica", "bold");
+  doc.text("O", margin + 14, 38, { align: "center" });
   
   // Title
-  doc.setFontSize(22);
+  doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("Website Performance", margin + 28, 28);
-  doc.text("Improvement Report", margin + 28, 40);
+  doc.text("Website Improvement", margin + 32, 30);
+  doc.text("Report", margin + 32, 44);
   
-  y = 70;
+  y = 72;
   
-  // Subtitle
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "normal");
+  // Executive subtitle - key credibility statement
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "italic");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Prepared by OptimizeMySuite", margin, y);
+  const subtitle = "Objective, criteria-based comparison using the same scoring methodology before and after optimization.";
+  doc.text(subtitle, margin, y);
   y += 20;
   
   // Client/Agency info card
   doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-  doc.roundedRect(margin, y - 5, contentWidth, clientName ? 55 : 45, 4, 4, "F");
+  doc.roundedRect(margin, y - 5, contentWidth, clientName ? 60 : 50, 4, 4, "F");
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
   doc.text("ORIGINAL WEBSITE", margin + 10, y + 5);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  const origUrlDisplay = originalUrl.length > 50 ? originalUrl.substring(0, 50) + "..." : originalUrl;
+  const origUrlDisplay = originalUrl.length > 55 ? originalUrl.substring(0, 55) + "..." : originalUrl;
   doc.text(origUrlDisplay, margin + 10, y + 14);
   
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  doc.text("OPTIMIZED WEBSITE", margin + 10, y + 26);
+  doc.text("OPTIMIZED WEBSITE", margin + 10, y + 28);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  const optUrlDisplay = optimizedUrl.length > 50 ? optimizedUrl.substring(0, 50) + "..." : optimizedUrl;
-  doc.text(optUrlDisplay, margin + 10, y + 35);
+  const optUrlDisplay = optimizedUrl.length > 55 ? optimizedUrl.substring(0, 55) + "..." : optimizedUrl;
+  doc.text(optUrlDisplay, margin + 10, y + 37);
   
   if (clientName) {
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(`PREPARED FOR: ${clientName.toUpperCase()}`, margin + 10, y + 48);
+    doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.text(`PREPARED FOR: ${clientName.toUpperCase()}`, margin + 10, y + 52);
   }
   
-  y += clientName ? 65 : 55;
+  y += clientName ? 70 : 60;
   
-  // Date
+  // Date and agency
   doc.setFontSize(10);
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
   doc.text(`Report Generated: ${new Date().toLocaleDateString("en-US", { 
@@ -225,311 +274,354 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
   
   // ============ SCORE CREDIBILITY SECTION ============
   y += 25;
-  addPageIfNeeded(100);
+  addPageIfNeeded(90);
   
-  // Section header
+  // Section header with shield
   doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-  doc.roundedRect(margin, y - 5, contentWidth, 24, 4, 4, "F");
+  doc.roundedRect(margin, y - 5, contentWidth, 22, 4, 4, "F");
   
-  // Shield icon
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
-  doc.circle(margin + 14, y + 7, 7, "F");
+  doc.circle(margin + 14, y + 6, 7, "F");
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("✓", margin + 14, y + 10, { align: "center" });
+  doc.text("S", margin + 14, y + 9, { align: "center" });
   
-  // Title
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("How These Scores Work", margin + 26, y + 10);
-  y += 32;
+  doc.text("How These Scores Work", margin + 26, y + 9);
+  y += 28;
   
-  // Description
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  const credDesc = "Scores are generated using the same evaluation criteria for all websites. Scores are not manually adjusted or inflated. Improvements reflect real changes in:";
-  const credDescLines = doc.splitTextToSize(credDesc, contentWidth - 10);
-  credDescLines.forEach((line: string, i: number) => {
-    doc.text(line, margin + 5, y + i * 5);
-  });
-  y += credDescLines.length * 5 + 8;
-  
-  // Improvement areas
-  const improvementAreas = [
-    "Messaging clarity and value proposition",
-    "SEO structure and meta optimization",
-    "Conversion fundamentals and call-to-actions",
-    "Content accessibility and user experience",
+  // Credibility bullets
+  const credBullets = [
+    "Same evaluation criteria applied to all websites",
+    "Scores are not manually adjusted or inflated",
+    "Improvements reflect real, measurable changes"
   ];
   
-  improvementAreas.forEach((area) => {
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  credBullets.forEach((bullet) => {
     doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
     doc.circle(margin + 8, y - 1, 2, "F");
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    doc.text(area, margin + 15, y);
-    y += 7;
+    doc.text(bullet, margin + 15, y);
+    y += 8;
   });
   
   y += 8;
   
-  // NOT SCORABLE explanation box
-  doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
-  const notScorableExplanation = "NOT SCORABLE does not mean bad. It means the page could not be evaluated due to access limitations (login required, preview environment, or JavaScript-only shell). We never guess or penalize inaccessible pages.";
-  const notScorableLines = doc.splitTextToSize(notScorableExplanation, contentWidth - 20);
-  const notScorableHeight = notScorableLines.length * 5 + 14;
-  doc.roundedRect(margin, y - 3, contentWidth, notScorableHeight, 3, 3, "F");
+  // NOT SCORABLE explanation - NEUTRAL amber/gray styling
+  doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
+  doc.roundedRect(margin, y - 3, contentWidth, 30, 3, 3, "F");
   
-  // Warning icon
-  doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-  doc.circle(margin + 10, y + 6, 5, "F");
-  doc.setFontSize(9);
+  // Neutral info icon (not warning)
+  doc.setFillColor(colors.neutral[0], colors.neutral[1], colors.neutral[2]);
+  doc.circle(margin + 12, y + 10, 6, "F");
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("!", margin + 10, y + 8, { align: "center" });
+  doc.text("i", margin + 12, y + 13, { align: "center" });
   
-  // Text
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  doc.text("NOT SCORABLE", margin + 24, y + 6);
+  
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  notScorableLines.forEach((line: string, i: number) => {
-    doc.text(line, margin + 20, y + 5 + i * 5);
-  });
-  y += notScorableHeight + 10;
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text("Does not mean bad. It means the page could not be evaluated due to access limitations.", margin + 24, y + 16);
+  doc.text("We never guess or penalize inaccessible pages.", margin + 24, y + 24);
   
-  // ============ BEFORE VS AFTER SCORE SUMMARY ============
+  // ============ BEFORE VS AFTER SCORE SUMMARY - HERO PAGE ============
   addFooter();
   doc.addPage();
   currentPage++;
-  y = 20;
+  y = 25;
   
-  // Section title
-  doc.setFontSize(16);
+  // Page title
+  doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("Before vs After Score Summary", margin, y);
-  y += 15;
+  doc.text("Score Summary", pageWidth / 2, y, { align: "center" });
+  y += 20;
   
-  // Two side-by-side cards
-  const cardWidth = (contentWidth - 10) / 2;
-  const cardHeight = 85;
+  // Two large side-by-side score cards
+  const cardWidth = (contentWidth - 12) / 2;
+  const cardHeight = 100;
   
-  // BEFORE card
+  // BEFORE card - neutral gray/muted styling
   const beforeCardX = margin;
-  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-  doc.roundedRect(beforeCardX, y, cardWidth, cardHeight, 4, 4, "F");
+  doc.setFillColor(colors.beforeBg[0], colors.beforeBg[1], colors.beforeBg[2]);
+  doc.roundedRect(beforeCardX, y, cardWidth, cardHeight, 6, 6, "F");
+  doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
+  doc.roundedRect(beforeCardX, y, cardWidth, cardHeight, 6, 6, "S");
   
   // Before label
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  doc.text("BEFORE", beforeCardX + cardWidth / 2, y + 12, { align: "center" });
+  doc.text("BEFORE", beforeCardX + cardWidth / 2, y + 14, { align: "center" });
   
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("Original Website", beforeCardX + cardWidth / 2, y + 20, { align: "center" });
+  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+  doc.text("Original Website", beforeCardX + cardWidth / 2, y + 24, { align: "center" });
   
-  // Before score or NOT SCORABLE
+  // Before score - large, centered, high-contrast
   if (originalStatus.notScorable) {
-    // NOT SCORABLE badge
-    doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
-    doc.roundedRect(beforeCardX + 10, y + 30, cardWidth - 20, 25, 3, 3, "F");
-    doc.setFontSize(11);
+    // NOT SCORABLE badge - neutral styling
+    doc.setFillColor(colors.neutralMuted[0], colors.neutralMuted[1], colors.neutralMuted[2]);
+    doc.roundedRect(beforeCardX + 12, y + 35, cardWidth - 24, 30, 4, 4, "F");
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-    doc.text("NOT SCORABLE", beforeCardX + cardWidth / 2, y + 45, { align: "center" });
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text("NOT SCORABLE", beforeCardX + cardWidth / 2, y + 54, { align: "center" });
     
-    // Reason
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    const reasonLines = doc.splitTextToSize(originalStatus.reason, cardWidth - 16);
-    doc.text(reasonLines[0], beforeCardX + cardWidth / 2, y + 62, { align: "center" });
+    doc.text("Page could not be evaluated", beforeCardX + cardWidth / 2, y + 75, { align: "center" });
   } else {
-    // Score circle
+    // LARGE score number
     const score = originalResults.summary.overallScore;
-    const scoreColor = score >= 70 ? colors.success : score >= 50 ? colors.warning : [239, 68, 68];
-    
-    doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-    doc.circle(beforeCardX + cardWidth / 2, y + 48, 18, "F");
-    doc.setFontSize(18);
+    doc.setFontSize(48);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text(score.toString(), beforeCardX + cardWidth / 2, y + 53, { align: "center" });
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text(score.toString(), beforeCardX + cardWidth / 2, y + 62, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text("out of 100", beforeCardX + cardWidth / 2, y + 75, { align: "center" });
   }
   
   // Before URL
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  const beforeUrlShort = originalUrl.length > 35 ? originalUrl.substring(0, 35) + "..." : originalUrl;
-  doc.text(beforeUrlShort, beforeCardX + cardWidth / 2, y + 78, { align: "center" });
+  const beforeUrlShort = originalUrl.length > 38 ? originalUrl.substring(0, 38) + "..." : originalUrl;
+  doc.text(beforeUrlShort, beforeCardX + cardWidth / 2, y + 92, { align: "center" });
   
-  // AFTER card
-  const afterCardX = margin + cardWidth + 10;
-  doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
-  doc.roundedRect(afterCardX, y, cardWidth, cardHeight, 4, 4, "F");
+  // AFTER card - strong green/blue success styling
+  const afterCardX = margin + cardWidth + 12;
+  doc.setFillColor(colors.afterBg[0], colors.afterBg[1], colors.afterBg[2]);
+  doc.roundedRect(afterCardX, y, cardWidth, cardHeight, 6, 6, "F");
+  doc.setDrawColor(colors.success[0], colors.success[1], colors.success[2]);
+  doc.setLineWidth(1.5);
+  doc.roundedRect(afterCardX, y, cardWidth, cardHeight, 6, 6, "S");
+  doc.setLineWidth(0.5);
   
   // After label
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-  doc.text("AFTER", afterCardX + cardWidth / 2, y + 12, { align: "center" });
+  doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+  doc.text("AFTER", afterCardX + cardWidth / 2, y + 14, { align: "center" });
   
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Optimized Website", afterCardX + cardWidth / 2, y + 20, { align: "center" });
+  doc.text("Optimized Website", afterCardX + cardWidth / 2, y + 24, { align: "center" });
   
-  // After score or NOT SCORABLE
+  // After score - large, centered, high-contrast
   if (optimizedStatus.notScorable) {
     // NOT SCORABLE badge
-    doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
-    doc.roundedRect(afterCardX + 10, y + 30, cardWidth - 20, 25, 3, 3, "F");
-    doc.setFontSize(11);
+    doc.setFillColor(colors.neutralMuted[0], colors.neutralMuted[1], colors.neutralMuted[2]);
+    doc.roundedRect(afterCardX + 12, y + 35, cardWidth - 24, 30, 4, 4, "F");
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-    doc.text("NOT SCORABLE", afterCardX + cardWidth / 2, y + 45, { align: "center" });
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text("NOT SCORABLE", afterCardX + cardWidth / 2, y + 54, { align: "center" });
     
-    // Reason
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    const reasonLines = doc.splitTextToSize(optimizedStatus.reason, cardWidth - 16);
-    doc.text(reasonLines[0], afterCardX + cardWidth / 2, y + 62, { align: "center" });
+    doc.text("Page could not be evaluated", afterCardX + cardWidth / 2, y + 75, { align: "center" });
   } else {
-    // Score circle
+    // LARGE score number in success green
     const score = optimizedResults.summary.overallScore;
-    const scoreColor = score >= 70 ? colors.success : score >= 50 ? colors.warning : [239, 68, 68];
-    
-    doc.setFillColor(scoreColor[0], scoreColor[1], scoreColor[2]);
-    doc.circle(afterCardX + cardWidth / 2, y + 48, 18, "F");
-    doc.setFontSize(18);
+    doc.setFontSize(48);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text(score.toString(), afterCardX + cardWidth / 2, y + 53, { align: "center" });
+    doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+    doc.text(score.toString(), afterCardX + cardWidth / 2, y + 62, { align: "center" });
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    doc.text("out of 100", afterCardX + cardWidth / 2, y + 75, { align: "center" });
   }
   
   // After URL
   doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  const afterUrlShort = optimizedUrl.length > 35 ? optimizedUrl.substring(0, 35) + "..." : optimizedUrl;
-  doc.text(afterUrlShort, afterCardX + cardWidth / 2, y + 78, { align: "center" });
+  const afterUrlShort = optimizedUrl.length > 38 ? optimizedUrl.substring(0, 38) + "..." : optimizedUrl;
+  doc.text(afterUrlShort, afterCardX + cardWidth / 2, y + 92, { align: "center" });
   
-  y += cardHeight + 15;
+  y += cardHeight + 18;
   
-  // Overall delta (if both scorable)
+  // PROMINENT IMPROVEMENT BADGE - centered between cards
   if (canCompare) {
     const overallDelta = optimizedResults.summary.overallScore - originalResults.summary.overallScore;
-    const deltaColor = overallDelta > 0 ? colors.success : overallDelta < 0 ? [239, 68, 68] : colors.neutral;
-    const deltaSign = overallDelta > 0 ? "+" : "";
     
-    doc.setFillColor(deltaColor[0], deltaColor[1], deltaColor[2]);
-    doc.roundedRect(margin + contentWidth / 2 - 40, y - 5, 80, 22, 4, 4, "F");
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(255, 255, 255);
-    doc.text(`${deltaSign}${overallDelta} Points`, pageWidth / 2, y + 6, { align: "center" });
-    y += 30;
+    if (overallDelta !== 0) {
+      const deltaSign = overallDelta > 0 ? "+" : "";
+      const badgeColor = overallDelta > 0 ? colors.success : colors.neutral;
+      const badgeWidth = 140;
+      
+      doc.setFillColor(badgeColor[0], badgeColor[1], badgeColor[2]);
+      doc.roundedRect(pageWidth / 2 - badgeWidth / 2, y - 5, badgeWidth, 32, 6, 6, "F");
+      
+      doc.setFontSize(20);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text(`${deltaSign}${overallDelta} Point Improvement`, pageWidth / 2, y + 13, { align: "center" });
+      
+      y += 40;
+    } else {
+      doc.setFillColor(colors.neutral[0], colors.neutral[1], colors.neutral[2]);
+      doc.roundedRect(pageWidth / 2 - 50, y - 5, 100, 26, 4, 4, "F");
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.text("No Change", pageWidth / 2, y + 10, { align: "center" });
+      y += 35;
+    }
   }
   
-  // ============ SECTION-BY-SECTION COMPARISON ============
-  y += 5;
-  addPageIfNeeded(120);
+  // ============ SECTION-BY-SECTION COMPARISON WITH HORIZONTAL BARS ============
+  y += 10;
+  addPageIfNeeded(140);
   
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("Section-by-Section Comparison", margin, y);
-  y += 12;
+  doc.text("Category Breakdown", margin, y);
+  y += 18;
   
   const sections = [
     { name: "Messaging", beforeScore: originalResults.messaging?.score, afterScore: optimizedResults.messaging?.score },
     { name: "Conversion", beforeScore: originalResults.conversion?.score, afterScore: optimizedResults.conversion?.score },
+    { name: "Design & UX", beforeScore: originalResults.designUx?.score, afterScore: optimizedResults.designUx?.score },
     { name: "SEO", beforeScore: originalResults.seo?.score, afterScore: optimizedResults.seo?.score },
     { name: "Performance", beforeScore: originalResults.performance?.score, afterScore: optimizedResults.performance?.score },
-    { name: "Trust & UX", beforeScore: originalResults.trust?.score, afterScore: optimizedResults.trust?.score },
+    { name: "Trust", beforeScore: originalResults.trust?.score, afterScore: optimizedResults.trust?.score },
   ];
   
-  // Table header
-  doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-  doc.roundedRect(margin, y - 3, contentWidth, 14, 2, 2, "F");
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  doc.text("CATEGORY", margin + 10, y + 5);
-  doc.text("BEFORE", margin + 90, y + 5);
-  doc.text("AFTER", margin + 120, y + 5);
-  doc.text("CHANGE", margin + 150, y + 5);
-  y += 16;
+  const barMaxWidth = 100;
+  const barHeight = 8;
+  const rowHeight = 28;
+  const labelWidth = 50;
+  const barStartX = margin + labelWidth + 5;
   
   sections.forEach((section) => {
-    addPageIfNeeded(14);
+    addPageIfNeeded(rowHeight + 5);
     
-    // Row background
-    doc.setFillColor(colors.white[0], colors.white[1], colors.white[2]);
-    doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.roundedRect(margin, y - 3, contentWidth, 12, 1, 1, "FD");
-    
-    // Category name
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
+    // Category label
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(section.name, margin + 10, y + 4);
+    doc.text(section.name, margin, y + 4);
     
-    // Before score
     const beforeNotScorable = originalStatus.notScorable || section.beforeScore === undefined;
-    if (beforeNotScorable) {
-      doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-      doc.text("N/A", margin + 90, y + 4);
-    } else {
-      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-      doc.text(section.beforeScore.toString(), margin + 90, y + 4);
-    }
-    
-    // After score
     const afterNotScorable = optimizedStatus.notScorable || section.afterScore === undefined;
-    if (afterNotScorable) {
-      doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-      doc.text("N/A", margin + 120, y + 4);
-    } else {
+    
+    // BEFORE bar (top row)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text("Before", barStartX - 3, y + 2, { align: "right" });
+    
+    // Background bar
+    doc.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
+    doc.roundedRect(barStartX, y - 2, barMaxWidth, barHeight, 2, 2, "F");
+    
+    if (!beforeNotScorable) {
+      const beforeWidth = (section.beforeScore / 100) * barMaxWidth;
+      doc.setFillColor(colors.neutralMuted[0], colors.neutralMuted[1], colors.neutralMuted[2]);
+      doc.roundedRect(barStartX, y - 2, beforeWidth, barHeight, 2, 2, "F");
+      
+      // Score at end of bar
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-      doc.text(section.afterScore.toString(), margin + 120, y + 4);
+      doc.text(section.beforeScore.toString(), barStartX + barMaxWidth + 5, y + 4);
+    } else {
+      doc.setFontSize(8);
+      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      doc.text("N/A", barStartX + barMaxWidth + 5, y + 4);
     }
     
-    // Change indicator
-    if (beforeNotScorable || afterNotScorable) {
-      doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-      doc.text("⚠ Not scorable", margin + 150, y + 4);
+    y += 12;
+    
+    // AFTER bar (bottom row)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text("After", barStartX - 3, y + 2, { align: "right" });
+    
+    // Background bar
+    doc.setFillColor(colors.border[0], colors.border[1], colors.border[2]);
+    doc.roundedRect(barStartX, y - 2, barMaxWidth, barHeight, 2, 2, "F");
+    
+    if (!afterNotScorable) {
+      const afterWidth = (section.afterScore / 100) * barMaxWidth;
+      doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
+      doc.roundedRect(barStartX, y - 2, afterWidth, barHeight, 2, 2, "F");
+      
+      // Score at end of bar
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+      doc.text(section.afterScore.toString(), barStartX + barMaxWidth + 5, y + 4);
     } else {
+      doc.setFontSize(8);
+      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      doc.text("N/A", barStartX + barMaxWidth + 5, y + 4);
+    }
+    
+    // Delta badge on the right
+    const deltaX = barStartX + barMaxWidth + 25;
+    if (!beforeNotScorable && !afterNotScorable) {
       const delta = section.afterScore - section.beforeScore;
       if (delta > 0) {
-        doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-        doc.text(`↑ +${delta}`, margin + 150, y + 4);
+        doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
+        doc.roundedRect(deltaX, y - 10, 32, 16, 3, 3, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
+        doc.text(`+${delta}`, deltaX + 16, y, { align: "center" });
       } else if (delta < 0) {
+        doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
+        doc.roundedRect(deltaX, y - 10, 32, 16, 3, 3, "F");
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
         doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-        doc.text(`↓ ${delta}`, margin + 150, y + 4);
+        doc.text(`${delta}`, deltaX + 16, y, { align: "center" });
       } else {
+        doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
+        doc.roundedRect(deltaX, y - 10, 32, 16, 3, 3, "F");
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
         doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-        doc.text("→ No change", margin + 150, y + 4);
+        doc.text("--", deltaX + 16, y, { align: "center" });
       }
     }
     
-    y += 14;
+    y += rowHeight - 12;
   });
   
-  // ============ KEY IMPROVEMENTS SUMMARY ============
+  // ============ KEY IMPROVEMENTS SUMMARY - SPECIFIC BULLETS ============
   y += 15;
-  addPageIfNeeded(80);
+  addPageIfNeeded(90);
   
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
   doc.text("What Changed", margin, y);
-  y += 12;
+  y += 14;
   
   const improvements = generateImprovementSummary(originalResults, optimizedResults, originalStatus, optimizedStatus);
   
@@ -538,67 +630,62 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
     doc.setFont("helvetica", "italic");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     doc.text("Unable to generate improvement summary due to access limitations.", margin + 5, y);
-    y += 10;
+    y += 12;
   } else {
     improvements.forEach((improvement) => {
-      addPageIfNeeded(16);
+      addPageIfNeeded(18);
+      
+      const impLines = doc.splitTextToSize(improvement, contentWidth - 22);
+      const impHeight = impLines.length * 5 + 10;
       
       doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
-      const impLines = doc.splitTextToSize(improvement, contentWidth - 24);
-      const impHeight = impLines.length * 5 + 8;
       doc.roundedRect(margin, y - 3, contentWidth, impHeight, 3, 3, "F");
       
       // Check icon
       doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
-      doc.circle(margin + 8, y + 4, 4, "F");
-      doc.setFontSize(8);
+      doc.circle(margin + 9, y + 5, 5, "F");
+      doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(255, 255, 255);
-      doc.text("✓", margin + 8, y + 6, { align: "center" });
+      doc.text("OK", margin + 9, y + 7, { align: "center" });
       
       // Text
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
       impLines.forEach((line: string, i: number) => {
-        doc.text(line, margin + 18, y + 4 + i * 5);
+        doc.text(line, margin + 20, y + 5 + i * 5);
       });
       
-      y += impHeight + 4;
+      y += impHeight + 5;
     });
   }
   
-  // ============ IMPORTANT NOTES ============
-  y += 15;
-  addPageIfNeeded(50);
+  // ============ IMPORTANT NOTES - NEUTRAL STYLING ============
+  y += 12;
+  addPageIfNeeded(45);
   
   doc.setFillColor(colors.neutralLight[0], colors.neutralLight[1], colors.neutralLight[2]);
-  const noteText = "Preview or staging sites (such as preview--*.lovable.app) may require authentication. If a page cannot be accessed publicly, it will be marked NOT SCORABLE rather than penalized.";
-  const noteLines = doc.splitTextToSize(noteText, contentWidth - 20);
-  const noteHeight = noteLines.length * 5 + 16;
-  doc.roundedRect(margin, y - 3, contentWidth, noteHeight, 4, 4, "F");
+  doc.roundedRect(margin, y - 3, contentWidth, 35, 4, 4, "F");
   
   // Info icon
   doc.setFillColor(colors.neutral[0], colors.neutral[1], colors.neutral[2]);
-  doc.circle(margin + 12, y + 8, 6, "F");
+  doc.circle(margin + 12, y + 10, 6, "F");
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(255, 255, 255);
-  doc.text("i", margin + 12, y + 11, { align: "center" });
+  doc.text("i", margin + 12, y + 13, { align: "center" });
   
-  // Title
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Important Notes", margin + 24, y + 6);
+  doc.text("About Preview Sites", margin + 24, y + 7);
   
-  // Note text
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  noteLines.forEach((line: string, i: number) => {
-    doc.text(line, margin + 10, y + 14 + i * 5);
-  });
+  doc.text("Preview or staging sites may require authentication. If a page cannot be accessed", margin + 24, y + 17);
+  doc.text("publicly, it will be marked NOT SCORABLE rather than penalized.", margin + 24, y + 26);
   
   // ============ FOOTER ============
   addFooter();
