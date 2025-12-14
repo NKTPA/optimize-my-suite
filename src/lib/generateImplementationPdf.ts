@@ -3,6 +3,7 @@ import { ImplementationPlan } from "@/types/implementation";
 import { generateLovableRebuildPrompt } from "./generateLovablePrompt";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
+import { generatePdfFilename, setPdfMetadata, extractDomainFromUrl } from "./pdfMetadata";
 
 // Branding options for white-label PDFs
 export interface PdfBranding {
@@ -1112,7 +1113,16 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   // ============ FINAL FOOTER ============
   addFooter();
   
-  // Save
-  const filename = `implementation-strategy-pack-${new Date().toISOString().split("T")[0]}.pdf`;
+  // Set PDF metadata for white-label support
+  const metadataOptions = {
+    clientDomain: validatedUrl,
+    agencyName: branding?.footerText || undefined,
+    isWhiteLabel,
+    reportType: "implementation" as const,
+  };
+  setPdfMetadata(doc, metadataOptions);
+  
+  // Generate white-label friendly filename
+  const filename = generatePdfFilename(metadataOptions);
   doc.save(filename);
 }
