@@ -2,6 +2,13 @@ import jsPDF from "jspdf";
 import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 
+export interface BeforeAfterPdfBranding {
+  logoUrl?: string | null;
+  footerText?: string | null;
+  primaryColor?: string | null;
+  accentColor?: string | null;
+}
+
 export interface BeforeAfterPdfData {
   originalUrl: string;
   optimizedUrl: string;
@@ -9,6 +16,7 @@ export interface BeforeAfterPdfData {
   optimizedResults: AnalysisResult;
   agencyName?: string;
   clientName?: string;
+  branding?: BeforeAfterPdfBranding;
 }
 
 // Premium executive color palette (RGB values)
@@ -204,7 +212,7 @@ function truncateUrl(url: string, maxLength: number): string {
 }
 
 export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
-  const { originalUrl, optimizedUrl, originalResults, optimizedResults, agencyName, clientName } = data;
+  const { originalUrl, optimizedUrl, originalResults, optimizedResults, agencyName, clientName, branding } = data;
   
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -222,9 +230,22 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
     ? optimizedResults.summary.overallScore - originalResults.summary.overallScore 
     : 0;
 
+  // Credibility badge text (always shown for methodology transparency)
+  const CREDIBILITY_BADGE = "Objective, criteria-based scoring. No manual adjustments. Same methodology before and after.";
+  
+  // Determine if white-label mode is active (agency branding provided)
+  const isWhiteLabel = Boolean(branding?.logoUrl || branding?.footerText || agencyName);
+
   // Professional footer
   const addFooter = () => {
     const footerY = pageHeight - 12;
+    
+    // Credibility badge line (above main footer)
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...colors.textMuted);
+    doc.text(CREDIBILITY_BADGE, pageWidth / 2, footerY - 10, { align: "center" });
+    
     doc.setDrawColor(...colors.neutral200);
     doc.setLineWidth(0.5);
     doc.line(margin, footerY - 6, pageWidth - margin, footerY - 6);
@@ -232,7 +253,14 @@ export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...colors.textMuted);
-    doc.text("OptimizeMySuite", margin, footerY);
+    
+    // Footer text - white-label logic
+    const footerText = branding?.footerText 
+      ? branding.footerText 
+      : (isWhiteLabel ? "" : "OptimizeMySuite");
+    if (footerText) {
+      doc.text(footerText, margin, footerY);
+    }
     
     const dateStr = new Date().toLocaleDateString("en-US", { 
       month: "short", 
