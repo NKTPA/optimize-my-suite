@@ -1,15 +1,25 @@
-import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Info, Server } from "lucide-react";
+import { useState } from "react";
+import { TrendingUp, TrendingDown, AlertCircle, CheckCircle2, Info, Server, Rocket, Sparkles, Target, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DualScore } from "@/lib/scoringEngine";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface DualScoreDisplayProps {
   dualScore: DualScore;
+  baselineScore?: number;
+  baselineUrl?: string;
   className?: string;
 }
 
-export function DualScoreDisplay({ dualScore, className }: DualScoreDisplayProps) {
+export function DualScoreDisplay({ 
+  dualScore, 
+  baselineScore,
+  baselineUrl,
+  className 
+}: DualScoreDisplayProps) {
   const { 
     websiteQualityScore, 
     productionReadinessScore, 
@@ -18,6 +28,20 @@ export function DualScoreDisplay({ dualScore, className }: DualScoreDisplayProps
     unverifiedItems,
     delta 
   } = dualScore;
+
+  // Demo Mode defaults to ON for preview environments
+  const [demoMode, setDemoMode] = useState(environment.isPreview);
+
+  // Projected Live Score = Quality Score
+  const projectedLiveScore = websiteQualityScore;
+  const hasDualScores = websiteQualityScore !== undefined && productionReadinessScore !== undefined;
+
+  // Calculate delta vs baseline (from props or from dual score delta)
+  const deltaVsOriginal = baselineScore !== undefined 
+    ? projectedLiveScore - baselineScore 
+    : delta?.deltaScore ?? null;
+
+  const effectiveBaselineUrl = baselineUrl || delta?.originalUrl;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-score-excellent";
@@ -40,31 +64,166 @@ export function DualScoreDisplay({ dualScore, className }: DualScoreDisplayProps
     return "Critical";
   };
 
+  const getDeltaColor = (delta: number) => {
+    if (delta > 0) return "text-score-excellent bg-score-excellent/10 border-score-excellent/20";
+    if (delta < 0) return "text-score-poor bg-score-poor/10 border-score-poor/20";
+    return "text-muted-foreground bg-muted border-border";
+  };
+
+  const getDeltaIcon = (delta: number) => {
+    if (delta > 0) return <TrendingUp className="w-3 h-3" />;
+    if (delta < 0) return <TrendingDown className="w-3 h-3" />;
+    return <Minus className="w-3 h-3" />;
+  };
+
   const circumference = 2 * Math.PI * 45;
   const qualityOffset = circumference - (websiteQualityScore / 100) * circumference;
   const readinessOffset = circumference - (productionReadinessScore / 100) * circumference;
 
+  // Display score based on demo mode
+  const displayMainScore = demoMode && environment.isPreview ? projectedLiveScore : overallScore;
+
   return (
     <div className={cn("space-y-6", className)}>
-      {/* Environment Badge */}
+      {/* Environment Badge + Demo Mode Toggle */}
       {environment.isPreview && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-          <Server className="w-4 h-4 text-amber-500" />
-          <span className="text-sm text-amber-600 dark:text-amber-400">
-            Preview Environment Detected ({environment.provider})
-          </span>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <Info className="w-4 h-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>This is a preview/staging site. Production readiness items are scored fairly - they won't heavily penalize your overall score.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4 text-amber-500" />
+            <span className="text-sm text-amber-600 dark:text-amber-400">
+              Preview Environment Detected ({environment.provider})
+            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>This is a preview/staging site. Production readiness items are scored fairly - they won't heavily penalize your overall score.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          {/* Demo Mode Toggle */}
+          <div className="flex items-center gap-2">
+            <Label 
+              htmlFor="demo-mode-toggle" 
+              className="text-xs text-amber-700 dark:text-amber-300 cursor-pointer whitespace-nowrap"
+            >
+              Demo Mode (Quality-only)
+            </Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center">
+                    <Switch
+                      id="demo-mode-toggle"
+                      checked={demoMode}
+                      onCheckedChange={setDemoMode}
+                      className="scale-75"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>When enabled, scores emphasize content quality over production-readiness factors that don't apply to preview sites.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         </div>
       )}
+
+      {/* Score Insights Panel */}
+      <div className="bg-gradient-to-br from-muted/30 to-muted/10 rounded-xl border border-border/50 p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Score Insights</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Current Score */}
+          <div className="bg-card rounded-lg border border-border/50 p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Target className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">Current Score</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={cn("text-2xl font-bold", getScoreColor(displayMainScore))}>
+                {displayMainScore}
+              </span>
+              {demoMode && environment.isPreview && (
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  Quality
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Projected Live Score */}
+          {environment.isPreview && (
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-lg border border-primary/20 p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Rocket className="w-3.5 h-3.5 text-primary" />
+                <span className="text-xs text-primary/80">Projected Live Score</span>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Info className="w-3 h-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Preview environments can't fully validate production signals (indexing, analytics, etc.). Projected Live Score estimates performance once deployed on the customer domain.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={cn("text-2xl font-bold", getScoreColor(projectedLiveScore))}>
+                  {projectedLiveScore}
+                </span>
+                {!hasDualScores && (
+                  <span className="text-[10px] text-muted-foreground">Single-score mode</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Delta vs Original */}
+          <div className="bg-card rounded-lg border border-border/50 p-3">
+            <div className="flex items-center gap-2 mb-1">
+              <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">vs Original</span>
+            </div>
+            {deltaVsOriginal !== null ? (
+              <div className="flex flex-col gap-1">
+                <Badge 
+                  variant="outline" 
+                  className={cn("text-sm font-bold px-2 py-0.5 w-fit", getDeltaColor(deltaVsOriginal))}
+                >
+                  <span className="flex items-center gap-1">
+                    {getDeltaIcon(deltaVsOriginal)}
+                    {deltaVsOriginal > 0 ? "+" : ""}{deltaVsOriginal} vs Original
+                  </span>
+                </Badge>
+                {effectiveBaselineUrl && (
+                  <p className="text-[10px] text-muted-foreground truncate" title={effectiveBaselineUrl}>
+                    vs {effectiveBaselineUrl}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                <span className="text-xs text-muted-foreground/70 italic">
+                  No baseline yet
+                </span>
+                <span className="text-[10px] text-muted-foreground/50">
+                  Analyze customer domain first
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* Dual Score Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -149,48 +308,20 @@ export function DualScoreDisplay({ dualScore, className }: DualScoreDisplayProps
               <p className="text-xs text-muted-foreground mt-1">
                 SEO, indexing, analytics, speed
               </p>
-              <Badge variant="outline" className="mt-2 text-xs">
-                {getScoreLabel(productionReadinessScore)}
-              </Badge>
+              <div className="flex items-center gap-2 mt-2">
+                <Badge variant="outline" className="text-xs">
+                  {getScoreLabel(productionReadinessScore)}
+                </Badge>
+                {environment.isPreview && (
+                  <Badge variant="secondary" className="text-[10px]">
+                    15% weight
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Delta Score (if comparing to original) */}
-      {delta && (
-        <div className={cn(
-          "flex items-center gap-3 p-4 rounded-lg border",
-          delta.improved 
-            ? "bg-score-excellent/10 border-score-excellent/20" 
-            : "bg-score-poor/10 border-score-poor/20"
-        )}>
-          {delta.improved ? (
-            <TrendingUp className="w-5 h-5 text-score-excellent" />
-          ) : (
-            <TrendingDown className="w-5 h-5 text-score-poor" />
-          )}
-          <div className="flex-1">
-            <p className="text-sm font-medium">
-              {delta.improved ? "Improvement" : "Change"} vs Original
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Compared to {delta.originalUrl}
-            </p>
-          </div>
-          <div className="text-right">
-            <span className={cn(
-              "text-lg font-bold",
-              delta.improved ? "text-score-excellent" : "text-score-poor"
-            )}>
-              {delta.deltaScore > 0 ? "+" : ""}{delta.deltaScore}
-            </span>
-            <p className="text-xs text-muted-foreground">
-              ({delta.deltaPercent > 0 ? "+" : ""}{delta.deltaPercent}%)
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* Exempted Items for Preview */}
       {environment.isPreview && unverifiedItems.length > 0 && (
