@@ -1,3 +1,11 @@
+/**
+ * Website Performance Audit PDF Generator
+ * 
+ * CRITICAL: PDF components must NEVER use fixed height for dynamic text.
+ * All text containers must auto-expand vertically based on content length.
+ * 
+ * See src/pdf/PdfRegressionGuards.ts for forbidden patterns.
+ */
 import jsPDF from "jspdf";
 import { AnalysisResult, FindingInput } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
