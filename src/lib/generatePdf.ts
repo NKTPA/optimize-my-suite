@@ -236,6 +236,131 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
     doc.roundedRect(x, barY, scoreWidth, height, 4, 4, "F");
   };
 
+  // ============ SAFE TEXT RENDERING HELPER ============
+  // Universal component for all text that must auto-expand and never truncate
+  const renderSafeText = (
+    text: string,
+    startX: number,
+    maxWidth: number,
+    options?: {
+      fontSize?: number;
+      fontStyle?: "normal" | "bold" | "italic";
+      textColor?: number[];
+      lineHeight?: number;
+      bulletPrefix?: string;
+      labelText?: string; // For "Label: Value" pattern - renders label bold on first line
+    }
+  ): number => {
+    const fontSize = options?.fontSize || 9;
+    const fontStyle = options?.fontStyle || "normal";
+    const textColor = options?.textColor || colors.textSecondary;
+    const lineHeight = options?.lineHeight || 4.5;
+    
+    doc.setFontSize(fontSize);
+    doc.setFont("helvetica", fontStyle);
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+    
+    let textToRender = text;
+    let labelWidth = 0;
+    
+    // Handle label:value pattern - label goes on its own line
+    if (options?.labelText) {
+      // Render label bold on its own line first
+      doc.setFont("helvetica", "bold");
+      doc.text(`${options.labelText}:`, startX, y);
+      doc.setFont("helvetica", "normal");
+      y += lineHeight;
+      
+      // Now render the value on subsequent lines
+      textToRender = text;
+    } else if (options?.bulletPrefix) {
+      textToRender = `${options.bulletPrefix} ${text}`;
+    }
+    
+    // Split text to fit within available width - NO TRUNCATION
+    const lines = doc.splitTextToSize(textToRender, maxWidth);
+    const totalHeight = lines.length * lineHeight;
+    
+    // Check if we need a new page BEFORE rendering the block
+    // Keep entire block together if possible
+    if (y + totalHeight > pageHeight - 35) {
+      // If block fits on a fresh page, move to new page
+      if (totalHeight < pageHeight - 60) {
+        addNewPage();
+      }
+      // Otherwise we'll render what we can and continue on next page
+    }
+    
+    // Render ALL lines - no slicing, no truncation
+    lines.forEach((line: string, index: number) => {
+      // Check if current line needs new page
+      if (y + lineHeight > pageHeight - 35) {
+        addNewPage();
+      }
+      doc.text(line, startX, y);
+      y += lineHeight;
+    });
+    
+    return totalHeight;
+  };
+
+  // ============ SAFE BULLET LIST RENDERER ============
+  // Renders bullet lists that auto-expand and never truncate
+  const renderBulletList = (
+    items: string[],
+    options?: {
+      bulletStyle?: "circle" | "arrow" | "number";
+      bulletColor?: number[];
+      maxItems?: number; // Optional limit, but NO line truncation within items
+    }
+  ) => {
+    const bulletColor = options?.bulletColor || colors.primary;
+    const bulletStyle = options?.bulletStyle || "circle";
+    const itemsToRender = options?.maxItems ? items.slice(0, options.maxItems) : items;
+    
+    itemsToRender.forEach((item, index) => {
+      const text = sanitizeFindingText(item);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      
+      // Calculate block height first
+      const lines = doc.splitTextToSize(text, contentWidth - 20);
+      const blockHeight = lines.length * 4.5 + 4;
+      
+      // Check if entire block fits, if not and it would fit on fresh page, add new page
+      if (y + blockHeight > pageHeight - 35 && blockHeight < pageHeight - 60) {
+        addNewPage();
+      }
+      
+      // Draw bullet
+      if (bulletStyle === "circle") {
+        doc.setFillColor(bulletColor[0], bulletColor[1], bulletColor[2]);
+        doc.circle(margin + 5, y + 1, 2, "F");
+      } else if (bulletStyle === "number") {
+        doc.setFillColor(bulletColor[0], bulletColor[1], bulletColor[2]);
+        doc.circle(margin + 6, y + 1, 5, "F");
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(255, 255, 255);
+        doc.text((index + 1).toString(), margin + 6, y + 3, { align: "center" });
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+      }
+      
+      // Render ALL lines of text - no truncation
+      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+      lines.forEach((line: string, lineIndex: number) => {
+        if (y + 4.5 > pageHeight - 35) {
+          addNewPage();
+        }
+        const xOffset = bulletStyle === "number" ? 16 : 12;
+        doc.text(line, margin + xOffset, y + 3 + lineIndex * 4.5);
+      });
+      
+      y += blockHeight;
+    });
+  };
+
   // Premium section header with business context
   const addCategorySection = (
     title: string, 
@@ -285,11 +410,15 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
     
     y += 50;
     
-    // Why This Matters box
+    // Why This Matters box - dynamically sized based on content
     if (context && score < 70) {
-      addPageIfNeeded(35);
+      const whyLines = doc.splitTextToSize(context.whyMatters, contentWidth - 16);
+      const whyBoxHeight = whyLines.length * 4.5 + 16;
+      
+      addPageIfNeeded(whyBoxHeight + 5);
+      
       doc.setFillColor(colors.primaryLight[0], colors.primaryLight[1], colors.primaryLight[2]);
-      doc.roundedRect(margin, y - 3, contentWidth, 28, 3, 3, "F");
+      doc.roundedRect(margin, y - 3, contentWidth, whyBoxHeight, 3, 3, "F");
       
       doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
@@ -298,81 +427,118 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
       
       doc.setFont("helvetica", "normal");
       doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-      const whyLines = doc.splitTextToSize(context.whyMatters, contentWidth - 16);
-      whyLines.slice(0, 2).forEach((line: string, i: number) => {
+      
+      // Render ALL lines - no truncation
+      whyLines.forEach((line: string, i: number) => {
         doc.text(line, margin + 8, y + 13 + i * 4.5);
       });
-      y += 32;
+      
+      y += whyBoxHeight + 4;
     }
     
-    // Findings
+    // Findings - render ALL findings with ALL lines
     if (findings.length > 0) {
       findings.forEach((f) => {
         const text = sanitizeFindingText(getFindingText(f));
-        addPageIfNeeded(18);
-        
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
+        
         const lines = doc.splitTextToSize(text, contentWidth - 20);
-        const blockHeight = Math.min(lines.length, 3) * 4.5 + 8;
+        const blockHeight = lines.length * 4.5 + 6;
+        
+        // Try to keep block together
+        if (y + blockHeight > pageHeight - 35 && blockHeight < pageHeight - 60) {
+          addNewPage();
+        }
         
         // Bullet point
         doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
         doc.circle(margin + 5, y + 3, 2, "F");
         
-        // Text
+        // Render ALL lines - no truncation
         doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-        lines.slice(0, 3).forEach((line: string, index: number) => {
+        lines.forEach((line: string, index: number) => {
+          if (y + 5 + index * 4.5 > pageHeight - 35) {
+            addNewPage();
+            // Re-render from current line
+          }
           doc.text(line, margin + 12, y + 5 + index * 4.5);
         });
         y += blockHeight;
       });
     }
     
-    // Recommendations
+    // Recommendations - render ALL with NO truncation
     if (recommendations && recommendations.length > 0) {
       y += 3;
-      recommendations.slice(0, 3).forEach((r) => {
+      
+      recommendations.forEach((r) => {
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
 
         const textStartX = margin + 4;
-        const availableWidth = contentWidth - 12;
+        const availableWidth = contentWidth - 8;
 
-        const isMessagingLabel =
-          r.startsWith("Recommended Headline:") ||
-          r.startsWith("Recommended Subheadline:");
+        // Check for label:value patterns (Recommended Headline, Subheadline, Title, Meta, Keywords)
+        const labelPatterns = [
+          "Recommended Headline:",
+          "Recommended Subheadline:",
+          "Recommended Title:",
+          "Recommended Meta:",
+          "Target Keywords:"
+        ];
+        
+        const matchedLabel = labelPatterns.find(pattern => r.startsWith(pattern));
 
-        if (isMessagingLabel) {
-          const [label, ...rest] = r.split(":");
-          const value = rest.join(":").trim();
+        if (matchedLabel) {
+          const label = matchedLabel.replace(":", "");
+          const value = r.substring(matchedLabel.length).trim();
 
           const valueLines = doc.splitTextToSize(value, availableWidth);
-          const blockHeight = (1 + valueLines.length) * 4.5 + 2;
-          addPageIfNeeded(blockHeight);
+          const blockHeight = (1 + valueLines.length) * 4.5 + 4;
+          
+          // Try to keep block together
+          if (y + blockHeight > pageHeight - 35 && blockHeight < pageHeight - 60) {
+            addNewPage();
+          }
 
-          // Label on its own line
+          // Label on its own line, bold
           doc.setFont("helvetica", "bold");
           doc.text(`${label}:`, textStartX, y);
           doc.setFont("helvetica", "normal");
+          y += 4.5;
 
-          // Value on following lines, wrapped properly
+          // Value on following lines - ALL lines, no truncation
           valueLines.forEach((line: string, index: number) => {
-            doc.text(line, textStartX, y + 4.5 * (index + 1));
+            if (y > pageHeight - 35) {
+              addNewPage();
+            }
+            doc.text(line, textStartX, y);
+            y += 4.5;
           });
 
-          y += blockHeight;
+          y += 2;
         } else {
+          // Regular recommendation with arrow
           const lines = doc.splitTextToSize(`→ ${r}`, availableWidth);
-          const lineCount = lines.length;
-          addPageIfNeeded(lineCount * 4.5 + 4);
+          const blockHeight = lines.length * 4.5 + 4;
+          
+          // Try to keep block together
+          if (y + blockHeight > pageHeight - 35 && blockHeight < pageHeight - 60) {
+            addNewPage();
+          }
 
+          // Render ALL lines - no truncation
           lines.forEach((line: string, index: number) => {
-            doc.text(line, textStartX, y + index * 4.5);
+            if (y > pageHeight - 35) {
+              addNewPage();
+            }
+            doc.text(line, textStartX, y);
+            y += 4.5;
           });
 
-          y += lineCount * 4.5 + 2;
+          y += 2;
         }
       });
     }
@@ -507,11 +673,15 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
   }
   
   const summaryLines = doc.splitTextToSize(executiveSummary, contentWidth);
-  summaryLines.slice(0, 8).forEach((line: string, i: number) => {
+  // Render ALL summary lines - no truncation
+  summaryLines.forEach((line: string, i: number) => {
+    if (y + i * 6 > pageHeight - 35) {
+      addNewPage();
+    }
     doc.text(line, margin, y + i * 6);
   });
   
-  y += summaryLines.slice(0, 8).length * 6 + 15;
+  y += summaryLines.length * 6 + 15;
   
   // Category scores overview grid
   doc.setFontSize(12);
@@ -611,13 +781,17 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
   y += 18;
   
   results.summary.quickWins.slice(0, 5).forEach((win, index) => {
-    addPageIfNeeded(22);
-    
-    // Card background
-    doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
-    
     const winLines = doc.splitTextToSize(win, contentWidth - 30);
-    const cardHeight = Math.min(winLines.length, 2) * 5 + 12;
+    // Dynamic card height based on ALL lines - no truncation
+    const cardHeight = winLines.length * 5 + 12;
+    
+    // Try to keep entire card together
+    if (y + cardHeight > pageHeight - 35 && cardHeight < pageHeight - 60) {
+      addNewPage();
+    }
+    
+    // Card background - sized to fit ALL content
+    doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
     doc.roundedRect(margin, y - 3, contentWidth, cardHeight, 3, 3, "F");
     
     // Number badge
@@ -628,11 +802,11 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
     doc.setTextColor(255, 255, 255);
     doc.text((index + 1).toString(), margin + 10, y + 7, { align: "center" });
     
-    // Win text
+    // Win text - render ALL lines, no truncation
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    winLines.slice(0, 2).forEach((line: string, i: number) => {
+    winLines.forEach((line: string, i: number) => {
       doc.text(line, margin + 22, y + 5 + i * 5);
     });
     
@@ -788,31 +962,56 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
   
   y += 30;
   
+  // Technical findings - render ALL lines, no truncation
   results.technical.findings.forEach((f) => {
     const text = sanitizeFindingText(getFindingText(f));
-    addPageIfNeeded(15);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    
+    const lines = doc.splitTextToSize(text, contentWidth - 15);
+    const blockHeight = lines.length * 4.5 + 4;
+    
+    // Try to keep block together
+    if (y + blockHeight > pageHeight - 35 && blockHeight < pageHeight - 60) {
+      addNewPage();
+    }
+    
     doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
     doc.circle(margin + 5, y + 1, 2, "F");
-    const lines = doc.splitTextToSize(text, contentWidth - 15);
-    lines.slice(0, 2).forEach((line: string, i: number) => {
+    
+    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    // Render ALL lines - no truncation
+    lines.forEach((line: string, i: number) => {
+      if (y + 3 + i * 4.5 > pageHeight - 35) {
+        addNewPage();
+      }
       doc.text(line, margin + 12, y + 3 + i * 4.5);
     });
-    y += lines.slice(0, 2).length * 4.5 + 4;
+    y += blockHeight;
   });
   
-  results.technical.recommendations.slice(0, 3).forEach((r) => {
-    addPageIfNeeded(12);
+  // Technical recommendations - render ALL lines, no truncation
+  results.technical.recommendations.forEach((r) => {
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+    
     const lines = doc.splitTextToSize(`→ ${r}`, contentWidth - 10);
-    lines.slice(0, 2).forEach((line: string, i: number) => {
+    const blockHeight = lines.length * 4.5 + 2;
+    
+    // Try to keep block together
+    if (y + blockHeight > pageHeight - 35 && blockHeight < pageHeight - 60) {
+      addNewPage();
+    }
+    
+    // Render ALL lines - no truncation
+    lines.forEach((line: string, i: number) => {
+      if (y + i * 4.5 > pageHeight - 35) {
+        addNewPage();
+      }
       doc.text(line, margin + 8, y + i * 4.5);
     });
-    y += lines.slice(0, 2).length * 4.5 + 2;
+    y += blockHeight;
   });
   
   // ============ WHAT THIS AUDIT ENABLES (Agency Positioning) ============
@@ -855,10 +1054,17 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
   ];
   
   enablesItems.forEach((item) => {
-    addPageIfNeeded(35);
+    // Calculate dynamic card height based on ALL content
+    const descLines = doc.splitTextToSize(item.desc, contentWidth - 28);
+    const cardHeight = 14 + descLines.length * 4 + 6;
+    
+    // Try to keep entire card together
+    if (y + cardHeight > pageHeight - 35 && cardHeight < pageHeight - 60) {
+      addNewPage();
+    }
     
     doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(margin, y - 3, contentWidth, 28, 3, 3, "F");
+    doc.roundedRect(margin, y - 3, contentWidth, cardHeight, 3, 3, "F");
     
     doc.setFillColor(colors.success[0], colors.success[1], colors.success[2]);
     doc.circle(margin + 10, y + 8, 4, "F");
@@ -875,12 +1081,12 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    const descLines = doc.splitTextToSize(item.desc, contentWidth - 28);
-    descLines.slice(0, 2).forEach((line: string, i: number) => {
+    // Render ALL description lines - no truncation
+    descLines.forEach((line: string, i: number) => {
       doc.text(line, margin + 20, y + 14 + i * 4);
     });
     
-    y += 33;
+    y += cardHeight + 5;
   });
   
   // ============ METHODOLOGY CREDIBILITY ============
