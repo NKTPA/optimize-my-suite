@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { UsageLimitModal } from "@/components/entitlements/UsageLimitModal";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Analyze() {
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -111,11 +112,19 @@ export default function Analyze() {
       if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
         formattedUrl = "https://" + formattedUrl;
       }
+      
+      // Refresh session to get a valid token
+      const { data: { session: freshSession }, error: refreshError } = await supabase.auth.getSession();
+      
+      if (refreshError || !freshSession?.access_token) {
+        throw new Error("Your session has expired. Please log in again.");
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-website`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${freshSession.access_token}`,
         },
         body: JSON.stringify({
           url: formattedUrl,
@@ -123,6 +132,9 @@ export default function Analyze() {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          throw new Error("Your session has expired. Please log in again.");
+        }
         throw new Error(errorData.error || "Failed to analyze website");
       }
       const data = await response.json();
@@ -163,16 +175,26 @@ export default function Analyze() {
     setBlueprint(null);
     setResults(null);
     try {
+      // Refresh session to get a valid token
+      const { data: { session: freshSession }, error: refreshError } = await supabase.auth.getSession();
+      
+      if (refreshError || !freshSession?.access_token) {
+        throw new Error("Your session has expired. Please log in again.");
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-website-blueprint`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
+          Authorization: `Bearer ${freshSession.access_token}`,
         },
         body: JSON.stringify(formData),
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          throw new Error("Your session has expired. Please log in again.");
+        }
         throw new Error(errorData.error || "Failed to generate blueprint");
       }
       const data = await response.json();
