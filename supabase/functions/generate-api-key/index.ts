@@ -101,12 +101,11 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Store the hashed key in the database
+    // Store the API key metadata (without hash) in api_keys table
     const { data: insertedKey, error: insertError } = await supabaseAdmin
       .from("api_keys")
       .insert({
         workspace_id,
-        key_hash: keyHash,
         key_prefix: keyPrefix,
         name: key_name || "Default API Key",
       })
@@ -115,6 +114,32 @@ serve(async (req) => {
 
     if (insertError) {
       console.error("Failed to store API key:", insertError);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate API key" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Store the hash in the secure api_key_hashes table (client cannot access)
+    const { error: hashInsertError } = await supabaseAdmin
+      .from("api_key_hashes")
+      .insert({
+        api_key_id: insertedKey.id,
+        key_hash: keyHash,
+      });
+
+    if (insertError) {
+      console.error("Failed to store API key:", insertError);
+      return new Response(
+        JSON.stringify({ error: "Failed to generate API key" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (hashInsertError) {
+      console.error("Failed to store API key hash:", hashInsertError);
+      // Rollback: delete the api_key record
+      await supabaseAdmin.from("api_keys").delete().eq("id", insertedKey.id);
       return new Response(
         JSON.stringify({ error: "Failed to generate API key" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
