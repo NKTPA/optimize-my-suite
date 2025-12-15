@@ -336,18 +336,44 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-        
-        // Use full content width for recommendations to prevent text cutoff
+
         const textStartX = margin + 4;
-        const availableWidth = contentWidth - 4;
-        const lines = doc.splitTextToSize(`→ ${r}`, availableWidth);
-        // Allow all lines needed - no truncation
-        const lineCount = lines.length;
-        addPageIfNeeded(lineCount * 4.5 + 4);
-        lines.forEach((line: string, index: number) => {
-          doc.text(line, textStartX, y + index * 4.5);
-        });
-        y += lineCount * 4.5 + 2;
+        const availableWidth = contentWidth - 12;
+
+        const isMessagingLabel =
+          r.startsWith("Recommended Headline:") ||
+          r.startsWith("Recommended Subheadline:");
+
+        if (isMessagingLabel) {
+          const [label, ...rest] = r.split(":");
+          const value = rest.join(":").trim();
+
+          const valueLines = doc.splitTextToSize(value, availableWidth);
+          const blockHeight = (1 + valueLines.length) * 4.5 + 2;
+          addPageIfNeeded(blockHeight);
+
+          // Label on its own line
+          doc.setFont("helvetica", "bold");
+          doc.text(`${label}:`, textStartX, y);
+          doc.setFont("helvetica", "normal");
+
+          // Value on following lines, wrapped properly
+          valueLines.forEach((line: string, index: number) => {
+            doc.text(line, textStartX, y + 4.5 * (index + 1));
+          });
+
+          y += blockHeight;
+        } else {
+          const lines = doc.splitTextToSize(`→ ${r}`, availableWidth);
+          const lineCount = lines.length;
+          addPageIfNeeded(lineCount * 4.5 + 4);
+
+          lines.forEach((line: string, index: number) => {
+            doc.text(line, textStartX, y + index * 4.5);
+          });
+
+          y += lineCount * 4.5 + 2;
+        }
       });
     }
     
