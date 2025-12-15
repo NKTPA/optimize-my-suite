@@ -61,11 +61,43 @@ export type Database = {
           },
         ]
       }
+      api_key_hashes: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          key_hash: string
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          key_hash: string
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          key_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_hashes_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: true
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "api_key_hashes_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: true
+            referencedRelation: "api_keys_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       api_keys: {
         Row: {
           created_at: string
           id: string
-          key_hash: string
           key_prefix: string
           last_used_at: string | null
           name: string
@@ -75,7 +107,6 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
-          key_hash: string
           key_prefix: string
           last_used_at?: string | null
           name?: string
@@ -85,7 +116,6 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
-          key_hash?: string
           key_prefix?: string
           last_used_at?: string | null
           name?: string
@@ -414,6 +444,14 @@ export type Database = {
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean
+      }
+      validate_api_key: {
+        Args: { p_plaintext_key: string }
+        Returns: {
+          api_key_id: string
+          valid: boolean
+          workspace_id: string
+        }[]
       }
     }
     Enums: {
