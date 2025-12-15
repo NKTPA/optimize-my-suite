@@ -333,21 +333,21 @@ export function generateAnalysisPdf(results: AnalysisResult, url: string, brandi
     if (recommendations && recommendations.length > 0) {
       y += 3;
       recommendations.slice(0, 3).forEach((r) => {
-        addPageIfNeeded(24);
         doc.setFontSize(9);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
         
-        // Use full available width for recommendations
-        const textStartX = margin + 8;
-        const availableWidth = contentWidth - 8;
+        // Use full content width for recommendations to prevent text cutoff
+        const textStartX = margin + 4;
+        const availableWidth = contentWidth - 4;
         const lines = doc.splitTextToSize(`→ ${r}`, availableWidth);
-        // Allow up to 4 lines to prevent truncation of longer recommendations
-        const maxLines = Math.min(lines.length, 4);
-        lines.slice(0, maxLines).forEach((line: string, index: number) => {
+        // Allow all lines needed - no truncation
+        const lineCount = lines.length;
+        addPageIfNeeded(lineCount * 4.5 + 4);
+        lines.forEach((line: string, index: number) => {
           doc.text(line, textStartX, y + index * 4.5);
         });
-        y += maxLines * 4.5 + 2;
+        y += lineCount * 4.5 + 2;
       });
     }
     
