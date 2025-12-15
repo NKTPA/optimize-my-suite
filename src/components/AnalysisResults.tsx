@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AnalysisResultsProps {
   results: AnalysisResult;
@@ -58,13 +59,20 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
     setIsGenerating(true);
     setImplementationError(null);
     try {
+      // Refresh session to get a valid token
+      const { data: { session: freshSession }, error: refreshError } = await supabase.auth.getSession();
+      
+      if (refreshError || !freshSession?.access_token) {
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-implementation-plan`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${session?.access_token}`,
+            Authorization: `Bearer ${freshSession.access_token}`,
           },
           body: JSON.stringify({
             analysisResult: results,
@@ -80,6 +88,10 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        // Handle expired token specifically
+        if (response.status === 401) {
+          throw new Error("Your session has expired. Please log in again.");
+        }
         throw new Error(errorData.error || "Failed to generate implementation plan");
       }
 
