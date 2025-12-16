@@ -440,6 +440,7 @@ export type Database = {
       }
     }
     Functions: {
+      check_api_keys_safe_security: { Args: never; Returns: boolean }
       get_user_workspace_id: { Args: { _user_id: string }; Returns: string }
       is_workspace_member: {
         Args: { _user_id: string; _workspace_id: string }
