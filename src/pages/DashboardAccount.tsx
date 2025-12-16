@@ -11,6 +11,7 @@ import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { ApiAccess } from "@/components/settings/ApiAccess";
 
 export default function DashboardAccount() {
   const { user, profile, signOut, isLoading: authLoading } = useAuth();
@@ -337,6 +338,9 @@ export default function DashboardAccount() {
               </Button>
             </CardContent>
           </Card>
+
+          {/* API Access (Scale Plan Only) */}
+          <ApiAccess />
 
           {/* Sign Out */}
           <Card className="border-destructive/20">
