@@ -1190,6 +1190,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
+        temperature: 0, // Deterministic scoring for consistent results
         messages: [
           { role: "system", content: ANALYSIS_PROMPT },
           {
