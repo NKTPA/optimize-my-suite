@@ -1041,6 +1041,51 @@ serve(async (req) => {
         }
       }
       
+      if (!html && fetchBlocked) {
+        // Auto-fallback: try Firecrawl when direct fetch is blocked (403/503)
+        const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+        if (firecrawlApiKey) {
+          try {
+            logStep("Direct fetch blocked; attempting Firecrawl fallback", { url });
+            const fcResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${firecrawlApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                url,
+                formats: ['html'],
+                onlyMainContent: false,
+                waitFor: 7000,
+              }),
+            });
+
+            if (fcResponse.ok) {
+              const fcData = await fcResponse.json();
+              const fcHtml = fcData.data?.html || fcData.html;
+              if (typeof fcHtml === 'string' && fcHtml.length > 500) {
+                html = fcHtml;
+                if (html.length > 5000000) {
+                  html = html.slice(0, 5000000);
+                  logStep("WARNING: Firecrawl HTML truncated to 5MB");
+                }
+                logStep("Firecrawl fallback successful", { length: html.length });
+              } else {
+                logStep("Firecrawl fallback returned insufficient HTML", { length: typeof fcHtml === 'string' ? fcHtml.length : 0 });
+              }
+            } else {
+              const fcText = await fcResponse.text().catch(() => '');
+              logStep("Firecrawl fallback failed", { status: fcResponse.status, body: fcText.slice(0, 500) });
+            }
+          } catch (fcError) {
+            logStep("Firecrawl fallback error", { error: fcError instanceof Error ? fcError.message : String(fcError) });
+          }
+        } else {
+          logStep("Firecrawl fallback not available (missing FIRECRAWL_API_KEY)");
+        }
+      }
+
       if (!html) {
         logStep("ERROR: All fetch attempts failed", { error: lastError?.message });
         
