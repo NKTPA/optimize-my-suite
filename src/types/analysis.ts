@@ -31,7 +31,8 @@ export interface NotScorableState {
     | 'redirect_loop' 
     | 'placeholder_page'
     | 'js_only_shell'
-    | 'login_required';
+    | 'login_required'
+    | 'age_verification';
   reasonDisplay: string;
   finalUrl?: string;
   httpStatus?: number;
