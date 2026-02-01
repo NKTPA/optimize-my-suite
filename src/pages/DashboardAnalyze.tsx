@@ -8,6 +8,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { BlueprintForm } from "@/components/BlueprintForm";
 import { BlueprintDisplay } from "@/components/BlueprintDisplay";
+import { ManualHtmlInput } from "@/components/analyze/ManualHtmlInput";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AnalysisResult } from "@/types/analysis";
@@ -78,8 +79,10 @@ export default function Analyze() {
     }
   };
 
-  const handleAnalyze = async () => {
-    if (!url.trim()) {
+  const handleAnalyze = async (manualHtml?: string, manualUrl?: string) => {
+    const targetUrl = manualUrl || url;
+    
+    if (!targetUrl.trim() && !manualHtml) {
       toast({
         title: "Please enter a URL",
         description: "Enter the client website URL you want to analyze.",
@@ -87,7 +90,7 @@ export default function Analyze() {
       });
       return;
     }
-    if (!isValidUrl(url)) {
+    if (!manualHtml && !isValidUrl(targetUrl)) {
       toast({
         title: "Invalid URL",
         description: "Please enter a valid website URL (e.g., clientsite.com).",
@@ -107,19 +110,25 @@ export default function Analyze() {
     setBlueprint(null);
     setBlueprintError("");
     try {
-      let formattedUrl = url.trim();
+      let formattedUrl = targetUrl.trim();
       if (!formattedUrl.startsWith("http://") && !formattedUrl.startsWith("https://")) {
         formattedUrl = "https://" + formattedUrl;
       }
+      
+      const requestBody: Record<string, unknown> = { url: formattedUrl };
+      
+      // Add manual HTML if provided
+      if (manualHtml) {
+        requestBody.manualHtml = manualHtml;
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-website`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.access_token}`,
         },
-        body: JSON.stringify({
-          url: formattedUrl,
-        }),
+        body: JSON.stringify(requestBody),
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -136,7 +145,7 @@ export default function Analyze() {
         addAnalysis(formattedUrl, data);
       }
       toast({
-        title: "Analysis Complete",
+        title: manualHtml ? "Manual HTML Analysis Complete" : "Analysis Complete",
         description: "Client website analysis is ready. Scroll down to see the results.",
       });
     } catch (error) {
@@ -149,6 +158,10 @@ export default function Analyze() {
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const handleManualHtmlSubmit = (html: string, submittedUrl: string) => {
+    handleAnalyze(html, submittedUrl);
   };
 
   const handleGenerateBlueprint = async (formData: BlueprintFormData) => {
@@ -297,13 +310,21 @@ export default function Analyze() {
                   <Button
                     variant="hero"
                     size="lg"
-                    onClick={handleAnalyze}
+                    onClick={() => handleAnalyze()}
                     disabled={isLoading || isGeneratingBlueprint}
                     className="w-full sm:w-auto min-w-[180px]"
                   >
                     {isLoading ? "Analyzing..." : "Run Analysis"}
                     <ArrowRight className="w-5 h-5" />
                   </Button>
+                </div>
+                
+                {/* Manual HTML Option for blocked sites */}
+                <div className="flex items-center justify-center mt-4">
+                  <ManualHtmlInput 
+                    onSubmit={handleManualHtmlSubmit} 
+                    isLoading={isLoading} 
+                  />
                 </div>
 
                 {/* Divider */}

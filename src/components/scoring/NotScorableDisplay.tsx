@@ -109,6 +109,15 @@ export function NotScorableDisplay({ state, url }: NotScorableDisplayProps) {
               </li>
             ))}
           </ul>
+          
+          {/* Special tip for blocked/age-verified sites */}
+          {(state.reason === 'blocked_fetch' || state.reason === 'age_verification') && (
+            <div className="mt-4 pt-3 border-t border-primary/10">
+              <p className="text-sm text-primary font-medium">
+                💡 Tip: Use the "Paste HTML" button above to manually provide the page source after passing any gates in your browser.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Info Note */}

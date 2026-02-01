@@ -895,7 +895,7 @@ serve(async (req) => {
     // ========================================
     // PARSE AND VALIDATE REQUEST
     // ========================================
-    const { url } = await req.json();
+    const { url, manualHtml, useFirecrawl } = await req.json();
 
     if (!url) {
       return new Response(
@@ -921,112 +921,169 @@ serve(async (req) => {
       provider: environment.provider 
     });
 
-    logStep("Analyzing URL", { url });
+    logStep("Analyzing URL", { url, manualHtml: !!manualHtml, useFirecrawl: !!useFirecrawl });
 
     // ========================================
     // FETCH AND ANALYZE WEBSITE
     // ========================================
-    let html: string;
-    const userAgents = [
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-    ];
+    let html: string | undefined;
     
-    let lastError: Error | null = null;
-    let fetchBlocked = false;
-    
-    for (const userAgent of userAgents) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-        const response = await fetch(url, {
-          headers: {
-            "User-Agent": userAgent,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1",
-          },
-          redirect: "follow",
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          html = await response.text();
-          
-          if (html.length > 5000000) {
-            html = html.slice(0, 5000000);
-            logStep("WARNING: HTML truncated to 5MB");
-          }
-          
-          logStep("Fetched HTML", { length: html.length, userAgent: userAgent.slice(0, 30) });
-          break;
-        } else if (response.status === 403 || response.status === 503) {
-          logStep("Fetch blocked, trying next UA", { status: response.status });
-          lastError = new Error(`Website returned ${response.status}`);
-          fetchBlocked = true;
-          continue;
-        } else {
-          throw new Error(`Failed to fetch website: ${response.status}`);
-        }
-      } catch (fetchError) {
-        logStep("Fetch failed", { error: fetchError instanceof Error ? fetchError.message : String(fetchError) });
-        lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
-        continue;
+    // Option 1: Use manually provided HTML (for age-gated/blocked sites)
+    if (manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0) {
+      logStep("Using manually provided HTML", { length: manualHtml.length });
+      html = manualHtml;
+      
+      // Basic validation
+      if (html.length < 500) {
+        return new Response(
+          JSON.stringify({ error: "Provided HTML is too short. Please paste the full page source." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
     }
     
-    if (!html!) {
-      logStep("ERROR: All fetch attempts failed", { error: lastError?.message });
+    // Option 2: Try Firecrawl if requested (for bot-protected sites)
+    if (!html && useFirecrawl) {
+      const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+      if (firecrawlApiKey) {
+        try {
+          logStep("Attempting Firecrawl fetch", { url });
+          const fcResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${firecrawlApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url,
+              formats: ['html'],
+              onlyMainContent: false,
+              waitFor: 5000,
+            }),
+          });
+          
+          if (fcResponse.ok) {
+            const fcData = await fcResponse.json();
+            const fcHtml = fcData.data?.html || fcData.html;
+            if (fcHtml && fcHtml.length > 500) {
+              logStep("Firecrawl fetch successful", { length: fcHtml.length });
+              html = fcHtml;
+            }
+          } else {
+            logStep("Firecrawl fetch failed", { status: fcResponse.status });
+          }
+        } catch (fcError) {
+          logStep("Firecrawl error", { error: fcError instanceof Error ? fcError.message : String(fcError) });
+        }
+      } else {
+        logStep("Firecrawl not configured, skipping");
+      }
+    }
+    
+    // Option 3: Standard fetch with multiple user agents
+    if (!html) {
+      const userAgents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+      ];
       
-      // Return NOT SCORABLE result instead of error
-      const notScorableResult = {
-        summary: {
-          overallScore: 0,
-          overview: "Unable to analyze this website.",
-          quickWins: [],
-        },
-        notScorable: {
-          isNotScorable: true,
-          reason: fetchBlocked ? 'blocked_fetch' : 'blocked_fetch',
-          reasonDisplay: 'Could not access this website. The site may have bot protection enabled, require authentication, or be temporarily unavailable.',
-          finalUrl: url,
-          httpStatus: 0,
-          htmlSizeKb: 0,
-          fixInstructions: [
-            'Verify the URL is correct and publicly accessible',
-            'Try accessing the URL in an incognito browser window',
-            'Check if the site has bot protection (Cloudflare, etc.)',
-            'If this is a preview URL, try the production URL instead',
-          ],
-        },
-        messaging: { score: 0, findings: [], recommendedHeadline: '', recommendedSubheadline: '', elevatorPitch: '' },
-        conversion: { score: 0, findings: [], recommendations: [], sampleButtons: [] },
-        designUx: { score: 0, findings: [], recommendations: [] },
-        mobile: { score: 0, findings: [], recommendations: [] },
-        performance: { score: 0, findings: [], heavyImages: [], recommendations: [] },
-        seo: { score: 0, findings: [], recommendedTitle: '', recommendedMetaDescription: '', recommendedH1: '', keywords: [], checklist: [] },
-        trust: { score: 0, findings: [], whyChooseUs: [], testimonialsBlock: '' },
-        technical: { findings: [], recommendations: [] },
-        aiServicePitch: { paragraph: '', bullets: [] },
-        environment,
-        analysisSourceUrl: url,
-      };
+      let lastError: Error | null = null;
+      let fetchBlocked = false;
       
-      return new Response(JSON.stringify(notScorableResult), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200, // Return 200 with NOT SCORABLE state, not error
-      });
+      for (const userAgent of userAgents) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": userAgent,
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
+              "Accept-Encoding": "gzip, deflate, br",
+              "Cache-Control": "no-cache",
+              "Pragma": "no-cache",
+              "Sec-Fetch-Dest": "document",
+              "Sec-Fetch-Mode": "navigate",
+              "Sec-Fetch-Site": "none",
+              "Sec-Fetch-User": "?1",
+              "Upgrade-Insecure-Requests": "1",
+            },
+            redirect: "follow",
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            html = await response.text();
+            
+            if (html.length > 5000000) {
+              html = html.slice(0, 5000000);
+              logStep("WARNING: HTML truncated to 5MB");
+            }
+            
+            logStep("Fetched HTML", { length: html.length, userAgent: userAgent.slice(0, 30) });
+            break;
+          } else if (response.status === 403 || response.status === 503) {
+            logStep("Fetch blocked, trying next UA", { status: response.status });
+            lastError = new Error(`Website returned ${response.status}`);
+            fetchBlocked = true;
+            continue;
+          } else {
+            throw new Error(`Failed to fetch website: ${response.status}`);
+          }
+        } catch (fetchError) {
+          logStep("Fetch failed", { error: fetchError instanceof Error ? fetchError.message : String(fetchError) });
+          lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+          continue;
+        }
+      }
+      
+      if (!html) {
+        logStep("ERROR: All fetch attempts failed", { error: lastError?.message });
+        
+        // Return NOT SCORABLE result instead of error
+        const notScorableResult = {
+          summary: {
+            overallScore: 0,
+            overview: "Unable to analyze this website.",
+            quickWins: [],
+          },
+          notScorable: {
+            isNotScorable: true,
+            reason: fetchBlocked ? 'blocked_fetch' : 'blocked_fetch',
+            reasonDisplay: 'Could not access this website. The site may have bot protection enabled, require authentication, or be temporarily unavailable.',
+            finalUrl: url,
+            httpStatus: 0,
+            htmlSizeKb: 0,
+            fixInstructions: [
+              'Verify the URL is correct and publicly accessible',
+              'Try accessing the URL in an incognito browser window',
+              'Check if the site has bot protection (Cloudflare, etc.)',
+              'If this is a preview URL, try the production URL instead',
+              'Try using "Paste HTML" to manually provide the page source',
+            ],
+          },
+          messaging: { score: 0, findings: [], recommendedHeadline: '', recommendedSubheadline: '', elevatorPitch: '' },
+          conversion: { score: 0, findings: [], recommendations: [], sampleButtons: [] },
+          designUx: { score: 0, findings: [], recommendations: [] },
+          mobile: { score: 0, findings: [], recommendations: [] },
+          performance: { score: 0, findings: [], heavyImages: [], recommendations: [] },
+          seo: { score: 0, findings: [], recommendedTitle: '', recommendedMetaDescription: '', recommendedH1: '', keywords: [], checklist: [] },
+          trust: { score: 0, findings: [], whyChooseUs: [], testimonialsBlock: '' },
+          technical: { findings: [], recommendations: [] },
+          aiServicePitch: { paragraph: '', bullets: [] },
+          environment,
+          analysisSourceUrl: url,
+        };
+        
+        return new Response(JSON.stringify(notScorableResult), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200, // Return 200 with NOT SCORABLE state, not error
+        });
+      }
     }
 
     // ========================================
