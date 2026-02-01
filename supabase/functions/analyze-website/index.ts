@@ -344,12 +344,98 @@ const LOVABLE_PLACEHOLDER_KEYWORDS = [
 
 interface NotScorableResult {
   isNotScorable: true;
-  reason: 'auth_gate' | 'insufficient_html' | 'blocked_fetch' | 'redirect_loop' | 'placeholder_page' | 'js_only_shell' | 'login_required';
+  reason: 'auth_gate' | 'insufficient_html' | 'blocked_fetch' | 'redirect_loop' | 'placeholder_page' | 'js_only_shell' | 'login_required' | 'age_verification';
   reasonDisplay: string;
   finalUrl?: string;
   httpStatus?: number;
   htmlSizeKb?: number;
   fixInstructions: string[];
+}
+
+// Age verification detection keywords
+const AGE_VERIFICATION_KEYWORDS = [
+  'age verification',
+  'age-verification',
+  'verify your age',
+  'confirm your age',
+  'are you 21',
+  'are you over 21',
+  'are you 18',
+  'are you over 18',
+  'must be 21',
+  'must be 18',
+  'of legal drinking age',
+  'legal drinking age',
+  'enter your date of birth',
+  'enter your birthday',
+  'age gate',
+  'age-gate',
+  'agegate',
+  'alcohol',
+  'spirits',
+  'wine',
+  'beer',
+  'liquor',
+  'cannabis',
+  'marijuana',
+  'tobacco',
+  'vape',
+  'gambling',
+  'casino',
+  'adult content',
+  '21+',
+  '18+',
+];
+
+/**
+ * Detects if the page has an age verification gate
+ */
+function detectAgeVerificationPage(html: string): boolean {
+  const lowerHtml = html.toLowerCase();
+  
+  // Check for age verification keywords
+  let keywordMatches = 0;
+  for (const kw of AGE_VERIFICATION_KEYWORDS) {
+    if (lowerHtml.includes(kw)) {
+      keywordMatches++;
+    }
+  }
+  
+  // Need at least 2 keyword matches to be confident
+  if (keywordMatches < 2) {
+    return false;
+  }
+  
+  // Check for typical age gate UI elements
+  const hasDateInputs = 
+    lowerHtml.includes('type="date"') ||
+    lowerHtml.includes('type=\'date\'') ||
+    lowerHtml.includes('date of birth') ||
+    lowerHtml.includes('birthdate') ||
+    lowerHtml.includes('birth date');
+  
+  const hasAgeButtons = 
+    (lowerHtml.includes('yes') && lowerHtml.includes('no')) ||
+    lowerHtml.includes('i am 21') ||
+    lowerHtml.includes('i am 18') ||
+    lowerHtml.includes('i am of legal') ||
+    lowerHtml.includes('enter site') ||
+    lowerHtml.includes('enter the site');
+  
+  // Check for minimal main content (most of page is the age gate)
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : html;
+  const textOnly = bodyContent
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // Age gate pages typically have limited text content
+  const hasLimitedContent = textOnly.length < 2000;
+  
+  return (hasDateInputs || hasAgeButtons) && hasLimitedContent;
 }
 
 /**
@@ -397,6 +483,24 @@ function checkContentSufficiency(html: string, url: string, httpStatus?: number)
         'Use the public deployment URL (not preview-- URL)',
         'Connect a custom domain for production analysis',
         'If using authentication, ensure the homepage is publicly accessible',
+      ],
+    };
+  }
+  
+  // Check for age verification gate
+  if (detectAgeVerificationPage(html)) {
+    return {
+      isNotScorable: true,
+      reason: 'age_verification',
+      reasonDisplay: 'This website has an age verification gate that prevents our analyzer from accessing the main content. Age-gated sites (alcohol, cannabis, gambling, adult content) cannot be scored without manual verification.',
+      finalUrl: url,
+      httpStatus,
+      htmlSizeKb,
+      fixInstructions: [
+        'Age-gated websites cannot be automatically analyzed',
+        'The site requires users to confirm their age before viewing content',
+        'Consider analyzing a specific product or about page URL that may bypass the gate',
+        'Contact support if you need to analyze age-restricted content',
       ],
     };
   }

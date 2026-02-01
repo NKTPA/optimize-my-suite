@@ -16,6 +16,7 @@ const REASON_LABELS: Record<NotScorableState['reason'], string> = {
   placeholder_page: 'Placeholder Page Detected',
   js_only_shell: 'JavaScript-Only Shell',
   login_required: 'Login Required',
+  age_verification: 'Age Verification Required',
 };
 
 const REASON_ICONS: Record<NotScorableState['reason'], typeof AlertTriangle> = {
@@ -26,6 +27,7 @@ const REASON_ICONS: Record<NotScorableState['reason'], typeof AlertTriangle> = {
   placeholder_page: AlertTriangle,
   js_only_shell: AlertTriangle,
   login_required: XCircle,
+  age_verification: AlertTriangle,
 };
 
 export function NotScorableDisplay({ state, url }: NotScorableDisplayProps) {
