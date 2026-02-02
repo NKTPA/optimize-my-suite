@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Key, Copy, Trash2, Loader2, Code2, ExternalLink } from "lucide-react";
+import { Key, Copy, Trash2, Loader2, Code2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,9 +28,12 @@ export function ApiAccess() {
 
   const hasAccess = limits.hasApiAccess;
 
+  // API is Coming Soon - disable functionality
+  const isComingSoon = true;
+
   // Load existing API keys from the safe view
   useEffect(() => {
-    if (!workspace?.id || !hasAccess) {
+    if (!workspace?.id || !hasAccess || isComingSoon) {
       setIsLoadingKeys(false);
       return;
     }
@@ -54,14 +57,13 @@ export function ApiAccess() {
     };
 
     loadApiKeys();
-  }, [workspace?.id, hasAccess]);
+  }, [workspace?.id, hasAccess, isComingSoon]);
 
   const generateApiKey = async () => {
-    if (!workspace) return;
+    if (!workspace || isComingSoon) return;
 
     setIsGenerating(true);
     try {
-      // Call server-side edge function for secure key generation with SHA-256 hashing
       const { data, error } = await supabase.functions.invoke("generate-api-key", {
         body: {
           workspace_id: workspace.id,
@@ -142,14 +144,21 @@ export function ApiAccess() {
               Generate API keys to integrate website analysis into your workflows.
             </CardDescription>
           </div>
-          <Badge variant={hasAccess ? "default" : "secondary"}>
-            {hasAccess ? "Enabled" : "Scale Only"}
+          <Badge variant="secondary" className="text-muted-foreground">
+            Coming Soon
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* New Key Display */}
-        {newKey && (
+        {/* Coming Soon Notice */}
+        <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
+          <p className="text-sm text-muted-foreground">
+            API access is coming soon. We'll notify you when it's ready.
+          </p>
+        </div>
+
+        {/* New Key Display - Hidden when coming soon */}
+        {!isComingSoon && newKey && (
           <div className="p-4 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
             <p className="text-sm font-medium text-foreground">
               🔑 Your new API key (copy now - it won't be shown again):
@@ -165,22 +174,18 @@ export function ApiAccess() {
           </div>
         )}
 
-        {/* Generate Button */}
+        {/* Generate Button - Disabled for Coming Soon */}
         <Button
           onClick={generateApiKey}
-          disabled={isGenerating || !hasAccess}
-          className="gap-2"
+          disabled={true}
+          className="gap-2 opacity-50 cursor-not-allowed"
         >
-          {isGenerating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Key className="w-4 h-4" />
-          )}
+          <Key className="w-4 h-4" />
           Generate New API Key
         </Button>
 
-        {/* Existing Keys */}
-        {apiKeys.length > 0 && (
+        {/* Existing Keys - Hidden when coming soon */}
+        {!isComingSoon && apiKeys.length > 0 && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium text-foreground">Active Keys</h4>
             {apiKeys.filter(k => !k.revoked_at).map((key) => (
@@ -208,36 +213,30 @@ export function ApiAccess() {
           </div>
         )}
 
-        {/* API Documentation */}
+        {/* API Documentation Preview */}
         <div className="pt-4 border-t border-border space-y-4">
-          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
             <Code2 className="w-4 h-4" />
-            API Endpoints
+            Planned API Endpoints
           </h4>
-          <div className="space-y-3 text-sm">
-            <div className="p-3 rounded-lg bg-muted/50">
+          <div className="space-y-3 text-sm opacity-60">
+            <div className="p-3 rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-1">
-                <code className="font-mono text-primary">POST /api/analyze</code>
-                <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                <code className="font-mono text-muted-foreground">POST /api/analyze</code>
               </div>
               <p className="text-muted-foreground text-xs">
                 Analyze a website and return the full audit report.
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-muted/50">
+            <div className="p-3 rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-1">
-                <code className="font-mono text-primary">POST /api/implementation-pack</code>
-                <Badge variant="outline" className="text-xs">Coming Soon</Badge>
+                <code className="font-mono text-muted-foreground">POST /api/implementation-pack</code>
               </div>
               <p className="text-muted-foreground text-xs">
                 Generate an implementation pack from analysis results.
               </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="gap-2" disabled>
-            <ExternalLink className="w-4 h-4" />
-            View Full API Docs
-          </Button>
         </div>
       </CardContent>
     </Card>

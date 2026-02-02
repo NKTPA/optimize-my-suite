@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Building2, Lock, CreditCard, LogOut, Save, Loader2, Image, Eye, EyeOff } from "lucide-react";
+import { User, Building2, Lock, CreditCard, Save, Loader2, Eye, EyeOff, Upload, X, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -16,18 +17,25 @@ import { ApiAccess } from "@/components/settings/ApiAccess";
 export default function DashboardAccount() {
   const { user, profile, signOut, isLoading: authLoading } = useAuth();
   const { plan, subscribed, isTrial, subscriptionEnd } = useSubscription();
+  const { workspace, branding, updateBranding } = useWorkspace();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [agencyName, setAgencyName] = useState("");
   const [agencyWebsite, setAgencyWebsite] = useState("");
+  const [brandColor, setBrandColor] = useState("#3b82f6");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -48,11 +56,111 @@ export default function DashboardAccount() {
     }
   }, [profile]);
 
+  useEffect(() => {
+    if (branding) {
+      setBrandColor(branding.accent_color || "#3b82f6");
+      setLogoPreview(branding.logo_url || null);
+    }
+  }, [branding]);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload a PNG, JPG, or SVG file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Logo must be under 2MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.id}/logo.${fileExt}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from("agency-logos")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from("agency-logos")
+        .getPublicUrl(filePath);
+
+      const logoUrl = urlData.publicUrl;
+
+      // Update branding with logo URL
+      await updateBranding({ logo_url: logoUrl });
+      setLogoPreview(logoUrl);
+
+      toast({
+        title: "Logo Uploaded",
+        description: "Your logo has been saved and will appear on PDF reports.",
+      });
+    } catch (error) {
+      console.error("Logo upload error:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Could not upload logo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!user) return;
+
+    try {
+      // Remove from storage
+      const { error: deleteError } = await supabase.storage
+        .from("agency-logos")
+        .remove([`${user.id}/logo.png`, `${user.id}/logo.jpg`, `${user.id}/logo.svg`]);
+
+      // Update branding to remove logo URL
+      await updateBranding({ logo_url: null });
+      setLogoPreview(null);
+
+      toast({
+        title: "Logo Removed",
+        description: "Your logo has been removed.",
+      });
+    } catch (error) {
+      console.error("Logo removal error:", error);
+      toast({
+        title: "Removal Failed",
+        description: "Could not remove logo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
     setIsSavingProfile(true);
     try {
-      const { error } = await supabase
+      // Update profile
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({
           first_name: firstName.trim(),
@@ -62,7 +170,10 @@ export default function DashboardAccount() {
         })
         .eq("user_id", user.id);
 
-      if (error) throw error;
+      if (profileError) throw profileError;
+
+      // Update branding with brand color
+      await updateBranding({ accent_color: brandColor });
 
       toast({
         title: "Profile Updated",
@@ -81,6 +192,14 @@ export default function DashboardAccount() {
   };
 
   const handleChangePassword = async () => {
+    if (!currentPassword.trim()) {
+      toast({
+        title: "Current Password Required",
+        description: "Please enter your current password.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (newPassword !== confirmPassword) {
       toast({
         title: "Passwords Don't Match",
@@ -100,6 +219,22 @@ export default function DashboardAccount() {
 
     setIsChangingPassword(true);
     try {
+      // First, verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || "",
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Incorrect Current Password",
+          description: "The current password you entered is incorrect.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Now update the password
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -110,6 +245,7 @@ export default function DashboardAccount() {
         title: "Password Changed",
         description: "Your password has been updated successfully.",
       });
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     } catch (error) {
@@ -268,6 +404,92 @@ export default function DashboardAccount() {
                   placeholder="https://acmeagency.com"
                 />
               </div>
+
+              {/* Brand Logo Upload */}
+              <div className="space-y-2">
+                <Label>Brand Logo</Label>
+                <div className="flex items-center gap-4">
+                  <div
+                    className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {logoPreview ? (
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="w-full h-full object-contain p-2"
+                      />
+                    ) : (
+                      <Image className="w-6 h-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.svg"
+                      onChange={handleLogoUpload}
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploadingLogo}
+                        className="gap-2"
+                      >
+                        {isUploadingLogo ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4" />
+                        )}
+                        Upload Logo
+                      </Button>
+                      {logoPreview && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveLogo}
+                          className="text-destructive gap-1"
+                        >
+                          <X className="w-4 h-4" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      PNG, JPG, or SVG (max 2MB). This logo appears on your white-label PDF reports.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Brand Color */}
+              <div className="space-y-2">
+                <Label htmlFor="brandColor">Brand Color</Label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    id="brandColor"
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    className="w-10 h-10 rounded border-0 cursor-pointer"
+                  />
+                  <Input
+                    value={brandColor}
+                    onChange={(e) => setBrandColor(e.target.value)}
+                    placeholder="#3b82f6"
+                    className="w-28"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Used as the accent color in your PDF reports.
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label>Email Address</Label>
                 <Input value={user.email || ""} disabled className="bg-muted" />
@@ -291,6 +513,27 @@ export default function DashboardAccount() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
                 <div className="relative">
                   <Input
@@ -298,7 +541,7 @@ export default function DashboardAccount() {
                     type={showNewPassword ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Enter new password"
                     className="pr-10"
                   />
                   <button
@@ -319,7 +562,7 @@ export default function DashboardAccount() {
                     type={showConfirmPassword ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder="Confirm new password"
                     className="pr-10"
                   />
                   <button
@@ -332,32 +575,30 @@ export default function DashboardAccount() {
                   </button>
                 </div>
               </div>
-              <Button onClick={handleChangePassword} disabled={isChangingPassword} variant="outline" className="gap-2">
+              <Button 
+                onClick={handleChangePassword} 
+                disabled={isChangingPassword || !currentPassword.trim()} 
+                variant="outline" 
+                className="gap-2"
+              >
                 {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                 Change Password
               </Button>
             </CardContent>
           </Card>
 
-          {/* API Access (Scale Plan Only) */}
+          {/* API Access (Coming Soon) */}
           <ApiAccess />
 
-          {/* Sign Out */}
-          <Card className="border-destructive/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <LogOut className="w-5 h-5" />
-                Sign Out
-              </CardTitle>
-              <CardDescription>Sign out of your agency account.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="destructive" onClick={handleSignOut} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
-            </CardContent>
-          </Card>
+          {/* Sign Out - Simple text button */}
+          <div className="pt-4 border-t border-border">
+            <button
+              onClick={handleSignOut}
+              className="text-sm text-destructive/80 hover:text-destructive hover:underline transition-colors"
+            >
+              Sign out of your account
+            </button>
+          </div>
         </div>
       </div>
     </DashboardLayout>
