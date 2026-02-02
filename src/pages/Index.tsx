@@ -240,12 +240,9 @@ export default function Index() {
                 <p className="text-sm text-muted-foreground italic mb-4">
                   "We closed a $12K website rebuild in the first week using the audit reports. The before/after scoring made it a no-brainer for the client."
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">Sarah M.</p>
-                    <p className="text-xs text-muted-foreground">Agency Director at [Agency Name]</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">Sarah M.</p>
+                  <p className="text-xs text-muted-foreground">Agency Director at [Agency Name]</p>
                 </div>
               </div>
               
@@ -253,12 +250,9 @@ export default function Index() {
                 <p className="text-sm text-muted-foreground italic mb-4">
                   "My team used to spend 3 hours per audit manually. Now we batch 50 prospects and have reports ready before lunch."
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">James K.</p>
-                    <p className="text-xs text-muted-foreground">SEO Consultant</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">James K.</p>
+                  <p className="text-xs text-muted-foreground">SEO Consultant</p>
                 </div>
               </div>
               
@@ -266,12 +260,9 @@ export default function Index() {
                 <p className="text-sm text-muted-foreground italic mb-4">
                   "The white-label PDFs look better than what we were producing in-house. Clients actually read these."
                 </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">Rachel T.</p>
-                    <p className="text-xs text-muted-foreground">Digital Strategist</p>
-                  </div>
+                <div>
+                  <p className="font-semibold text-foreground text-sm">Rachel T.</p>
+                  <p className="text-xs text-muted-foreground">Digital Strategist</p>
                 </div>
               </div>
             </div>
