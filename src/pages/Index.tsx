@@ -233,17 +233,6 @@ export default function Index() {
               Trusted by agencies who sell results, not promises
             </p>
             
-            {/* Logo placeholders */}
-            <div className="flex flex-wrap justify-center gap-8 mb-12">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div 
-                  key={i} 
-                  className="w-[120px] h-[40px] rounded-lg bg-muted/50 flex items-center justify-center grayscale opacity-60"
-                >
-                  <span className="text-xs text-muted-foreground/30 font-medium">Logo</span>
-                </div>
-              ))}
-            </div>
             
             {/* Testimonials */}
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
