@@ -7,7 +7,9 @@ import {
   LogOut, 
   CreditCard,
   LayoutDashboard,
-  Settings
+  Settings,
+  User,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,8 +19,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { TrialBanner } from "@/components/entitlements/TrialBanner";
-import { UsageIndicator } from "@/components/entitlements/UsageIndicator";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -46,12 +54,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate("/", { replace: true });
   };
 
+  // Main nav items (no Settings - moved to dropdown)
   const navItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dashboard/analyze", label: "Analyze", icon: Globe },
     { href: "/dashboard/batch", label: "Batch Mode", icon: Layers },
     { href: "/dashboard/history", label: "History", icon: History },
-    { href: "/dashboard/account", label: "Settings", icon: Settings },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -112,33 +120,39 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </nav>
 
             <div className="flex items-center gap-2">
-              {/* Subscription Status */}
-              <div className="hidden lg:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
-                <div className="flex items-center gap-1.5">
-                  {getPlanBadge()}
-                </div>
-                <div className="h-4 w-px bg-border" />
-                <UsageIndicator type="analyses" compact />
-                <div className="h-4 w-px bg-border" />
-                <UsageIndicator type="packs" compact />
-              </div>
-              
-              {/* Mobile: Show only badge and analyses */}
-              <div className="lg:hidden flex items-center gap-2">
+              {/* Plan Badge */}
+              <div className="hidden sm:flex items-center">
                 {getPlanBadge()}
-                <UsageIndicator type="analyses" compact />
               </div>
 
-              <Link to="/pricing">
-                <Button variant="ghost" size="sm" className="hidden sm:flex gap-2">
-                  <CreditCard className="w-4 h-4" />
-                  <span className="hidden xl:inline">Plans</span>
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                <span className="hidden xl:inline">Logout</span>
-              </Button>
+              {/* User Dropdown Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <User className="w-4 h-4" />
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-background border border-border">
+                  <Link to="/dashboard/account">
+                    <DropdownMenuItem className="gap-2 cursor-pointer">
+                      <Settings className="w-4 h-4" />
+                      Settings
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link to="/pricing">
+                    <DropdownMenuItem className="gap-2 cursor-pointer">
+                      <CreditCard className="w-4 h-4" />
+                      Plans & Billing
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive">
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -163,6 +177,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 </Link>
               );
             })}
+            {/* Settings in mobile nav for easy access */}
+            <Link to="/dashboard/account">
+              <Button 
+                variant={isActive("/dashboard/account") ? "secondary" : "ghost"} 
+                size="sm" 
+                className="gap-2 whitespace-nowrap"
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </Button>
+            </Link>
           </nav>
         </div>
       </div>

@@ -34,6 +34,7 @@ export function OnboardingChecklist() {
   const { subscribed, isTrial } = useSubscription();
   const { history } = useHistory();
   const [dismissed, setDismissed] = useState(false);
+  const [allCompleteDismissed, setAllCompleteDismissed] = useState(false);
 
   // Check localStorage for dismissal
   useEffect(() => {
@@ -41,11 +42,20 @@ export function OnboardingChecklist() {
     if (isDismissed === "true") {
       setDismissed(true);
     }
+    const isAllCompleteDismissed = localStorage.getItem("onboarding_complete_dismissed");
+    if (isAllCompleteDismissed === "true") {
+      setAllCompleteDismissed(true);
+    }
   }, []);
 
   const handleDismiss = () => {
     localStorage.setItem("onboarding_dismissed", "true");
     setDismissed(true);
+  };
+
+  const handleAllCompleteDismiss = () => {
+    localStorage.setItem("onboarding_complete_dismissed", "true");
+    setAllCompleteDismissed(true);
   };
 
   const hasAnalysis = history.some(item => item.type === "analysis");
@@ -101,10 +111,41 @@ export function OnboardingChecklist() {
 
   const completedCount = items.filter(item => item.isComplete).length;
   const progress = (completedCount / items.length) * 100;
+  const allComplete = completedCount === items.length;
+  
+  const incompleteItems = items.filter(item => !item.isComplete);
+  const completedItems = items.filter(item => item.isComplete);
 
-  // Don't show if dismissed or all complete
-  if (dismissed || completedCount === items.length) {
+  // Don't show if dismissed
+  if (dismissed) {
     return null;
+  }
+
+  // All complete - show success banner
+  if (allComplete) {
+    if (allCompleteDismissed) {
+      return null;
+    }
+    
+    return (
+      <Card className="border-success/30 bg-success/5">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-success/10">
+                <CheckCircle2 className="w-5 h-5 text-success" />
+              </div>
+              <div>
+                <p className="font-medium text-foreground">Setup complete! You're ready to go.</p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={handleAllCompleteDismiss} className="h-8 w-8">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
@@ -129,38 +170,42 @@ export function OnboardingChecklist() {
         <Progress value={progress} className="h-2 mt-4" />
       </CardHeader>
       <CardContent className="pt-4">
-        <div className="space-y-3">
-          {items.map((item) => {
+        <div className="space-y-2">
+          {/* Completed items - compact single line each */}
+          {completedItems.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-2 px-3 py-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
+              <p className="text-sm text-muted-foreground opacity-60">
+                {item.title}
+              </p>
+            </div>
+          ))}
+          
+          {/* Incomplete items - full prominence */}
+          {incompleteItems.map((item) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.id}
-                className={`flex items-center justify-between p-3 rounded-xl transition-colors ${
-                  item.isComplete 
-                    ? "bg-success/5 border border-success/20" 
-                    : "bg-card border border-border/50 hover:border-border"
-                }`}
+                className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/50 hover:border-border transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  {item.isComplete ? (
-                    <CheckCircle2 className="w-5 h-5 text-success flex-shrink-0" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
-                  )}
+                  <Circle className="w-5 h-5 text-muted-foreground/50 flex-shrink-0" />
                   <div>
-                    <p className={`text-sm font-medium ${item.isComplete ? "text-muted-foreground line-through" : "text-foreground"}`}>
+                    <p className="text-sm font-medium text-foreground">
                       {item.title}
                     </p>
                     <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
                 </div>
-                {!item.isComplete && (
-                  <Link to={item.href}>
-                    <Button size="sm" variant="outline" className="text-xs">
-                      {item.ctaText}
-                    </Button>
-                  </Link>
-                )}
+                <Link to={item.href}>
+                  <Button size="sm" variant="outline" className="text-xs">
+                    {item.ctaText}
+                  </Button>
+                </Link>
               </div>
             );
           })}

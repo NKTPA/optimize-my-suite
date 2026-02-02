@@ -9,7 +9,9 @@ import {
   TrendingUp,
   Users,
   Zap,
-  BarChart3
+  BarChart3,
+  Loader2,
+  HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +20,8 @@ import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist
 import { useAuth } from "@/hooks/use-auth";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { useHistory } from "@/hooks/use-history";
-import { Loader2 } from "lucide-react";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const quickActions = [
   {
@@ -53,8 +56,9 @@ const quickActions = [
 
 export default function Dashboard() {
   const { user, isLoading: authLoading } = useAuth();
-  const { plan, subscribed, isTrial, usageLimit } = useSubscription();
+  const { plan, subscribed, isTrial } = useSubscription();
   const { history, isLoading: historyLoading } = useHistory();
+  const { usage, limits, isOwnerOverride } = useWorkspace();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,7 +77,26 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const analysisCount = history.filter(h => h.type === "analysis").length;
+  const analysesUsed = usage?.analyses_used || 0;
+  const packsUsed = usage?.packs_used || 0;
+  const analysisLimit = limits.analysesPerMonth;
+  const packsLimit = limits.implementationsPerMonth;
+  
+  const getUsageDisplay = (used: number, limit: number | "unlimited") => {
+    if (isOwnerOverride || limit === "unlimited") {
+      return `${used} (Unlimited)`;
+    }
+    return `${used} of ${limit}`;
+  };
+  
+  const getRemainingDisplay = (used: number, limit: number | "unlimited") => {
+    if (isOwnerOverride || limit === "unlimited") {
+      return "Unlimited remaining";
+    }
+    const remaining = Math.max(0, limit - used);
+    return `${remaining} remaining`;
+  };
+
   const implementationCount = history.filter(h => h.type === "implementation").length;
 
   return (
@@ -101,17 +124,15 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Analyses This Month</p>
-                  <p className="text-2xl font-bold text-foreground">{analysisCount}</p>
+                  <p className="text-2xl font-bold text-foreground">{getUsageDisplay(analysesUsed, analysisLimit)}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-primary/10">
                   <BarChart3 className="w-5 h-5 text-primary" />
                 </div>
               </div>
-              {usageLimit > 0 && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  {usageLimit - analysisCount} remaining
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                {getRemainingDisplay(analysesUsed, analysisLimit)}
+              </p>
             </CardContent>
           </Card>
 
@@ -119,13 +140,16 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Implementation Packs</p>
-                  <p className="text-2xl font-bold text-foreground">{implementationCount}</p>
+                  <p className="text-sm text-muted-foreground">Packs This Month</p>
+                  <p className="text-2xl font-bold text-foreground">{getUsageDisplay(packsUsed, packsLimit)}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-accent/10">
                   <FileText className="w-5 h-5 text-accent" />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {getRemainingDisplay(packsUsed, packsLimit)}
+              </p>
             </CardContent>
           </Card>
 
@@ -224,17 +248,31 @@ export default function Dashboard() {
                           </p>
                         </div>
                       </div>
-                      {item.overallScore !== undefined && (
-                        <div className="text-right">
-                          <span className={`text-lg font-bold ${
-                            item.overallScore >= 80 ? "text-success" :
-                            item.overallScore >= 60 ? "text-warning" : "text-destructive"
-                          }`}>
-                            {item.overallScore}
-                          </span>
-                          <span className="text-muted-foreground text-sm">/100</span>
-                        </div>
-                      )}
+                      <div className="text-right">
+                        {item.overallScore !== undefined && item.overallScore !== null ? (
+                          <>
+                            <span className={`text-lg font-bold ${
+                              item.overallScore >= 80 ? "text-success" :
+                              item.overallScore >= 60 ? "text-warning" : "text-destructive"
+                            }`}>
+                              {item.overallScore}
+                            </span>
+                            <span className="text-muted-foreground text-sm">/100</span>
+                          </>
+                        ) : item.type === "analysis" && !item.overallScore ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1 text-muted-foreground">
+                                <span className="text-lg">—</span>
+                                <HelpCircle className="w-3 h-3" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Score unavailable</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : null}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
