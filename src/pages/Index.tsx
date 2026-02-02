@@ -18,12 +18,35 @@ import {
   TrendingUp,
   Users,
   BadgeCheck,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
+
+// FAQ Item component with accordion behavior
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  return (
+    <div className="border border-border/50 rounded-xl overflow-hidden">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between p-4 text-left bg-card hover:bg-muted/30 transition-colors"
+      >
+        <span className="font-medium text-foreground pr-4">{question}</span>
+        <ChevronDown className={`w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && (
+        <div className="px-4 pb-4 bg-card">
+          <p className="text-sm text-muted-foreground leading-relaxed">{answer}</p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const featureCards = [
   { icon: MessageSquare, title: "Messaging & Clarity Analysis", description: "Prove whether your client's value proposition actually lands — with objective criteria, not opinions." },
@@ -203,6 +226,69 @@ export default function Index() {
       </header>
 
       <main>
+        {/* Social Proof Section */}
+        <section className="py-12 border-t border-border/50 bg-secondary/20">
+          <div className="container">
+            <p className="text-center text-sm text-muted-foreground mb-8">
+              Trusted by agencies who sell results, not promises
+            </p>
+            
+            {/* Logo placeholders */}
+            <div className="flex flex-wrap justify-center gap-8 mb-12">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div 
+                  key={i} 
+                  className="w-[120px] h-[40px] rounded-lg bg-muted/50 flex items-center justify-center grayscale opacity-60"
+                >
+                  <span className="text-xs text-muted-foreground/30 font-medium">Logo</span>
+                </div>
+              ))}
+            </div>
+            
+            {/* Testimonials */}
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+                <p className="text-sm text-muted-foreground italic mb-4">
+                  "We closed a $12K website rebuild in the first week using the audit reports. The before/after scoring made it a no-brainer for the client."
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">Sarah M.</p>
+                    <p className="text-xs text-muted-foreground">Agency Director at [Agency Name]</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+                <p className="text-sm text-muted-foreground italic mb-4">
+                  "My team used to spend 3 hours per audit manually. Now we batch 50 prospects and have reports ready before lunch."
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">James K.</p>
+                    <p className="text-xs text-muted-foreground">SEO Consultant</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+                <p className="text-sm text-muted-foreground italic mb-4">
+                  "The white-label PDFs look better than what we were producing in-house. Clients actually read these."
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">Rachel T.</p>
+                    <p className="text-xs text-muted-foreground">Digital Strategist</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Why Agencies Risk Section */}
         <section className="py-16 lg:py-20 border-t border-border/50">
           <div className="container">
@@ -415,6 +501,46 @@ export default function Index() {
           </div>
         </section>
 
+        {/* FAQ Section */}
+        <section className="py-16 lg:py-20">
+          <div className="container">
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+                  Common Questions From Agencies
+                </h2>
+              </div>
+              
+              <div className="space-y-3">
+                <FaqItem 
+                  question="How is this different from running a Lighthouse audit?"
+                  answer="Lighthouse checks technical performance. OptimizeMySuite evaluates what actually wins clients: messaging clarity, conversion elements, trust signals, mobile UX, and design credibility — all scored with criteria you can explain in a client meeting."
+                />
+                <FaqItem 
+                  question="What does the white-label PDF look like?"
+                  answer="A polished, branded report with your logo, your colors, and your agency name. Clients see your brand, not ours. It includes scores, specific findings, and prioritized recommendations."
+                />
+                <FaqItem 
+                  question="Can I try it before committing?"
+                  answer="Yes. Every plan starts with a 3-day free trial. Run audits, generate PDFs, test batch mode — no credit card required."
+                />
+                <FaqItem 
+                  question="How does the scoring work?"
+                  answer="Every score is based on transparent, repeatable criteria — not AI opinions. We check for specific elements (like whether a CTA exists above the fold, whether trust signals are present, whether mobile tap targets are sized correctly) and score based on what we find. If we can't access something, it's marked NOT SCORABLE rather than penalized."
+                />
+                <FaqItem 
+                  question="Can my team use this too?"
+                  answer="Pro and Scale plans include team seats. Everyone shares the same workspace, client list, and report templates."
+                />
+                <FaqItem 
+                  question="What if I need more analyses than my plan allows?"
+                  answer="You can upgrade anytime. Overages are handled gracefully — we'll let you know when you're approaching your limit so there are no surprises."
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="py-16 lg:py-20 bg-primary/5">
           <div className="container">
@@ -428,7 +554,7 @@ export default function Index() {
               <p className="text-sm text-foreground/70 font-medium mb-8">
                 One closed website project pays for months of OptimizeMySuite.
               </p>
-              <Button variant="hero" size="lg" className="gap-2" onClick={() => setShowPlanModal(true)}>
+              <Button variant="hero" size="lg" className="gap-2 shadow-hero-button" onClick={() => setShowPlanModal(true)}>
                 Start Your Free Trial
                 <ArrowRight className="w-5 h-5" />
               </Button>
@@ -438,15 +564,67 @@ export default function Index() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-border/50 py-10">
+      <footer className="border-t border-border/50 py-12 bg-muted/30">
         <div className="container">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">OptimizeMySuite</span> — Proof-based website audits for marketing agencies
-            </p>
-            <div className="flex items-center gap-4">
-              <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground">Pricing</Link>
-              <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">Login</Link>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Brand column */}
+            <div>
+              <p className="font-semibold text-foreground text-lg mb-2">OptimizeMySuite</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                Proof-based website audits for marketing agencies
+              </p>
+              <p className="text-xs text-muted-foreground">
+                © 2025 OptimizeMySuite. All rights reserved.
+              </p>
+            </div>
+            
+            {/* Product column */}
+            <div>
+              <p className="font-semibold text-foreground text-sm mb-4">Product</p>
+              <ul className="space-y-2">
+                <li>
+                  <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Features
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Batch Mode
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Company column */}
+            <div>
+              <p className="font-semibold text-foreground text-sm mb-4">Company</p>
+              <ul className="space-y-2">
+                <li>
+                  <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Login
+                  </Link>
+                </li>
+                <li>
+                  <a href="mailto:support@optimizemysuite.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Support
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    Terms of Service
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
