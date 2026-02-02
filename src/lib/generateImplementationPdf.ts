@@ -73,39 +73,27 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     }
   };
 
-  // Credibility badge text (always shown for methodology transparency)
-  const CREDIBILITY_BADGE = "Objective, criteria-based scoring. No manual adjustments. Same methodology before and after.";
-  
   // Determine if white-label mode is active (agency branding provided)
   const isWhiteLabel = Boolean(branding?.logoUrl || branding?.footerText);
   
-  // Premium footer
+  // Simplified footer - no repetitive credibility badge on every page
+  // Credibility statement appears only once in the dedicated methodology section
   const addFooter = () => {
-    // Credibility badge line (above main footer)
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
-    doc.text(CREDIBILITY_BADGE, pageWidth / 2, pageHeight - 20, { align: "center" });
-    
     // Subtle top line
     doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
     doc.setLineWidth(0.3);
-    doc.line(margin, pageHeight - 16, pageWidth - margin, pageHeight - 16);
+    doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
     
-    // Footer text - white-label logic
-    doc.setFontSize(8);
-    doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
-    // If branding footerText provided, use it; if white-label with no footerText, show nothing; else show default
-    const footerText = branding?.footerText 
-      ? branding.footerText 
-      : (isWhiteLabel ? "" : "Prepared by OptimizeMySuite");
-    if (footerText) {
-      doc.text(footerText, margin, pageHeight - 10);
-    }
+    // CONFIDENTIAL on left
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+    doc.text("CONFIDENTIAL", margin, pageHeight - 8);
     
-    // Page number with style
+    // Page number on right
     doc.setFont("helvetica", "bold");
-    doc.text(`${currentPage}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+    doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
+    doc.text(String(currentPage), pageWidth - margin, pageHeight - 8, { align: "right" });
   };
 
   // ============ COVER PAGE ============
@@ -481,16 +469,22 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     y += blockHeight;
   };
   
-  // Service card with visual polish
+  // Service card with visual polish - FULL description rendering (no truncation)
   const addServiceCardPremium = (serviceName: string, description: string, cta: string) => {
-    addPageIfNeeded(42);
+    // Calculate actual height needed for full description
+    doc.setFontSize(9);
+    const descLines = doc.splitTextToSize(description, contentWidth - 24);
+    const descHeight = descLines.length * 5;
+    const cardHeight = Math.max(46, 24 + descHeight + 16); // 24 for name, 16 for CTA section
+    
+    addPageIfNeeded(cardHeight + 8);
     
     // Card with shadow effect (multiple rectangles)
     doc.setFillColor(colors.cardBgAlt[0], colors.cardBgAlt[1], colors.cardBgAlt[2]);
-    doc.roundedRect(margin + 1, y + 1, contentWidth, 38, 4, 4, "F");
+    doc.roundedRect(margin + 1, y + 1, contentWidth, cardHeight, 4, 4, "F");
     doc.setFillColor(colors.white[0], colors.white[1], colors.white[2]);
     doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.roundedRect(margin, y, contentWidth, 38, 4, 4, "FD");
+    doc.roundedRect(margin, y, contentWidth, cardHeight, 4, 4, "FD");
     
     // Service name
     doc.setFontSize(12);
@@ -498,22 +492,24 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
     doc.text(serviceName, margin + 12, y + 12);
     
-    // Description
+    // Description - render ALL lines (no truncation)
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    const descLines = doc.splitTextToSize(description, contentWidth - 24);
-    doc.text(descLines[0], margin + 12, y + 21);
+    descLines.forEach((line: string, i: number) => {
+      doc.text(line, margin + 12, y + 21 + i * 5);
+    });
     
-    // CTA recommendation badge
+    // CTA recommendation badge - positioned after description
+    const ctaY = y + 21 + descHeight + 4;
     doc.setFillColor(colors.successLight[0], colors.successLight[1], colors.successLight[2]);
-    doc.roundedRect(margin + 12, y + 27, 70, 8, 2, 2, "F");
+    doc.roundedRect(margin + 12, ctaY, 70, 8, 2, 2, "F");
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-    doc.text(`RECOMMENDED CTA: ${cta}`, margin + 15, y + 32);
+    doc.text("RECOMMENDED CTA: " + cta, margin + 15, ctaY + 5);
     
-    y += 46;
+    y += cardHeight + 8;
   };
   
   // ============ PAGE 3+: DETAILED RECOMMENDATIONS ============
@@ -756,17 +752,31 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   y += 14;
   
   plan.seoSetup.imageAltTextExamples.forEach((ex) => {
-    addPageIfNeeded(20);
+    // Calculate height for full alt text (no truncation)
+    doc.setFontSize(8);
+    const altTextValue = 'alt="' + ex.altText + '"';
+    const altLines = doc.splitTextToSize(altTextValue, contentWidth - 16);
+    const cardHeight = 18 + altLines.length * 4;
+    
+    addPageIfNeeded(cardHeight + 4);
     doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(margin, y - 2, contentWidth, 14, 2, 2, "F");
+    doc.roundedRect(margin, y - 2, contentWidth, cardHeight, 2, 2, "F");
+    
+    // Image type label
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     doc.text(ex.forImageType + ":", margin + 8, y + 6);
-    doc.setFont("courier", "normal");
+    
+    // Alt text - render ALL lines with word wrap using Helvetica (not Courier for better embedding)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(`alt="${ex.altText}"`, margin + 50, y + 6);
-    y += 18;
+    altLines.forEach((line: string, i: number) => {
+      doc.text(line, margin + 8, y + 14 + i * 4);
+    });
+    
+    y += cardHeight + 4;
   });
   y += 8;
   
@@ -785,37 +795,51 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Recommended Color Palette", margin + 4, y);
   y += 10;
   
-  // Color swatches - more premium look
-  const swatchWidth = (contentWidth - 20) / 3;
-  const swatchY = y;
+  // Color swatches - vertical stacking layout (no truncation)
+  const colorValues = [
+    { label: "Primary", value: plan.designAndLayout.colorPaletteSuggestion.primary },
+    { label: "Secondary", value: plan.designAndLayout.colorPaletteSuggestion.secondary },
+    { label: "Accent", value: plan.designAndLayout.colorPaletteSuggestion.accent },
+  ];
   
-  ["Primary", "Secondary", "Accent"].forEach((label, i) => {
-    const x = margin + i * (swatchWidth + 10);
-    const colorValue = i === 0 ? plan.designAndLayout.colorPaletteSuggestion.primary 
-                     : i === 1 ? plan.designAndLayout.colorPaletteSuggestion.secondary 
-                     : plan.designAndLayout.colorPaletteSuggestion.accent;
+  colorValues.forEach((color, i) => {
+    addPageIfNeeded(38);
     
+    // Parse hex and description from value (format: "#HEXCODE - Description")
+    const parts = color.value.split(" - ");
+    const hexCode = parts[0] || color.value;
+    const description = parts[1] || "";
+    
+    // Card background
     doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(x, swatchY, swatchWidth, 30, 3, 3, "F");
+    doc.roundedRect(margin, y, contentWidth, 32, 3, 3, "F");
     
-    // Color circle
+    // Color circle (placeholder - actual hex would need parsing)
     doc.setFillColor(colors.primaryMid[0], colors.primaryMid[1], colors.primaryMid[2]);
-    doc.circle(x + 12, swatchY + 11, 7, "F");
+    doc.circle(margin + 18, y + 16, 10, "F");
     
     // Label
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(label.toUpperCase(), x + 5, swatchY + 25);
+    doc.text(color.label.toUpperCase(), margin + 35, y + 10);
     
-    // Value
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-    const shortColor = colorValue.length > 12 ? colorValue.substring(0, 12) + "..." : colorValue;
-    doc.text(shortColor, x + 24, swatchY + 11);
+    // Hex code
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    doc.text(hexCode, margin + 35, y + 19);
+    
+    // Description - full text (no truncation)
+    if (description) {
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+      doc.text(description, margin + 35, y + 27);
+    }
+    
+    y += 38;
   });
-  y += 40;
   
   // Layout changes
   addPageIfNeeded(15);
@@ -1002,7 +1026,37 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   y += 40;
   
   // ============ LOVABLE REBUILD PROMPTS ============
-  addPageIfNeeded(60);
+  // Add a new page with INTERNAL USE ONLY cover before the Lovable section
+  addFooter();
+  doc.addPage();
+  currentPage++;
+  y = 25;
+  
+  // INTERNAL USE ONLY divider page
+  doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
+  doc.rect(0, 0, pageWidth, pageHeight, "F");
+  
+  // Warning banner
+  doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
+  doc.rect(0, pageHeight / 2 - 50, pageWidth, 100, "F");
+  
+  doc.setFontSize(28);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(255, 255, 255);
+  doc.text("INTERNAL USE ONLY", pageWidth / 2, pageHeight / 2 - 15, { align: "center" });
+  
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "normal");
+  doc.text("Do not share with client", pageWidth / 2, pageHeight / 2 + 10, { align: "center" });
+  
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("The following pages contain internal rebuild prompts", pageWidth / 2, pageHeight / 2 + 30, { align: "center" });
+  
+  addFooter();
+  doc.addPage();
+  currentPage++;
+  y = 25;
   
   // Section header with border
   doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
@@ -1049,14 +1103,17 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Copy & Paste into Lovable:", margin, y);
+  doc.text("Copy and Paste into Lovable:", margin, y);
   y += 10;
   
   // Generate the Lovable prompt
   const lovablePrompt = generateLovableRebuildPrompt(plan, validatedUrl);
+  // Use Helvetica for better font embedding (Courier can cause CID encoding issues)
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
   const promptLines = doc.splitTextToSize(lovablePrompt, contentWidth - 14);
   
-  const lineHeight = 4;
+  const lineHeight = 4.5;
   const paddingTop = 8;
   const paddingBottom = 8;
   
@@ -1064,7 +1121,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   let lineIndex = 0;
   
   while (linesRemaining > 0) {
-    const availableHeight = 270 - y;
+    const availableHeight = 260 - y;
     const linesPerPage = Math.floor((availableHeight - paddingTop - paddingBottom) / lineHeight);
     const linesToRender = Math.min(linesRemaining, linesPerPage);
     
@@ -1082,8 +1139,9 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setLineWidth(0.5);
     doc.roundedRect(margin, y, contentWidth, containerHeight, 3, 3, "FD");
     
-    doc.setFontSize(7);
-    doc.setFont("courier", "normal");
+    // Use Helvetica consistently to avoid CID encoding issues
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
     
     let lineY = y + paddingTop;

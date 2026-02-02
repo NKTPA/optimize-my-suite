@@ -338,6 +338,7 @@ export function renderPriorityItem(
 
 /**
  * Render a service card with description and CTA
+ * Description auto-expands to fit full content (no truncation)
  */
 export function renderServiceCard(
   ctx: PdfContext,
@@ -347,14 +348,20 @@ export function renderServiceCard(
 ): number {
   const { doc, margin, contentWidth } = ctx;
   
-  ensureSpace(ctx, 42);
+  // Calculate actual height needed for full description
+  doc.setFontSize(9);
+  const descLines = doc.splitTextToSize(description, contentWidth - 24);
+  const descHeight = descLines.length * 5;
+  const cardHeight = Math.max(46, 24 + descHeight + 16);
+  
+  ensureSpace(ctx, cardHeight + 8);
   
   // Card with shadow effect
   doc.setFillColor(PDF_COLORS.cardBgAlt[0], PDF_COLORS.cardBgAlt[1], PDF_COLORS.cardBgAlt[2]);
-  doc.roundedRect(margin + 1, ctx.y + 1, contentWidth, 38, 4, 4, "F");
+  doc.roundedRect(margin + 1, ctx.y + 1, contentWidth, cardHeight, 4, 4, "F");
   doc.setFillColor(PDF_COLORS.white[0], PDF_COLORS.white[1], PDF_COLORS.white[2]);
   doc.setDrawColor(PDF_COLORS.border[0], PDF_COLORS.border[1], PDF_COLORS.border[2]);
-  doc.roundedRect(margin, ctx.y, contentWidth, 38, 4, 4, "FD");
+  doc.roundedRect(margin, ctx.y, contentWidth, cardHeight, 4, 4, "FD");
   
   // Service name
   doc.setFontSize(12);
@@ -362,30 +369,33 @@ export function renderServiceCard(
   doc.setTextColor(PDF_COLORS.textPrimary[0], PDF_COLORS.textPrimary[1], PDF_COLORS.textPrimary[2]);
   doc.text(serviceName, margin + 12, ctx.y + 12);
   
-  // Description
+  // Description - render ALL lines (no truncation)
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(PDF_COLORS.textSecondary[0], PDF_COLORS.textSecondary[1], PDF_COLORS.textSecondary[2]);
-  const descLines = doc.splitTextToSize(description, contentWidth - 24);
-  doc.text(descLines[0], margin + 12, ctx.y + 21);
+  descLines.forEach((line: string, i: number) => {
+    doc.text(line, margin + 12, ctx.y + 21 + i * 5);
+  });
   
-  // CTA badge
+  // CTA badge - positioned after description
+  const ctaY = ctx.y + 21 + descHeight + 4;
   doc.setFillColor(PDF_COLORS.successLight[0], PDF_COLORS.successLight[1], PDF_COLORS.successLight[2]);
-  doc.roundedRect(margin + 12, ctx.y + 27, 70, 8, 2, 2, "F");
+  doc.roundedRect(margin + 12, ctaY, 70, 8, 2, 2, "F");
   doc.setFontSize(7);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(PDF_COLORS.success[0], PDF_COLORS.success[1], PDF_COLORS.success[2]);
-  doc.text(`RECOMMENDED CTA: ${cta}`, margin + 15, ctx.y + 32);
+  doc.text("RECOMMENDED CTA: " + cta, margin + 15, ctaY + 5);
   
-  ctx.y += 46;
+  ctx.y += cardHeight + 8;
   
-  return 46;
+  return cardHeight + 8;
 }
 
 // ============ CHECKLIST ITEM ============
 
 /**
  * Render an execution checklist item
+ * Uses ASCII [ ] checkbox instead of Unicode to avoid font issues
  */
 export function renderChecklistItem(
   ctx: PdfContext,
@@ -400,15 +410,16 @@ export function renderChecklistItem(
   
   ensureSpace(ctx, blockHeight);
   
-  // Checkbox
+  // Checkbox using simple rectangle (no Unicode)
   doc.setDrawColor(PDF_COLORS.border[0], PDF_COLORS.border[1], PDF_COLORS.border[2]);
   doc.setLineWidth(0.5);
   doc.roundedRect(margin + 4, ctx.y, 6, 6, 1, 1, "S");
   
   if (completed) {
+    // Fill and draw checkmark with lines
     doc.setFillColor(PDF_COLORS.success[0], PDF_COLORS.success[1], PDF_COLORS.success[2]);
     doc.roundedRect(margin + 4, ctx.y, 6, 6, 1, 1, "F");
-    // Checkmark
+    // Checkmark drawn with lines (not Unicode)
     doc.setDrawColor(255, 255, 255);
     doc.setLineWidth(0.8);
     doc.line(margin + 5.5, ctx.y + 3, margin + 7, ctx.y + 5);
