@@ -1,9 +1,12 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, Play, FileDown, AlertTriangle, FileSpreadsheet, RotateCcw } from "lucide-react";
+import { Upload, Play, FileDown, AlertTriangle, FileSpreadsheet, RotateCcw, Download, ArrowRight, ClipboardList, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { BatchSite } from "@/types/batch";
 import { BatchSummaryCard } from "@/components/batch/BatchSummaryCard";
 import { ImplementationModal } from "@/components/batch/ImplementationModal";
@@ -15,7 +18,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { UsageLimitModal } from "@/components/entitlements/UsageLimitModal";
 import { getPlanLimits } from "@/lib/entitlements";
-import { Loader2 } from "lucide-react";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -24,6 +26,11 @@ function delay(ms: number) {
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
 }
+
+const SAMPLE_CSV = `url,name
+https://example-plumber.com,Joe's Plumbing
+https://example-dentist.com,Bright Smile Dental
+https://example-hvac.com,Cool Air Services`;
 
 export default function DashboardBatch() {
   const { user, session, isLoading: authLoading } = useAuth();
@@ -38,11 +45,25 @@ export default function DashboardBatch() {
   const [generatingSiteId, setGeneratingSiteId] = useState<string | null>(null);
   const [showUsageLimitModal, setShowUsageLimitModal] = useState(false);
   const [limitModalType, setLimitModalType] = useState<"analyses" | "packs">("analyses");
+  const [inputTab, setInputTab] = useState<"paste" | "csv">("paste");
+  const [pastedUrls, setPastedUrls] = useState("");
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   const planLimits = workspace ? getPlanLimits(workspace.plan as any) : getPlanLimits("starter");
   const maxBatchUrls = planLimits.batchUrlLimit === "unlimited" ? Infinity : planLimits.batchUrlLimit;
+  const planDisplayLimit = planLimits.batchUrlLimit === "unlimited" ? "Unlimited" : planLimits.batchUrlLimit;
+  const planName = workspace?.plan ? workspace.plan.charAt(0).toUpperCase() + workspace.plan.slice(1) : "Starter";
+
+  // Parse pasted URLs
+  const parsedPastedUrls = pastedUrls
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && (line.startsWith("http://") || line.startsWith("https://") || line.includes(".")));
+
+  const urlCount = sites.length > 0 ? sites.length : parsedPastedUrls.length;
+  const isOverLimit = maxBatchUrls !== Infinity && urlCount > maxBatchUrls;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -60,12 +81,16 @@ export default function DashboardBatch() {
 
   if (!user) return null;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleDownloadSampleCSV = () => {
+    const blob = new Blob([SAMPLE_CSV], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "sample-batch-urls.csv";
+    link.click();
+  };
 
+  const processCSVText = (text: string) => {
     try {
-      const text = await file.text();
       const parsed = parseCSV(text);
 
       if (parsed.length === 0) {
@@ -98,7 +123,7 @@ export default function DashboardBatch() {
       setOverallError(null);
       toast({
         title: `${newSites.length} client sites loaded`,
-        description: "Click 'Run Batch Analysis' to start processing.",
+        description: "Click 'Start Batch Analysis' to begin processing.",
       });
     } catch (error) {
       toast({
@@ -107,10 +132,80 @@ export default function DashboardBatch() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    processCSVText(text);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !file.name.endsWith(".csv")) {
+      toast({
+        title: "Invalid file",
+        description: "Please drop a CSV file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const text = await file.text();
+    processCSVText(text);
+  };
+
+  const handleLoadPastedUrls = () => {
+    if (parsedPastedUrls.length === 0) {
+      toast({
+        title: "No valid URLs",
+        description: "Please enter at least one valid URL.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (parsedPastedUrls.length > maxBatchUrls) {
+      toast({
+        title: "Batch limit exceeded",
+        description: `Your plan allows up to ${maxBatchUrls} URLs per batch. Please reduce your list or upgrade.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newSites: BatchSite[] = parsedPastedUrls.map((url) => ({
+      id: generateId(),
+      url: url.startsWith("http") ? url : `https://${url}`,
+      status: "pending",
+    }));
+
+    setSites(newSites);
+    setOverallError(null);
+    setPastedUrls("");
+    toast({
+      title: `${newSites.length} URLs loaded`,
+      description: "Click 'Start Batch Analysis' to begin processing.",
+    });
   };
 
   const handleReset = () => {
@@ -120,6 +215,7 @@ export default function DashboardBatch() {
     setSelectedSite(null);
     setIsModalOpen(false);
     setGeneratingSiteId(null);
+    setPastedUrls("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -323,6 +419,7 @@ export default function DashboardBatch() {
 
   const completedCount = sites.filter((s) => s.status === "done").length;
   const errorCount = sites.filter((s) => s.status === "error").length;
+  const canStartBatch = (inputTab === "paste" && parsedPastedUrls.length > 0) || sites.length > 0;
 
   return (
     <DashboardLayout>
@@ -340,6 +437,10 @@ export default function DashboardBatch() {
             <p className="text-muted-foreground">
               Analyze multiple client websites at once. Scale your agency audits.
             </p>
+            {/* Plan Limit Badge */}
+            <Badge variant="secondary" className="mt-2 text-xs font-normal">
+              Your plan: {planName} — up to {planDisplayLimit} URLs per batch
+            </Badge>
           </div>
           {sites.length > 0 && (
             <Button variant="ghost" size="sm" onClick={handleReset} className="gap-2">
@@ -360,46 +461,100 @@ export default function DashboardBatch() {
           </div>
         )}
 
-        {/* Upload Section */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="flex-1">
-                <h2 className="font-semibold text-foreground mb-1">Upload Client List (CSV)</h2>
-                <p className="text-sm text-muted-foreground">
-                  CSV must have at least a <code className="bg-muted px-1.5 py-0.5 rounded text-xs">url</code> column.
-                  Optional: <code className="bg-muted px-1.5 py-0.5 rounded text-xs">name</code> column for client names.
-                </p>
-              </div>
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="csv-upload"
-                  disabled={isRunningBatch}
-                />
-                <label htmlFor="csv-upload">
-                  <Button
-                    variant="outline"
-                    className="gap-2 cursor-pointer"
-                    disabled={isRunningBatch}
-                    asChild
-                  >
-                    <span>
-                      <Upload className="w-4 h-4" />
-                      Choose CSV File
-                    </span>
-                  </Button>
-                </label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Input Section with Tabs */}
+        {sites.length === 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <Tabs value={inputTab} onValueChange={(v) => setInputTab(v as "paste" | "csv")}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="paste">Paste URLs</TabsTrigger>
+                  <TabsTrigger value="csv">Upload CSV</TabsTrigger>
+                </TabsList>
 
-        {/* Run Button & Progress */}
+                {/* Paste URLs Tab */}
+                <TabsContent value="paste" className="space-y-4">
+                  <Textarea
+                    value={pastedUrls}
+                    onChange={(e) => setPastedUrls(e.target.value)}
+                    placeholder={`Enter website URLs, one per line:\nhttps://example1.com\nhttps://example2.com\nhttps://example3.com`}
+                    className="min-h-[160px] font-mono text-sm"
+                    disabled={isRunningBatch}
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      {parsedPastedUrls.length > 0 && (
+                        <span className={isOverLimit ? "text-destructive font-medium" : "text-muted-foreground"}>
+                          {parsedPastedUrls.length} of {planDisplayLimit} URLs
+                          {isOverLimit && " — Reduce URLs or upgrade your plan"}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      onClick={handleLoadPastedUrls}
+                      disabled={parsedPastedUrls.length === 0 || isOverLimit || isRunningBatch}
+                      className="gap-2"
+                    >
+                      <Play className="w-4 h-4" />
+                      Start Batch Analysis
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                {/* Upload CSV Tab */}
+                <TabsContent value="csv" className="space-y-4">
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`
+                      border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer
+                      ${isDragOver 
+                        ? "border-primary bg-primary/5" 
+                        : "border-border hover:border-primary/50"
+                      }
+                    `}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className={`w-10 h-10 mx-auto mb-3 ${isDragOver ? "text-primary" : "text-muted-foreground/50"}`} />
+                    <p className="font-medium text-foreground mb-1">
+                      {isDragOver ? "Drop CSV file here" : "Drag and drop your CSV file here"}
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      or click to browse
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      CSV must have a <code className="bg-muted px-1.5 py-0.5 rounded">url</code> column.
+                      Optional: <code className="bg-muted px-1.5 py-0.5 rounded">name</code> column for client names.
+                    </p>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={isRunningBatch}
+                  />
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleDownloadSampleCSV}
+                      className="text-sm text-primary hover:underline flex items-center gap-1"
+                    >
+                      <Download className="w-3 h-3" />
+                      Download sample CSV
+                    </button>
+                    <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isRunningBatch}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Choose CSV File
+                    </Button>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Run Button & Progress (when sites are loaded) */}
         {sites.length > 0 && (
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -409,7 +564,7 @@ export default function DashboardBatch() {
                 className="gap-2"
               >
                 <Play className="w-4 h-4" />
-                Run Batch Analysis
+                Start Batch Analysis
               </Button>
               {isRunningBatch && (
                 <span className="text-sm text-muted-foreground">
@@ -417,22 +572,43 @@ export default function DashboardBatch() {
                 </span>
               )}
             </div>
-            <span className="text-sm text-muted-foreground">
-              {sites.length} client site{sites.length !== 1 ? "s" : ""} loaded
+            <span className={`text-sm ${isOverLimit ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+              {sites.length} of {planDisplayLimit} URLs
+              {isOverLimit && " — Reduce URLs or upgrade"}
             </span>
           </div>
         )}
 
-        {/* Empty State */}
-        {sites.length === 0 && (
-          <Card className="border-dashed">
-            <CardContent className="py-12 text-center">
-              <FileSpreadsheet className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="font-semibold text-foreground mb-2">No client sites loaded</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Upload a CSV file with client website URLs to get started. Each row should contain
-                a URL, and optionally a client/business name.
-              </p>
+        {/* Empty State - Action-oriented */}
+        {sites.length === 0 && inputTab === "paste" && pastedUrls.length === 0 && (
+          <Card className="border-dashed bg-muted/20">
+            <CardContent className="py-10">
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-semibold text-foreground mb-1">
+                  Analyze up to {planDisplayLimit} websites in one click
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Run bulk audits for your agency prospects and clients
+                </p>
+              </div>
+              
+              {/* Three Steps */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">1</div>
+                  <span>Paste URLs or upload CSV</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground/50 hidden sm:block" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">2</div>
+                  <span>Run batch analysis</span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-muted-foreground/50 hidden sm:block" />
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold">3</div>
+                  <span>Download all reports</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
