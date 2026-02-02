@@ -282,8 +282,9 @@ export default function DashboardAccount() {
   };
 
   const handleSignOut = async () => {
+    // Navigate FIRST before auth state changes trigger ProtectedRoute redirect
+    navigate("/", { replace: true });
     await signOut();
-    navigate("/");
   };
 
   if (authLoading) {
