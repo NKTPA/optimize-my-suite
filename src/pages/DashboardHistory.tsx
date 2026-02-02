@@ -1,16 +1,22 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, History as HistoryIcon, Loader2, Globe, FileText, Download, Trash2, Eye } from "lucide-react";
+import { Search, History as HistoryIcon, Loader2, Globe, FileText, Download, Trash2, Eye, EyeOff, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useHistory } from "@/hooks/use-history";
 import { useAuth } from "@/hooks/use-auth";
 import { HistoryItem, HistoryItemType } from "@/types/history";
 import { useToast } from "@/hooks/use-toast";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
+import { DomainGroupRow } from "@/components/history/DomainGroupRow";
+import { BulkActionBar } from "@/components/history/BulkActionBar";
+import { HistoryPagination } from "@/components/history/HistoryPagination";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +35,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+interface DomainGroup {
+  domain: string;
+  items: HistoryItem[];
+  latestItem: HistoryItem;
+  latestScore: number | null;
+  isNotScorable: boolean;
+}
+
+const ITEMS_PER_PAGE = 20;
+
+// Score color coding with proper thresholds
+const getScoreColor = (score: number | null | undefined): string => {
+  if (score === null || score === undefined) return "text-muted-foreground";
+  if (score < 40) return "text-destructive"; // Critical (0-39)
+  if (score < 60) return "text-warning"; // Needs Work (40-59)
+  if (score < 80) return "text-foreground"; // Good (60-79)
+  return "text-success"; // Excellent (80-100)
+};
+
+// Extract domain from URL
+const extractDomain = (url: string): string => {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+};
+
+// Check if item is NOT SCORABLE
+const isNotScorable = (item: HistoryItem): boolean => {
+  return item.snippet?.startsWith("NOT SCORABLE:") || false;
+};
+
 export default function DashboardHistory() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -38,8 +78,12 @@ export default function DashboardHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<HistoryItemType | "all">("all");
   const [sortBy, setSortBy] = useState<"date" | "score">("date");
+  const [hideNotScorable, setHideNotScorable] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -47,12 +91,18 @@ export default function DashboardHistory() {
     }
   }, [user, authLoading, navigate]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeFilter, sortBy, hideNotScorable]);
+
   // Calculate counts for filters
   const counts = useMemo(() => {
     return {
       all: history.length,
       analysis: history.filter((item) => item.type === "analysis").length,
       implementation: history.filter((item) => item.type === "implementation").length,
+      notScorable: history.filter((item) => isNotScorable(item)).length,
     };
   }, [history]);
 
@@ -61,12 +111,57 @@ export default function DashboardHistory() {
     const typeFilter = activeFilter === "all" ? undefined : activeFilter;
     let filtered = filterHistory(typeFilter, searchQuery);
     
+    // Filter out NOT SCORABLE if toggled
+    if (hideNotScorable) {
+      filtered = filtered.filter(item => !isNotScorable(item));
+    }
+    
     if (sortBy === "score") {
       filtered = [...filtered].sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0));
     }
     
     return filtered;
-  }, [filterHistory, activeFilter, searchQuery, sortBy]);
+  }, [filterHistory, activeFilter, searchQuery, sortBy, hideNotScorable]);
+
+  // Group by domain
+  const domainGroups = useMemo((): DomainGroup[] => {
+    const groups = new Map<string, HistoryItem[]>();
+    
+    filteredHistory.forEach(item => {
+      const domain = extractDomain(item.url);
+      if (!groups.has(domain)) {
+        groups.set(domain, []);
+      }
+      groups.get(domain)!.push(item);
+    });
+
+    return Array.from(groups.entries()).map(([domain, items]) => {
+      // Sort items by date (newest first)
+      const sortedItems = [...items].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      const latestItem = sortedItems[0];
+      const latestNotScorable = isNotScorable(latestItem);
+      
+      return {
+        domain,
+        items: sortedItems,
+        latestItem,
+        latestScore: latestNotScorable ? null : (latestItem.overallScore ?? null),
+        isNotScorable: latestNotScorable,
+      };
+    }).sort((a, b) => {
+      // Sort groups by latest item date
+      return new Date(b.latestItem.createdAt).getTime() - new Date(a.latestItem.createdAt).getTime();
+    });
+  }, [filteredHistory]);
+
+  // Pagination
+  const totalPages = Math.ceil(domainGroups.length / ITEMS_PER_PAGE);
+  const paginatedGroups = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return domainGroups.slice(start, start + ITEMS_PER_PAGE);
+  }, [domainGroups, currentPage]);
 
   const handleView = (item: HistoryItem) => {
     navigate("/dashboard/analyze", {
@@ -94,6 +189,11 @@ export default function DashboardHistory() {
   const handleDeleteConfirm = async () => {
     if (itemToDelete) {
       await deleteItem(itemToDelete);
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(itemToDelete);
+        return next;
+      });
       toast({
         title: "Report deleted",
         description: "The client report has been removed from history.",
@@ -101,6 +201,78 @@ export default function DashboardHistory() {
     }
     setDeleteDialogOpen(false);
     setItemToDelete(null);
+  };
+
+  // Bulk actions
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleSelectAll = useCallback((ids: string[]) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected = ids.every(id => prev.has(id));
+      
+      if (allSelected) {
+        ids.forEach(id => next.delete(id));
+      } else {
+        ids.forEach(id => next.add(id));
+      }
+      return next;
+    });
+  }, []);
+
+  const handleBulkDelete = async () => {
+    setBulkDeleteDialogOpen(false);
+    const idsToDelete = Array.from(selectedIds);
+    
+    for (const id of idsToDelete) {
+      await deleteItem(id);
+    }
+    
+    setSelectedIds(new Set());
+    toast({
+      title: "Reports deleted",
+      description: `${idsToDelete.length} reports have been removed from history.`,
+    });
+  };
+
+  const handleBulkDownload = () => {
+    const itemsToDownload = filteredHistory.filter(item => 
+      selectedIds.has(item.id) && item.analysisResult
+    );
+    
+    if (itemsToDownload.length === 0) {
+      toast({
+        title: "No downloadable reports",
+        description: "Selected items don't have PDF reports available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    itemsToDownload.forEach(item => {
+      if (item.analysisResult) {
+        generateAnalysisPdf(item.analysisResult, item.url);
+      }
+    });
+    
+    toast({
+      title: "PDFs Downloaded",
+      description: `${itemsToDownload.length} reports have been downloaded.`,
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
   };
 
   if (authLoading || historyLoading) {
@@ -145,7 +317,7 @@ export default function DashboardHistory() {
 
         {/* Filters & Sort */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
               variant={activeFilter === "all" ? "secondary" : "ghost"}
               size="sm"
@@ -165,8 +337,21 @@ export default function DashboardHistory() {
               size="sm"
               onClick={() => setActiveFilter("implementation")}
             >
-              Implementation Packs ({counts.implementation})
+              Packs ({counts.implementation})
             </Button>
+            
+            {/* Hide NOT SCORABLE toggle */}
+            {counts.notScorable > 0 && (
+              <Button
+                variant={hideNotScorable ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setHideNotScorable(!hideNotScorable)}
+                className="gap-1.5"
+              >
+                {hideNotScorable ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                {hideNotScorable ? "Show" : "Hide"} Not Scorable ({counts.notScorable})
+              </Button>
+            )}
           </div>
 
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as "date" | "score")}>
@@ -201,77 +386,43 @@ export default function DashboardHistory() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {filteredHistory.map((item) => (
-              <Card key={item.id} className="hover:shadow-card-hover transition-all">
-                <CardContent className="py-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 min-w-0 flex-1">
-                      <div className={`p-2.5 rounded-xl flex-shrink-0 ${
-                        item.type === "analysis" ? "bg-primary/10" : "bg-accent/10"
-                      }`}>
-                        {item.type === "analysis" ? (
-                          <Globe className="w-5 h-5 text-primary" />
-                        ) : (
-                          <FileText className="w-5 h-5 text-accent" />
-                        )}
-                      </div>
-                      
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-foreground truncate max-w-[400px]">
-                            {item.url}
-                          </p>
-                          <Badge variant={item.type === "analysis" ? "default" : "secondary"} className="text-xs flex-shrink-0">
-                            {item.type === "analysis" ? "Analysis" : "Implementation"}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span>{new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {item.snippet && (
-                            <>
-                              <span>•</span>
-                              <span className="truncate max-w-[200px]">{item.snippet}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+          <>
+            {/* Domain Groups */}
+            <div className="space-y-3">
+              {paginatedGroups.map((group) => (
+                <DomainGroupRow
+                  key={group.domain}
+                  group={group}
+                  selectedIds={selectedIds}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleSelectAll={handleToggleSelectAll}
+                  onView={handleView}
+                  onDownload={handleDownload}
+                  onDelete={handleDeleteClick}
+                  getScoreColor={getScoreColor}
+                />
+              ))}
+            </div>
 
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {item.overallScore !== undefined && (
-                        <div className="text-right mr-2">
-                          <span className={`text-xl font-bold ${
-                            item.overallScore >= 80 ? "text-success" :
-                            item.overallScore >= 60 ? "text-warning" : "text-destructive"
-                          }`}>
-                            {item.overallScore}
-                          </span>
-                          <span className="text-muted-foreground text-sm">/100</span>
-                        </div>
-                      )}
-
-                      <Button variant="ghost" size="icon" onClick={() => handleView(item)} title="View Report">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      {item.analysisResult && (
-                        <Button variant="ghost" size="icon" onClick={() => handleDownload(item)} title="Download PDF">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(item.id)} title="Delete">
-                        <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            {/* Pagination */}
+            <HistoryPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={domainGroups.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
       </div>
+
+      {/* Bulk Action Bar */}
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        onDelete={() => setBulkDeleteDialogOpen(true)}
+        onDownload={handleBulkDownload}
+        onClear={clearSelection}
+      />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -289,6 +440,27 @@ export default function DashboardHistory() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} reports?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the selected reports from your agency history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete {selectedIds.size} Reports
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
