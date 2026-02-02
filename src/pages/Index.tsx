@@ -165,10 +165,15 @@ export default function Index() {
                 Start Your 3-Day Free Trial
                 <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Button>
-              <a href="#revenue" className="w-full sm:w-auto">
+              <a 
+                href="/sample-audit-report.pdf" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto"
+              >
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[200px]">
-                  See How Agencies Use This
-                  <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                  <FileText className="w-4 h-4 flex-shrink-0" />
+                  See a Sample Report
                 </Button>
               </a>
             </div>
@@ -231,52 +236,61 @@ export default function Index() {
         {/* Social Proof Section */}
         <section className="py-12 border-t border-border/50 bg-secondary/20">
           <div className="container">
-            <p className="text-center text-sm text-muted-foreground mb-6">
-              Trusted by agencies who sell results, not promises
-            </p>
-            
-            {/* Logo bar */}
-            <div className="flex justify-center items-center gap-6 mb-8 flex-wrap">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div 
-                  key={i} 
-                  className="w-[100px] h-[36px] rounded-md bg-muted/40 grayscale opacity-60"
-                />
-              ))}
+            {/* Trust Badges */}
+            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mb-8">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/50">
+                <Shield className="w-4 h-4 text-primary" />
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium">Data Encrypted in Transit</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/50">
+                <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M21.5 5.1l-2.8-2.8L12 9l-6.7-6.7L2.5 5.1 9.2 12l-6.7 6.9 2.8 2.8L12 15l6.7 6.7 2.8-2.8-6.7-6.9z"/>
+                </svg>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium">Built on Supabase</span>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/50">
+                <BadgeCheck className="w-4 h-4 text-primary" />
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium">99.9% Uptime</span>
+              </div>
             </div>
+
+            {/* Who This Is For */}
+            <p className="text-center text-sm text-foreground/80 font-medium mb-8">
+              Built for marketing agencies, SEO consultants, and web design firms who need to prove their value.
+            </p>
             
             {/* Testimonials */}
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
-                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none">"</span>
+                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none" aria-hidden="true">"</span>
                 <p className="text-sm text-muted-foreground italic mb-4 mt-6">
                   "We closed a $12K website rebuild in the first week using the audit reports. The before/after scoring made it a no-brainer for the client."
                 </p>
                 <div>
-                  <p className="font-semibold text-foreground text-sm">Sarah M.</p>
-                  <p className="text-xs text-muted-foreground">Agency Director, Greenline Digital</p>
+                  <p className="font-semibold text-foreground text-sm">Marketing Agency Director</p>
+                  <p className="text-xs text-muted-foreground">Digital Marketing Agency</p>
                 </div>
               </div>
               
               <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
-                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none">"</span>
+                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none" aria-hidden="true">"</span>
                 <p className="text-sm text-muted-foreground italic mb-4 mt-6">
                   "My team used to spend 3 hours per audit manually. Now we batch 50 prospects and have reports ready before lunch."
                 </p>
                 <div>
-                  <p className="font-semibold text-foreground text-sm">James K.</p>
-                  <p className="text-xs text-muted-foreground">SEO Consultant</p>
+                  <p className="font-semibold text-foreground text-sm">SEO Consultant</p>
+                  <p className="text-xs text-muted-foreground">Freelance SEO Specialist</p>
                 </div>
               </div>
               
               <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
-                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none">"</span>
+                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none" aria-hidden="true">"</span>
                 <p className="text-sm text-muted-foreground italic mb-4 mt-6">
-                  "The white-label PDFs look better than what we were producing in-house. Clients actually read these."
+                  "The white-label PDFs look better than what we were producing in-house. Clients actually read these reports."
                 </p>
                 <div>
-                  <p className="font-semibold text-foreground text-sm">Rachel T.</p>
-                  <p className="text-xs text-muted-foreground">Digital Strategist</p>
+                  <p className="font-semibold text-foreground text-sm">Digital Strategist</p>
+                  <p className="text-xs text-muted-foreground">Web Design Agency</p>
                 </div>
               </div>
             </div>
@@ -363,7 +377,7 @@ export default function Index() {
         </section>
 
         {/* What You Get Section */}
-        <section className="py-16 lg:py-20">
+        <section id="features" className="py-16 lg:py-20">
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">Comprehensive, Client-Ready Analysis</h2>
@@ -501,7 +515,7 @@ export default function Index() {
         </section>
 
         {/* FAQ Section */}
-        <section className="py-16 lg:py-20">
+        <section id="faq" className="py-16 lg:py-20">
           <div className="container">
             <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
@@ -565,12 +579,12 @@ export default function Index() {
       {/* Footer */}
       <footer className="border-t border-border/50 py-12 bg-muted/30">
         <div className="container">
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
             {/* Brand column */}
             <div>
               <p className="font-semibold text-foreground text-lg mb-2">OptimizeMySuite</p>
               <p className="text-sm text-muted-foreground mb-4">
-                Proof-based website audits for marketing agencies
+                Website audit tool for agencies. White-label website reports. Agency SEO audit tool.
               </p>
               <p className="text-xs text-muted-foreground">
                 © 2025 OptimizeMySuite. All rights reserved.
@@ -587,21 +601,31 @@ export default function Index() {
                   </Link>
                 </li>
                 <li>
-                  <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     Features
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Batch Mode
-                  </Link>
+                  <a href="#revenue" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    For Agencies
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/sample-audit-report.pdf" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Sample Report
+                  </a>
                 </li>
               </ul>
             </div>
             
-            {/* Company column */}
+            {/* Support column */}
             <div>
-              <p className="font-semibold text-foreground text-sm mb-4">Company</p>
+              <p className="font-semibold text-foreground text-sm mb-4">Support</p>
               <ul className="space-y-2">
                 <li>
                   <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -610,7 +634,29 @@ export default function Index() {
                 </li>
                 <li>
                   <a href="mailto:support@optimizemysuite.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Support
+                    Contact Support
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                    FAQ
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Company column */}
+            <div>
+              <p className="font-semibold text-foreground text-sm mb-4">Company</p>
+              <ul className="space-y-2">
+                <li>
+                  <a 
+                    href="https://bicc.me" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Built by BICC
                   </a>
                 </li>
                 <li>
@@ -624,6 +670,21 @@ export default function Index() {
                   </a>
                 </li>
               </ul>
+            </div>
+          </div>
+          
+          {/* Bottom bar with additional trust signal */}
+          <div className="mt-8 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+            <p>Built for marketing agencies, SEO consultants, and web design firms.</p>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1">
+                <Shield className="w-3 h-3" />
+                256-bit SSL
+              </span>
+              <span className="flex items-center gap-1">
+                <BadgeCheck className="w-3 h-3" />
+                GDPR Compliant
+              </span>
             </div>
           </div>
         </div>
