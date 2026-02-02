@@ -99,8 +99,9 @@ export default function Index() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Hero Section */}
       <header className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-hero opacity-[0.03]" />
+        <div className="absolute inset-0 gradient-hero opacity-[0.08]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />
+        <div className="absolute inset-0 hero-dot-pattern" />
 
         <nav className="container relative pt-6 px-4 sm:px-6">
           <div className="flex items-center justify-between">
@@ -122,7 +123,7 @@ export default function Index() {
               <span className="break-words">Built for Marketing Agencies & SEO Consultants</span>
             </div>
             
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 tracking-tight leading-tight break-words">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight leading-tight break-words font-display">
               Stop Selling Promises.{" "}
               <span className="text-gradient">Start Selling Proof.</span>
             </h1>
@@ -136,7 +137,7 @@ export default function Index() {
             </p>
 
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 w-full max-w-lg sm:max-w-none mx-auto">
-              <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base" onClick={() => setShowPlanModal(true)}>
+              <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base shadow-hero-button" onClick={() => setShowPlanModal(true)}>
                 Start Your 3-Day Free Trial
                 <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Button>
@@ -161,6 +162,41 @@ export default function Index() {
                 <Check className="w-4 h-4 text-primary" />
                 One closed client pays for itself
               </span>
+            </div>
+
+            {/* Browser Mockup Placeholder */}
+            <div className="relative mt-16 sm:mt-20 max-w-3xl mx-auto">
+              {/* Glow effect behind mockup */}
+              <div className="absolute inset-0 -inset-x-8 -inset-y-8 bg-[radial-gradient(ellipse_at_center,_hsl(221_83%_53%_/_0.12),_transparent_70%)] blur-2xl" />
+              
+              {/* Browser window mockup */}
+              <div className="relative transform -rotate-1 hover:rotate-0 transition-transform duration-500">
+                <div className="rounded-xl border border-border/60 bg-card shadow-xl overflow-hidden">
+                  {/* Browser chrome bar */}
+                  <div className="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border/50">
+                    <div className="flex gap-1.5">
+                      <div className="w-3 h-3 rounded-full bg-[hsl(var(--chrome-close)/0.8)]" />
+                      <div className="w-3 h-3 rounded-full bg-[hsl(var(--chrome-minimize)/0.8)]" />
+                      <div className="w-3 h-3 rounded-full bg-[hsl(var(--chrome-maximize)/0.8)]" />
+                    </div>
+                    <div className="flex-1 mx-4">
+                      <div className="h-6 bg-background/60 rounded-md flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground/60">optimizemysuite.com/dashboard</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Placeholder content area */}
+                  <div className="aspect-[16/10] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center p-8">
+                    <div className="text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Sparkles className="w-8 h-8 text-primary/60" />
+                      </div>
+                      <p className="text-muted-foreground/70 text-sm font-medium">Product screenshot coming soon</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
