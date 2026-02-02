@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
+import productScreenshot from "@/assets/product-screenshot.png";
 
 // FAQ Item component with accordion behavior
 function FaqItem({ question, answer }: { question: string; answer: string }) {
@@ -209,14 +210,15 @@ export default function Index() {
                     </div>
                   </div>
                   
-                  {/* Placeholder content area */}
-                  <div className="aspect-[16/10] bg-gradient-to-br from-muted/30 to-muted/60 flex items-center justify-center p-8">
-                    <div className="text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Sparkles className="w-8 h-8 text-primary/60" />
-                      </div>
-                      <p className="text-muted-foreground/70 text-sm font-medium">Product screenshot coming soon</p>
-                    </div>
+                  {/* Product screenshot */}
+                  <div className="relative rounded-b-xl overflow-hidden">
+                    <img 
+                      src={productScreenshot} 
+                      alt="OptimizeMySuite dashboard showing website analysis with score and recommendations" 
+                      className="w-full"
+                    />
+                    {/* Subtle top gradient overlay for browser chrome blend */}
+                    <div className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
                   </div>
                 </div>
               </div>
