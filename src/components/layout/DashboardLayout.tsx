@@ -42,16 +42,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const queryClient = useQueryClient();
 
   const handleSignOut = async () => {
+    // Navigate FIRST before auth state changes trigger ProtectedRoute redirect
+    navigate("/", { replace: true });
+    
     // Clear React Query cache
     queryClient.clear();
     
+    // Then sign out (state change won't cause /auth redirect since we're already on /)
     await signOut();
+    
     toast({
       title: "Signed out",
       description: "You've been signed out of your agency account.",
     });
-    // Use replace: true to prevent back button from returning to authenticated pages
-    navigate("/", { replace: true });
   };
 
   // Main nav items (no Settings - moved to dropdown)
