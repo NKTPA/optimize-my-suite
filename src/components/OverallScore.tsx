@@ -1,7 +1,9 @@
 import { TrendingUp, Zap, Server, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DualScore } from "@/lib/scoringEngine";
+import { WebsiteTypeInfo } from "@/types/analysis";
 import { DualScoreDisplay } from "./DualScoreDisplay";
+import { WebsiteTypeBadge } from "./scoring/WebsiteTypeBadge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OverallScoreProps {
@@ -14,6 +16,7 @@ interface OverallScoreProps {
   baselineScore?: number;
   baselineUrl?: string;
   baselineDate?: string;
+  websiteType?: WebsiteTypeInfo;
 }
 
 export function OverallScore({ 
@@ -25,7 +28,8 @@ export function OverallScore({
   showDualScores = true,
   baselineScore,
   baselineUrl,
-  baselineDate
+  baselineDate,
+  websiteType
 }: OverallScoreProps) {
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-score-excellent";
@@ -92,16 +96,19 @@ export function OverallScore({
 
           {/* Overview & Quick Wins */}
           <div className="flex-1 text-center lg:text-left">
-            <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 mb-4">
               <div className="p-2 rounded-lg bg-primary/10">
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-foreground">Website Analysis Summary</h2>
+              {websiteType && (
+                <WebsiteTypeBadge websiteType={websiteType} />
+              )}
               {dualScore?.environment?.isPreview && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
-                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-warning/10 text-warning">
                         <Server className="w-3 h-3" />
                         <span className="text-xs font-medium">Preview</span>
                       </div>

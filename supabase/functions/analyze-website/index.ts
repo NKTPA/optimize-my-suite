@@ -678,31 +678,222 @@ function extractDataFromHtml(html: string, url: string) {
   };
 }
 
+// ============================================
+// WEBSITE TYPE DETECTION
+// ============================================
+type WebsiteType = 
+  | 'local_service'
+  | 'saas_software'
+  | 'ecommerce'
+  | 'professional_services'
+  | 'content_media'
+  | 'restaurant_hospitality'
+  | 'nonprofit'
+  | 'portfolio_personal'
+  | 'unknown';
 
-const ANALYSIS_PROMPT = `
-You are a senior CRO (conversion rate optimization) expert, web designer, and local SEO specialist focused on small HOME-SERVICES businesses (HVAC, plumbing, roofing, electrical, landscaping, med spa, dental, etc.).
+interface WebsiteTypeInfo {
+  type: WebsiteType;
+  displayName: string;
+  confidence: 'high' | 'medium' | 'low';
+  signals: string[];
+}
 
-You receive:
-- Basic business category and location (if detectable from the site)
-- Extracted website data:
-  - title, metaDescription
-  - headings (H1, H2, H3)
-  - main body text
-  - phoneNumbers, emails
-  - CTA buttons (text + href)
-  - forms (fields, actions)
-  - images (src, alt, approxSize)
-  - scripts (urls)
+const WEBSITE_TYPE_DISPLAY: Record<WebsiteType, string> = {
+  local_service: 'Local Service Business',
+  saas_software: 'SaaS / Software Product',
+  ecommerce: 'E-commerce / Online Store',
+  professional_services: 'Professional Services',
+  content_media: 'Content / Media / Blog',
+  restaurant_hospitality: 'Restaurant / Hospitality',
+  nonprofit: 'Nonprofit / Organization',
+  portfolio_personal: 'Portfolio / Personal',
+  unknown: 'General Business Website',
+};
 
-TASK:
-1) Analyze the site as if you were hired to increase LEADS (calls, form fills, bookings).
-2) Be brutally honest but respectful.
-3) Write at a 7th–8th grade reading level. Avoid jargon.
-4) Focus on QUICK, PRACTICAL fixes, not theory.
-5) Tailor your advice to home-services: urgent jobs, local customers, trust, and speed.
+/**
+ * Detects website type from extracted data and HTML content
+ */
+function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>, html: string, url: string): WebsiteTypeInfo {
+  const signals: string[] = [];
+  const scores: Record<WebsiteType, number> = {
+    local_service: 0,
+    saas_software: 0,
+    ecommerce: 0,
+    professional_services: 0,
+    content_media: 0,
+    restaurant_hospitality: 0,
+    nonprofit: 0,
+    portfolio_personal: 0,
+    unknown: 0,
+  };
 
-IMPORTANT: For preview/staging sites (like *.lovable.app, *.vercel.app, *.netlify.app), focus on content quality, messaging, and UX. Don't penalize for missing production items like analytics, canonical URLs, or custom domains - these will be added when the site goes live.
+  const lowerHtml = html.toLowerCase();
+  const lowerBody = extractedData.bodyTextPreview.toLowerCase();
+  const title = (extractedData.title || '').toLowerCase();
+  const description = (extractedData.metaDescription || '').toLowerCase();
+  const h1s = extractedData.headings.h1s.map(h => h.toLowerCase());
+  const h2s = extractedData.headings.h2s.map(h => h.toLowerCase());
+  const allHeadings = [...h1s, ...h2s].join(' ');
 
+  // ===== SAAS / SOFTWARE SIGNALS =====
+  const saasKeywords = ['saas', 'software', 'platform', 'api', 'dashboard', 'pricing', 'free trial', 
+    'sign up', 'get started', 'demo', 'features', 'integrations', 'automation', 'workflow',
+    'analytics', 'login', 'signup', 'product', 'solution', 'app', 'tool', 'cloud'];
+  const saasPatterns = [/pricing/i, /free\s*trial/i, /get\s*started/i, /sign\s*up/i, /start\s*free/i,
+    /book\s*demo/i, /request\s*demo/i, /schedule\s*demo/i, /integrat/i, /api/i];
+  
+  let saasScore = 0;
+  for (const kw of saasKeywords) {
+    if (lowerBody.includes(kw) || title.includes(kw) || allHeadings.includes(kw)) saasScore++;
+  }
+  for (const pattern of saasPatterns) {
+    if (pattern.test(lowerHtml)) saasScore += 2;
+  }
+  if (lowerHtml.includes('monthly') && lowerHtml.includes('annually')) saasScore += 3;
+  if (/\$\d+\s*\/?\s*(mo|month|yr|year)/i.test(lowerHtml)) saasScore += 3;
+  if (lowerHtml.includes('/pricing') || lowerHtml.includes('/features')) saasScore += 2;
+  if (lowerHtml.includes('start your free') || lowerHtml.includes('no credit card')) saasScore += 3;
+  scores.saas_software = saasScore;
+  if (saasScore >= 5) signals.push('SaaS pricing/trial patterns detected');
+
+  // ===== LOCAL SERVICE SIGNALS =====
+  const localKeywords = ['hvac', 'plumbing', 'plumber', 'roofing', 'roofer', 'electrical', 'electrician',
+    'landscaping', 'lawn', 'cleaning', 'pest control', 'locksmith', 'garage door', 'painting', 'contractor',
+    'handyman', 'repair', 'installation', 'service area', 'serving', 'emergency', '24/7', 'same day',
+    'free estimate', 'free quote', 'call now', 'licensed', 'insured', 'bonded'];
+  
+  let localScore = 0;
+  for (const kw of localKeywords) {
+    if (lowerBody.includes(kw) || title.includes(kw)) localScore++;
+  }
+  if (extractedData.phoneNumbers.length > 0) localScore += 2;
+  if (extractedData.addresses.length > 0) localScore += 2;
+  if (/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/.test(lowerHtml)) localScore += 1;
+  if (lowerHtml.includes('call us') || lowerHtml.includes('call today')) localScore += 2;
+  if (lowerHtml.includes('service area') || lowerHtml.includes('we serve')) localScore += 2;
+  if (/serving\s+[a-z]+\s+(county|area|region)/i.test(lowerHtml)) localScore += 3;
+  scores.local_service = localScore;
+  if (localScore >= 5) signals.push('Local service business patterns detected');
+
+  // ===== E-COMMERCE SIGNALS =====
+  const ecomKeywords = ['shop', 'cart', 'checkout', 'add to cart', 'buy now', 'product', 'products',
+    'shipping', 'free shipping', 'returns', 'order', 'orders', 'store', 'collection', 'catalog'];
+  
+  let ecomScore = 0;
+  for (const kw of ecomKeywords) {
+    if (lowerBody.includes(kw) || lowerHtml.includes(kw)) ecomScore++;
+  }
+  if (/add.to.cart/i.test(lowerHtml)) ecomScore += 3;
+  if (/buy.now/i.test(lowerHtml)) ecomScore += 2;
+  if (lowerHtml.includes('shopify') || lowerHtml.includes('woocommerce') || lowerHtml.includes('bigcommerce')) ecomScore += 3;
+  if (/\$\d+\.\d{2}/.test(lowerHtml)) ecomScore += 2;
+  if (lowerHtml.includes('/cart') || lowerHtml.includes('/checkout')) ecomScore += 3;
+  scores.ecommerce = ecomScore;
+  if (ecomScore >= 5) signals.push('E-commerce shopping patterns detected');
+
+  // ===== PROFESSIONAL SERVICES SIGNALS =====
+  const proKeywords = ['agency', 'consulting', 'consultant', 'law firm', 'attorney', 'lawyer', 'accountant',
+    'accounting', 'marketing', 'design agency', 'creative agency', 'our clients', 'case study', 'case studies',
+    'portfolio', 'our work', 'services we offer', 'industries we serve'];
+  
+  let proScore = 0;
+  for (const kw of proKeywords) {
+    if (lowerBody.includes(kw) || title.includes(kw)) proScore++;
+  }
+  if (lowerHtml.includes('schedule a consultation') || lowerHtml.includes('book a call')) proScore += 2;
+  if (lowerHtml.includes('our team') || lowerHtml.includes('meet the team')) proScore += 1;
+  if (lowerHtml.includes('case study') || lowerHtml.includes('case studies')) proScore += 2;
+  scores.professional_services = proScore;
+  if (proScore >= 4) signals.push('Professional services patterns detected');
+
+  // ===== RESTAURANT / HOSPITALITY SIGNALS =====
+  const restaurantKeywords = ['menu', 'reservations', 'book a table', 'order online', 'takeout', 'delivery',
+    'restaurant', 'cafe', 'bar', 'cuisine', 'chef', 'dine', 'dining', 'food', 'drinks', 'hotel', 'resort',
+    'rooms', 'book now', 'check availability'];
+  
+  let restaurantScore = 0;
+  for (const kw of restaurantKeywords) {
+    if (lowerBody.includes(kw) || title.includes(kw)) restaurantScore++;
+  }
+  if (lowerHtml.includes('opentable') || lowerHtml.includes('resy') || lowerHtml.includes('yelp')) restaurantScore += 2;
+  if (lowerHtml.includes('/menu') || lowerHtml.includes('/reservations')) restaurantScore += 3;
+  scores.restaurant_hospitality = restaurantScore;
+  if (restaurantScore >= 4) signals.push('Restaurant/hospitality patterns detected');
+
+  // ===== CONTENT / MEDIA / BLOG SIGNALS =====
+  const contentKeywords = ['blog', 'article', 'articles', 'news', 'latest posts', 'read more', 'subscribe',
+    'newsletter', 'author', 'published', 'category', 'tags', 'comments'];
+  
+  let contentScore = 0;
+  for (const kw of contentKeywords) {
+    if (lowerBody.includes(kw) || lowerHtml.includes(kw)) contentScore++;
+  }
+  if (lowerHtml.includes('/blog') || lowerHtml.includes('/news') || lowerHtml.includes('/articles')) contentScore += 3;
+  if (lowerHtml.includes('read more') && lowerHtml.includes('published')) contentScore += 2;
+  scores.content_media = contentScore;
+  if (contentScore >= 4) signals.push('Content/media patterns detected');
+
+  // ===== NONPROFIT SIGNALS =====
+  const nonprofitKeywords = ['donate', 'donation', 'nonprofit', 'non-profit', 'charity', 'mission',
+    'volunteer', 'cause', 'impact', 'give', 'support our', 'help us'];
+  
+  let nonprofitScore = 0;
+  for (const kw of nonprofitKeywords) {
+    if (lowerBody.includes(kw) || title.includes(kw)) nonprofitScore++;
+  }
+  if (lowerHtml.includes('/donate') || lowerHtml.includes('give now')) nonprofitScore += 3;
+  if (lowerHtml.includes('501(c)') || lowerHtml.includes('tax-deductible')) nonprofitScore += 3;
+  scores.nonprofit = nonprofitScore;
+  if (nonprofitScore >= 3) signals.push('Nonprofit patterns detected');
+
+  // ===== PORTFOLIO / PERSONAL SIGNALS =====
+  const portfolioKeywords = ['portfolio', 'my work', 'about me', 'freelance', 'hire me', 'contact me',
+    'my projects', 'personal website', 'designer', 'developer', 'photographer'];
+  
+  let portfolioScore = 0;
+  for (const kw of portfolioKeywords) {
+    if (lowerBody.includes(kw) || title.includes(kw)) portfolioScore++;
+  }
+  if (lowerHtml.includes('linkedin') && lowerHtml.includes('github')) portfolioScore += 2;
+  if (lowerHtml.includes('hire me') || lowerHtml.includes('work with me')) portfolioScore += 2;
+  scores.portfolio_personal = portfolioScore;
+  if (portfolioScore >= 3) signals.push('Portfolio/personal patterns detected');
+
+  // Determine winner
+  let maxType: WebsiteType = 'unknown';
+  let maxScore = 0;
+  for (const [type, score] of Object.entries(scores) as [WebsiteType, number][]) {
+    if (score > maxScore) {
+      maxScore = score;
+      maxType = type;
+    }
+  }
+
+  // Determine confidence
+  let confidence: 'high' | 'medium' | 'low' = 'low';
+  if (maxScore >= 10) confidence = 'high';
+  else if (maxScore >= 5) confidence = 'medium';
+
+  // If no clear winner, default to unknown
+  if (maxScore < 3) {
+    maxType = 'unknown';
+    confidence = 'low';
+  }
+
+  return {
+    type: maxType,
+    displayName: WEBSITE_TYPE_DISPLAY[maxType],
+    confidence,
+    signals,
+  };
+}
+
+// ============================================
+// TYPE-SPECIFIC ANALYSIS PROMPTS
+// ============================================
+function getAnalysisPromptForType(siteType: WebsiteTypeInfo): string {
+  const baseStructure = `
 OUTPUT:
 Return ONLY a valid JSON object with the following shape (no extra commentary):
 
@@ -767,9 +958,267 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
 }
 
 - Use scores on a 0–100 scale.
-- If some data is missing (for example, no meta description), explain that and still give a recommendation.
-- Always assume the goal is: "Get more phone calls, quote requests, and booked jobs from this website."
-`;
+- If some data is missing, explain that and still give a recommendation.`;
+
+  switch (siteType.type) {
+    case 'saas_software':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in SaaS and software products.
+
+DETECTED WEBSITE TYPE: SaaS / Software Product
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this SaaS website to increase CONVERSIONS (signups, trial starts, demo requests).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR SAAS WEBSITES:
+- MESSAGING: Clear value proposition, problem-solution fit, target audience identification, benefit clarity, differentiation from competitors
+- CONVERSION: Free trial/demo CTAs, pricing page clarity, signup flow friction, value-first messaging, clear next steps
+- TRUST: Customer logos, case studies, testimonials, security badges (SOC2, GDPR), integration partnerships, team credibility
+- SEO: Product-relevant keywords, feature pages, comparison pages, solution pages. NOT local keywords or service areas.
+- DESIGN/UX: Modern SaaS aesthetic, clear feature presentation, screenshot/video demos, intuitive navigation
+
+DO NOT RECOMMEND:
+- Phone numbers as primary CTA (SaaS uses online conversion)
+- Service area information (SaaS is typically location-independent)
+- "Request Service" or "Get Quote" buttons (use "Start Free Trial" / "Book Demo" / "Get Started")
+- Local SEO tactics like city-specific keywords
+- Emergency/24-7 service messaging
+
+FOCUS ON:
+- Value proposition clarity in the hero section
+- Free trial or demo conversion paths
+- Feature-benefit presentation
+- Social proof from similar companies
+- Pricing transparency
+- Integration ecosystem
+${baseStructure}
+- Assume the goal is: "Get more trial signups, demo requests, and paying customers."`;
+
+    case 'ecommerce':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in e-commerce and online retail.
+
+DETECTED WEBSITE TYPE: E-commerce / Online Store
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this e-commerce website to increase SALES (add to cart, checkout completion).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR E-COMMERCE WEBSITES:
+- MESSAGING: Product clarity, unique selling proposition, brand story, value communication
+- CONVERSION: Add to cart flow, checkout friction, product CTAs, upsell/cross-sell, cart abandonment prevention
+- TRUST: Reviews, return policy, payment security badges, shipping information, customer photos
+- SEO: Product schema, category structure, product descriptions, image alt text
+- DESIGN/UX: Product photography, grid layouts, filtering/sorting, mobile shopping experience
+
+DO NOT RECOMMEND:
+- Phone number prominence (e-commerce uses online checkout)
+- Service area information
+- Booking systems or appointment scheduling
+- Local SEO tactics
+
+FOCUS ON:
+- Product page optimization
+- Checkout flow simplification
+- Trust signals for online purchasing
+- Product discovery and navigation
+- Mobile shopping experience
+- Shipping and return policy visibility
+${baseStructure}
+- Assume the goal is: "Get more add-to-carts, completed checkouts, and repeat purchases."`;
+
+    case 'professional_services':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in professional services (agencies, consulting, law firms, accounting).
+
+DETECTED WEBSITE TYPE: Professional Services
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this professional services website to increase LEADS (consultation requests, contact form submissions).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR PROFESSIONAL SERVICES:
+- MESSAGING: Expertise positioning, service clarity, industry focus, results-oriented language
+- CONVERSION: Consultation booking, contact forms, case study downloads, newsletter signup
+- TRUST: Case studies, client logos, team credentials, industry awards, testimonials, certifications
+- SEO: Industry keywords, service-specific pages, thought leadership content
+- DESIGN/UX: Professional aesthetic, portfolio/work examples, team presentation
+
+FOCUS ON:
+- Expertise and credibility signals
+- Case studies and results
+- Clear service offerings
+- Team credentials and experience
+- Consultation or discovery call CTAs
+- Industry-specific positioning
+${baseStructure}
+- Assume the goal is: "Get more consultation requests, qualified leads, and new client engagements."`;
+
+    case 'restaurant_hospitality':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in restaurants and hospitality businesses.
+
+DETECTED WEBSITE TYPE: Restaurant / Hospitality
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this restaurant/hospitality website to increase BOOKINGS (reservations, orders, room bookings).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR RESTAURANT/HOSPITALITY:
+- MESSAGING: Atmosphere, cuisine type, unique experience, special occasions messaging
+- CONVERSION: Reservation buttons, online ordering, menu visibility, contact information
+- TRUST: Reviews, photos of food/space, awards, chef credentials, hygiene ratings
+- SEO: Location keywords, cuisine type, "near me" optimization, Google Business integration
+- DESIGN/UX: Food photography, ambiance photos, easy menu access, mobile-friendly reservations
+
+FOCUS ON:
+- Menu visibility and appeal
+- Reservation/booking ease
+- Location and hours prominence
+- Food photography quality
+- Online ordering integration
+- Special events and private dining
+${baseStructure}
+- Assume the goal is: "Get more reservations, online orders, and event bookings."`;
+
+    case 'nonprofit':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in nonprofit organizations.
+
+DETECTED WEBSITE TYPE: Nonprofit / Organization
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this nonprofit website to increase ENGAGEMENT (donations, volunteer signups, newsletter subscriptions).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR NONPROFITS:
+- MESSAGING: Mission clarity, impact storytelling, emotional connection, urgency
+- CONVERSION: Donate buttons, volunteer forms, newsletter signup, recurring donation options
+- TRUST: Impact statistics, financial transparency, leadership team, partner logos, annual reports
+- SEO: Cause-related keywords, program pages, impact stories
+- DESIGN/UX: Emotional imagery, clear donation flow, impact visualization
+
+FOCUS ON:
+- Mission and impact clarity
+- Donation flow simplicity
+- Impact storytelling
+- Volunteer opportunities
+- Financial transparency
+- Recurring giving options
+${baseStructure}
+- Assume the goal is: "Get more donations, volunteer signups, and community engagement."`;
+
+    case 'content_media':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in content and media websites.
+
+DETECTED WEBSITE TYPE: Content / Media / Blog
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this content website to increase ENGAGEMENT (time on site, subscriptions, return visits).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR CONTENT/MEDIA:
+- MESSAGING: Content value proposition, niche clarity, editorial voice
+- CONVERSION: Newsletter signup, content upgrades, membership/subscription, social follows
+- TRUST: Author credentials, content quality, publication frequency, social proof
+- SEO: Content keywords, internal linking, category structure, featured snippets optimization
+- DESIGN/UX: Readability, content discovery, related content, mobile reading experience
+
+FOCUS ON:
+- Newsletter/subscription conversion
+- Content discoverability
+- Reading experience
+- Author credibility
+- Social sharing
+- Content organization
+${baseStructure}
+- Assume the goal is: "Get more subscribers, increase time on site, and build a loyal audience."`;
+
+    case 'portfolio_personal':
+      return `You are a senior CRO (conversion rate optimization) expert specializing in portfolio and personal brand websites.
+
+DETECTED WEBSITE TYPE: Portfolio / Personal Website
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, CTAs, forms, and images.
+
+TASK:
+1) Analyze this portfolio website to increase OPPORTUNITIES (job inquiries, freelance projects, speaking engagements).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+
+SCORING CRITERIA FOR PORTFOLIOS:
+- MESSAGING: Personal brand clarity, skill positioning, unique value, career focus
+- CONVERSION: Contact form, hire me CTA, project inquiry, calendar booking
+- TRUST: Work samples, testimonials, client logos, credentials, social proof
+- SEO: Skill keywords, name recognition, portfolio optimization
+- DESIGN/UX: Work presentation, navigation, mobile experience, personality expression
+
+FOCUS ON:
+- Work sample presentation
+- Clear service/skill offerings
+- Easy contact methods
+- Professional credibility
+- Personal brand consistency
+${baseStructure}
+- Assume the goal is: "Get more job opportunities, freelance inquiries, and professional connections."`;
+
+    case 'local_service':
+    default:
+      return `You are a senior CRO (conversion rate optimization) expert, web designer, and local SEO specialist focused on LOCAL SERVICE businesses (HVAC, plumbing, roofing, electrical, landscaping, med spa, dental, cleaning, etc.).
+
+DETECTED WEBSITE TYPE: ${siteType.type === 'local_service' ? 'Local Service Business' : 'General Business Website'}
+CONFIDENCE: ${siteType.confidence}
+
+You receive extracted website data including title, meta description, headings, body text, phone numbers, emails, CTAs, forms, and images.
+
+TASK:
+1) Analyze this website to increase LEADS (calls, form fills, bookings).
+2) Be specific and actionable. Avoid generic advice.
+3) Write at a 7th–8th grade reading level.
+4) Focus on QUICK, PRACTICAL fixes, not theory.
+5) Tailor advice for local service businesses: urgent jobs, local customers, trust, and speed.
+
+SCORING CRITERIA FOR LOCAL SERVICE BUSINESSES:
+- MESSAGING: Service clarity, location prominence, emergency availability, benefit-focused headlines
+- CONVERSION: Phone number visibility, click-to-call, contact forms, booking systems, quote requests
+- TRUST: Reviews, licenses, certifications, guarantees, insurance, years in business, team photos
+- SEO: Local keywords, city/area targeting, Google Business optimization, NAP consistency
+- DESIGN/UX: Mobile-first design, fast load times, clear navigation, professional appearance
+
+FOCUS ON:
+- Phone number prominence and click-to-call
+- Service area clarity
+- Emergency/same-day availability messaging
+- Trust signals (licensed, insured, bonded)
+- Customer reviews and testimonials
+- Local SEO optimization
+
+IMPORTANT: For preview/staging sites, focus on content quality and don't penalize for missing production items like analytics or custom domains.
+${baseStructure}
+- Assume the goal is: "Get more phone calls, quote requests, and booked jobs from this website."`;
+  }
+}
 
 
 serve(async (req) => {
@@ -1171,11 +1620,23 @@ serve(async (req) => {
       hasPhone: extractedData.phoneNumbers.length > 0
     });
 
+    // Detect website type for adaptive scoring
+    const websiteType = detectWebsiteType(extractedData, html, url);
+    logStep("Website type detected", {
+      type: websiteType.type,
+      displayName: websiteType.displayName,
+      confidence: websiteType.confidence,
+      signals: websiteType.signals
+    });
+
     // Call AI for analysis
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("AI service not configured");
     }
+
+    // Get type-specific analysis prompt
+    const analysisPrompt = getAnalysisPromptForType(websiteType);
 
     // Include environment context in the AI prompt
     const environmentContext = environment.isPreview 
@@ -1192,15 +1653,17 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         temperature: 0, // Deterministic scoring for consistent results
         messages: [
-          { role: "system", content: ANALYSIS_PROMPT },
+          { role: "system", content: analysisPrompt },
           {
             role: "user",
             content: `Analyze this website: ${url}${environmentContext}
 
+Website Type: ${websiteType.displayName} (${websiteType.confidence} confidence)
+
 Extracted Data:
 ${JSON.stringify(extractedData, null, 2)}
 
-Provide a comprehensive analysis with specific, actionable recommendations for this home services business. Return ONLY valid JSON matching the specified structure.`,
+Provide a comprehensive analysis with specific, actionable recommendations appropriate for this ${websiteType.displayName}. Return ONLY valid JSON matching the specified structure.`,
           },
         ],
       }),
@@ -1279,6 +1742,14 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
     analysisResult.environment = environment;
     analysisResult.analysisSourceUrl = url;
     
+    // Add detected website type to the result
+    analysisResult.websiteType = {
+      type: websiteType.type,
+      displayName: websiteType.displayName,
+      confidence: websiteType.confidence,
+      signals: websiteType.signals,
+    };
+    
     // Update overall score with the fair-weighted version
     if (analysisResult.summary) {
       analysisResult.summary.websiteQualityScore = dualScore.websiteQualityScore;
@@ -1296,7 +1767,8 @@ Provide a comprehensive analysis with specific, actionable recommendations for t
       overallScore: dualScore.overallScore,
       qualityScore: dualScore.websiteQualityScore,
       readinessScore: dualScore.productionReadinessScore,
-      isPreview: environment.isPreview
+      isPreview: environment.isPreview,
+      websiteType: websiteType.type,
     });
 
     return new Response(JSON.stringify(analysisResult), {

@@ -208,6 +208,7 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
             baselineScore={baselineData?.score}
             baselineUrl={baselineData?.url}
             baselineDate={baselineData?.date}
+            websiteType={results.websiteType}
           />
 
           {/* Score Credibility Statement */}
