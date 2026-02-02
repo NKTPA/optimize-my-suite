@@ -1,9 +1,8 @@
 import jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
-import { generateLovableRebuildPrompt } from "./generateLovablePrompt";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
-import { generatePdfFilename, setPdfMetadata, extractDomainFromUrl } from "./pdfMetadata";
+import { generatePdfFilename, setPdfMetadata } from "./pdfMetadata";
 
 // Branding options for white-label PDFs
 export interface PdfBranding {
@@ -1025,148 +1024,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   });
   y += 40;
   
-  // ============ LOVABLE REBUILD PROMPTS ============
-  // Add a new page with INTERNAL USE ONLY cover before the Lovable section
-  addFooter();
-  doc.addPage();
-  currentPage++;
-  y = 25;
-  
-  // INTERNAL USE ONLY divider page
-  doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
-  doc.rect(0, 0, pageWidth, pageHeight, "F");
-  
-  // Warning banner
-  doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-  doc.rect(0, pageHeight / 2 - 50, pageWidth, 100, "F");
-  
-  doc.setFontSize(28);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("INTERNAL USE ONLY", pageWidth / 2, pageHeight / 2 - 15, { align: "center" });
-  
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
-  doc.text("Do not share with client", pageWidth / 2, pageHeight / 2 + 10, { align: "center" });
-  
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text("The following pages contain internal rebuild prompts", pageWidth / 2, pageHeight / 2 + 30, { align: "center" });
-  
-  addFooter();
-  doc.addPage();
-  currentPage++;
-  y = 25;
-  
-  // Section header with border
-  doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-  doc.setLineWidth(1);
-  doc.setLineDashPattern([4, 2], 0);
-  doc.roundedRect(margin, y, contentWidth, 26, 4, 4, "S");
-  doc.setLineDashPattern([], 0);
-  
-  // Icon
-  doc.setFillColor(colors.accentLight[0], colors.accentLight[1], colors.accentLight[2]);
-  doc.circle(margin + 15, y + 13, 9, "F");
-  doc.setFillColor(colors.accent[0], colors.accent[1], colors.accent[2]);
-  doc.circle(margin + 15, y + 13, 6, "F");
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("L", margin + 15, y + 16, { align: "center" });
-  
-  // Title
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("Lovable Website Rebuild Prompts", margin + 30, y + 11);
-  
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-  doc.text("Optional - For internal use when recreating this website in Lovable", margin + 30, y + 20);
-  y += 35;
-  
-  // Disclaimer
-  addPageIfNeeded(22);
-  doc.setFillColor(colors.accentLight[0], colors.accentLight[1], colors.accentLight[2]);
-  doc.roundedRect(margin, y, contentWidth, 18, 3, 3, "F");
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  const disclaimerText = "This rebuild prompt is optional and intended for internal use when recreating a website in Lovable. It does not modify the existing Implementation Pack.";
-  const disclaimerLines = doc.splitTextToSize(disclaimerText, contentWidth - 14);
-  doc.text(disclaimerLines, margin + 7, y + 8);
-  y += 25;
-  
-  // Prompt label
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-  doc.text("Copy and Paste into Lovable:", margin, y);
-  y += 10;
-  
-  // Generate the Lovable prompt
-  const lovablePrompt = generateLovableRebuildPrompt(plan, validatedUrl);
-  // Use Helvetica for better font embedding (Courier can cause CID encoding issues)
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  const promptLines = doc.splitTextToSize(lovablePrompt, contentWidth - 14);
-  
-  const lineHeight = 4.5;
-  const paddingTop = 8;
-  const paddingBottom = 8;
-  
-  let linesRemaining = promptLines.length;
-  let lineIndex = 0;
-  
-  while (linesRemaining > 0) {
-    const availableHeight = 260 - y;
-    const linesPerPage = Math.floor((availableHeight - paddingTop - paddingBottom) / lineHeight);
-    const linesToRender = Math.min(linesRemaining, linesPerPage);
-    
-    if (linesToRender <= 0) {
-      addFooter();
-      doc.addPage();
-      currentPage++;
-      y = 25;
-      continue;
-    }
-    
-    const containerHeight = (linesToRender * lineHeight) + paddingTop + paddingBottom;
-    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.setDrawColor(colors.border[0], colors.border[1], colors.border[2]);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(margin, y, contentWidth, containerHeight, 3, 3, "FD");
-    
-    // Use Helvetica consistently to avoid CID encoding issues
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    
-    let lineY = y + paddingTop;
-    for (let i = 0; i < linesToRender; i++) {
-      doc.text(promptLines[lineIndex + i], margin + 7, lineY);
-      lineY += lineHeight;
-    }
-    
-    y += containerHeight + 5;
-    lineIndex += linesToRender;
-    linesRemaining -= linesToRender;
-    
-    if (linesRemaining > 0) {
-      addFooter();
-      doc.addPage();
-      currentPage++;
-      y = 25;
-      
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "italic");
-      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-      doc.text("Lovable Rebuild Prompt (continued):", margin, y);
-      y += 12;
-    }
-  }
+  // NOTE: Lovable Website Rebuild Prompts removed from PDF
+  // The prompt is available in the UI only, not in client-facing PDF exports
   
   // ============ FINAL FOOTER ============
   addFooter();
