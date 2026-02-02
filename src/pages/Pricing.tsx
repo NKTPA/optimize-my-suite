@@ -110,6 +110,7 @@ export default function Pricing() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
 
   const handleSelectPlan = async (priceId: string, planName: string) => {
+    // First check if we have a user in local state
     if (!user || !session) {
       navigate("/auth?tab=signup");
       return;
@@ -117,6 +118,20 @@ export default function Pricing() {
 
     setLoadingPlan(planName);
     try {
+      // Verify session is still valid before calling checkout
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        // Session expired - redirect to login
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to continue.",
+          variant: "destructive",
+        });
+        navigate("/auth?tab=login");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: { priceId },
       });
