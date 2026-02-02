@@ -231,25 +231,36 @@ export default function Index() {
         {/* Social Proof Section */}
         <section className="py-12 border-t border-border/50 bg-secondary/20">
           <div className="container">
-            <p className="text-center text-sm text-muted-foreground mb-8">
+            <p className="text-center text-sm text-muted-foreground mb-6">
               Trusted by agencies who sell results, not promises
             </p>
             
+            {/* Logo bar */}
+            <div className="flex justify-center items-center gap-6 mb-8 flex-wrap">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div 
+                  key={i} 
+                  className="w-[100px] h-[36px] rounded-md bg-muted/40 grayscale opacity-60"
+                />
+              ))}
+            </div>
             
             {/* Testimonials */}
             <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
-                <p className="text-sm text-muted-foreground italic mb-4">
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
+                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none">"</span>
+                <p className="text-sm text-muted-foreground italic mb-4 mt-6">
                   "We closed a $12K website rebuild in the first week using the audit reports. The before/after scoring made it a no-brainer for the client."
                 </p>
                 <div>
                   <p className="font-semibold text-foreground text-sm">Sarah M.</p>
-                  <p className="text-xs text-muted-foreground">Agency Director at [Agency Name]</p>
+                  <p className="text-xs text-muted-foreground">Agency Director, Greenline Digital</p>
                 </div>
               </div>
               
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
-                <p className="text-sm text-muted-foreground italic mb-4">
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
+                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none">"</span>
+                <p className="text-sm text-muted-foreground italic mb-4 mt-6">
                   "My team used to spend 3 hours per audit manually. Now we batch 50 prospects and have reports ready before lunch."
                 </p>
                 <div>
@@ -258,8 +269,9 @@ export default function Index() {
                 </div>
               </div>
               
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
-                <p className="text-sm text-muted-foreground italic mb-4">
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
+                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none">"</span>
+                <p className="text-sm text-muted-foreground italic mb-4 mt-6">
                   "The white-label PDFs look better than what we were producing in-house. Clients actually read these."
                 </p>
                 <div>
@@ -320,7 +332,7 @@ export default function Index() {
         <section id="revenue" className="py-16 lg:py-20 bg-secondary/30">
           <div className="container">
             <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">This Helps You Make Money</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">How Agencies Turn Audits Into Revenue</h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                 Every feature is designed to help agencies close deals, retain clients, and scale services.
               </p>
@@ -359,18 +371,18 @@ export default function Index() {
                 White-labeled insights covering everything that matters — formatted for client presentations, not technical deep-dives.
               </p>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
               {featureCards.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <div key={index} className="group relative p-5 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100">
-                    <div className="flex items-start gap-4">
-                      <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex-shrink-0">
-                        <Icon className="w-5 h-5" />
+                  <div key={index} className="group relative p-4 rounded-xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex-shrink-0">
+                        <Icon className="w-4 h-4" />
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-1">{item.title}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-foreground text-sm mb-0.5">{item.title}</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
                       </div>
                     </div>
                   </div>
