@@ -4,6 +4,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&display=swap');
 
 @layer base {
   :root {
@@ -49,6 +50,11 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
 
+    /* Browser chrome colors */
+    --chrome-close: 0 72% 65%;
+    --chrome-minimize: 45 93% 58%;
+    --chrome-maximize: 142 71% 50%;
+
     /* Score colors */
     --score-excellent: 152 82% 36%;
     --score-good: 172 66% 45%;
@@ -57,6 +63,7 @@
 
     /* Gradients */
     --gradient-hero: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(199 89% 48%) 50%, hsl(172 66% 45%) 100%);
+    --gradient-hero-text: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(250 70% 55%) 100%);
     --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 20% 99%) 100%);
     --gradient-accent: linear-gradient(135deg, hsl(172 66% 45%) 0%, hsl(199 89% 48%) 100%);
     --gradient-subtle: linear-gradient(180deg, hsl(220 20% 98%) 0%, hsl(220 20% 96%) 100%);
@@ -142,6 +149,18 @@
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
 
+  h1, h2 {
+    font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  h1 {
+    font-weight: 800;
+  }
+
+  h2 {
+    font-weight: 700;
+  }
+
   h1 {
     @apply text-4xl md:text-5xl lg:text-6xl leading-[1.1];
     letter-spacing: -0.025em;
@@ -188,10 +207,23 @@
   }
 
   .text-gradient {
-    background: var(--gradient-hero);
+    background: var(--gradient-hero-text);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .hero-dot-pattern {
+    background-image: radial-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  .shadow-hero-button {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3), 0 4px 16px -2px hsl(221 83% 53% / 0.25);
+  }
+
+  .shadow-hero-button:hover {
+    box-shadow: 0 0 28px rgba(59, 130, 246, 0.4), 0 8px 24px -4px hsl(221 83% 53% / 0.3);
   }
 
   .glass {
