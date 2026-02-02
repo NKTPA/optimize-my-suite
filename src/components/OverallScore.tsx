@@ -86,7 +86,7 @@ export function OverallScore({
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className={cn("text-5xl font-bold tracking-tight", getScoreColor(displayScore))}>{displayScore}</span>
-              <span className="text-xs text-muted-foreground uppercase tracking-widest mt-1">{getScoreLabel(displayScore)}</span>
+              <span className="text-[10px] text-muted-foreground uppercase tracking-wider mt-1">{getScoreLabel(displayScore)}</span>
             </div>
           </div>
 
