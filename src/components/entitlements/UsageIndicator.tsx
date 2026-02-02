@@ -25,7 +25,7 @@ export function UsageIndicator({
       return (
         <div className={cn("flex items-center gap-2 text-sm", className)}>
           <span className="font-medium text-muted-foreground">
-            {type === "analyses" ? "Analyses" : "Packs"}: ∞
+            {type === "analyses" ? "Analyses" : "Packs"}: Unlimited
           </span>
         </div>
       );
@@ -46,18 +46,21 @@ export function UsageIndicator({
   const isAtLimit = percentage >= 100;
 
   if (compact) {
+    const limitDisplay = typeof limit === "number" ? limit : "Unlimited";
     return (
       <div className={cn("flex items-center gap-2 text-sm", className)}>
         <span className={cn(
           "font-medium",
           isAtLimit ? "text-destructive" : isNearLimit ? "text-warning" : "text-muted-foreground"
         )}>
-          {label}: {used}/{typeof limit === "number" ? limit : "∞"}
+          {label}: {used}/{limitDisplay}
         </span>
       </div>
     );
   }
 
+  const limitDisplay = typeof limit === "number" ? limit : "Unlimited";
+  
   return (
     <div className={cn("space-y-2", className)}>
       {showLabel && (
@@ -69,7 +72,7 @@ export function UsageIndicator({
           <span className={cn(
             isAtLimit ? "text-destructive" : isNearLimit ? "text-warning" : "text-muted-foreground"
           )}>
-            {used} / {typeof limit === "number" ? limit : "∞"}
+            {used} / {limitDisplay}
             {typeof remaining === "number" && remaining > 0 && (
               <span className="ml-1 text-xs">({remaining} left)</span>
             )}
