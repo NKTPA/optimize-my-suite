@@ -1,0 +1,96 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+/Resources <<
+/Font <<
+/F1 5 0 R
+>>
+>>
+>>
+endobj
+
+4 0 obj
+<<
+/Length 500
+>>
+stream
+BT
+/F1 24 Tf
+50 700 Td
+(Website Audit Report - Sample) Tj
+0 -40 Td
+/F1 14 Tf
+(OptimizeMySuite) Tj
+0 -30 Td
+/F1 12 Tf
+(This is a sample audit report showing the format) Tj
+0 -20 Td
+(and structure of OptimizeMySuite website audits.) Tj
+0 -40 Td
+/F1 14 Tf
+(Overall Score: 72/100) Tj
+0 -30 Td
+/F1 12 Tf
+(Key Findings:) Tj
+0 -20 Td
+(- Messaging clarity needs improvement) Tj
+0 -16 Td
+(- Mobile experience is strong) Tj
+0 -16 Td
+(- SEO fundamentals are in place) Tj
+0 -16 Td
+(- Trust signals could be enhanced) Tj
+0 -40 Td
+(Start your free trial to generate) Tj
+0 -16 Td
+(full white-label reports for your clients.) Tj
+0 -40 Td
+(optimizemysuite.com) Tj
+ET
+endstream
+endobj
+
+5 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000266 00000 n 
+0000000817 00000 n 
+
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+896
+%%EOF
