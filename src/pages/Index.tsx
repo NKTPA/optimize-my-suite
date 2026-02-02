@@ -347,7 +347,7 @@ export default function Index() {
               {revenueLevers.map((lever, index) => {
                 const Icon = lever.icon;
                 return (
-                  <div key={index} className="p-6 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
+                  <div key={index} className="p-6 rounded-2xl bg-card border border-border/50 border-l-[3px] border-l-primary/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
                     <div className="flex items-start gap-4">
                       <div className="p-3 rounded-xl bg-primary/10 text-primary flex-shrink-0">
                         <Icon className="w-6 h-6" />
@@ -381,7 +381,7 @@ export default function Index() {
               {featureCards.map((item, index) => {
                 const Icon = item.icon;
                 return (
-                  <div key={index} className="group p-5 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
+                  <div key={index} className="group relative p-5 rounded-2xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100">
                     <div className="flex items-start gap-4">
                       <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex-shrink-0">
                         <Icon className="w-5 h-5" />
@@ -417,7 +417,7 @@ export default function Index() {
                   className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
                     plan.popular 
                       ? "border-primary border-2 shadow-xl scale-[1.02] ring-4 ring-primary/10" 
-                      : "border-border/50 hover:border-border"
+                      : "border-border/50 hover:border-primary/30 hover:shadow-md"
                   }`}
                 >
                   {plan.popular && (
@@ -467,33 +467,38 @@ export default function Index() {
                 </p>
               </div>
               
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0">1</div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Run an audit on a prospect's website</h4>
-                    <p className="text-sm text-muted-foreground">See how the scoring works and what the PDF looks like.</p>
+              <div className="relative">
+                {/* Vertical timeline line */}
+                <div className="absolute left-[19px] top-[52px] bottom-[52px] w-px bg-border" />
+                
+                <div className="space-y-4 relative">
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">1</div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">Run an audit on a prospect's website</h4>
+                      <p className="text-sm text-muted-foreground">See how the scoring works and what the PDF looks like.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0">2</div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Generate an Implementation Pack</h4>
-                    <p className="text-sm text-muted-foreground">Get actionable copy and layout recommendations you can actually use.</p>
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">2</div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">Generate an Implementation Pack</h4>
+                      <p className="text-sm text-muted-foreground">Get actionable copy and layout recommendations you can actually use.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0">3</div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Export a white-label PDF</h4>
-                    <p className="text-sm text-muted-foreground">Send it to a client or use it in a proposal to see how it lands.</p>
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">3</div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">Export a white-label PDF</h4>
+                      <p className="text-sm text-muted-foreground">Send it to a client or use it in a proposal to see how it lands.</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0">4</div>
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Decide if it helps you close or retain clients</h4>
-                    <p className="text-sm text-muted-foreground">If it does, the subscription pays for itself many times over.</p>
+                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">4</div>
+                    <div>
+                      <h4 className="font-semibold text-foreground mb-1">Decide if it helps you close or retain clients</h4>
+                      <p className="text-sm text-muted-foreground">If it does, the subscription pays for itself many times over.</p>
+                    </div>
                   </div>
                 </div>
               </div>
