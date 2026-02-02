@@ -11,20 +11,97 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png" />
     <meta name="theme-color" content="#1e3a5f" />
     <title>OptimizeMySuite - Website Analysis & Optimization for Agencies</title>
-    <meta name="description" content="Powerful website analysis and optimization tools for marketing agencies. Audit client websites, generate implementation plans, and scale your service delivery." />
+    <meta name="description" content="Generate objective, criteria-based website audits that help agencies close clients, justify rebuilds, and prove value with before/after score comparisons." />
     <meta name="author" content="OptimizeMySuite" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://optimizemysuite.com/" />
 
-    <meta property="og:title" content="OptimizeMySuite - Website Analysis for Agencies" />
-    <meta property="og:description" content="Powerful website analysis and optimization tools for marketing agencies. Audit client websites and scale your service delivery." />
+    <!-- Open Graph -->
+    <meta property="og:title" content="OptimizeMySuite - Stop Selling Promises. Start Selling Proof." />
+    <meta property="og:description" content="Generate objective, criteria-based website audits that help agencies close clients, justify rebuilds, and prove value with before/after score comparisons." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://optimizemysuite.com/" />
+    <meta property="og:site_name" content="OptimizeMySuite" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@optimizemysuite" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:title" content="OptimizeMySuite - Website Analysis for Agencies" />
+    <meta name="twitter:description" content="Generate objective, criteria-based website audits that help agencies close clients, justify rebuilds, and prove value." />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "OptimizeMySuite",
+      "description": "Proof-based website audits for marketing agencies. Generate objective, criteria-based website audits that help agencies close clients, justify rebuilds, and prove value with before/after score comparisons.",
+      "url": "https://optimizemysuite.com",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "AggregateOffer",
+        "lowPrice": "49",
+        "highPrice": "399",
+        "priceCurrency": "USD"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "OptimizeMySuite",
+        "url": "https://optimizemysuite.com"
+      }
+    }
+    </script>
   </head>
 
   <body>
-    <div id="root"></div>
+    <!-- Static content for SEO crawlers - replaced by React on hydration -->
+    <div id="root">
+      <div style="font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 2rem;">
+        <header style="text-align: center; padding: 4rem 1rem;">
+          <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; color: #1e3a5f;">
+            Stop Selling Promises. Start Selling Proof.
+          </h1>
+          <p style="font-size: 1.25rem; color: #64748b; max-width: 700px; margin: 0 auto 2rem;">
+            Generate objective, criteria-based website audits that help you close clients, 
+            justify rebuilds, and prove your value with before/after score comparisons.
+          </p>
+          <a href="/auth" style="display: inline-block; background: #1e3a5f; color: white; padding: 0.75rem 2rem; border-radius: 0.5rem; text-decoration: none; font-weight: 600;">
+            Start Free Trial
+          </a>
+        </header>
+        
+        <main>
+          <section style="padding: 3rem 1rem; text-align: center;">
+            <h2 style="font-size: 1.75rem; font-weight: 600; margin-bottom: 1rem;">Why Agencies Choose OptimizeMySuite</h2>
+            <p style="color: #64748b; max-width: 600px; margin: 0 auto;">
+              Close more deals with objective proof. Our scoring engine analyzes websites across 
+              messaging clarity, SEO fundamentals, CRO best practices, mobile experience, and 
+              technical performance.
+            </p>
+          </section>
+          
+          <section style="padding: 2rem 1rem;">
+            <h2 style="font-size: 1.5rem; font-weight: 600; margin-bottom: 1rem; text-align: center;">Key Features</h2>
+            <ul style="list-style: none; padding: 0; max-width: 600px; margin: 0 auto;">
+              <li style="padding: 0.5rem 0; color: #374151;">✓ Objective Website Scoring (0-100)</li>
+              <li style="padding: 0.5rem 0; color: #374151;">✓ White-Label PDF Reports</li>
+              <li style="padding: 0.5rem 0; color: #374151;">✓ Before/After Comparisons</li>
+              <li style="padding: 0.5rem 0; color: #374151;">✓ Batch Analysis for Multiple Sites</li>
+              <li style="padding: 0.5rem 0; color: #374151;">✓ Implementation Recommendations</li>
+            </ul>
+          </section>
+        </main>
+        
+        <footer style="text-align: center; padding: 2rem; color: #64748b; font-size: 0.875rem;">
+          <p>© 2025 OptimizeMySuite. Website analysis and optimization for marketing agencies.</p>
+          <nav style="margin-top: 1rem;">
+            <a href="/pricing" style="color: #1e3a5f; margin: 0 1rem;">Pricing</a>
+            <a href="/auth" style="color: #1e3a5f; margin: 0 1rem;">Sign In</a>
+          </nav>
+        </footer>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
