@@ -204,15 +204,39 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       const ownerStatus = await checkOwnerStatus();
       setIsOwner(ownerStatus);
       
-      // Fetch workspace (user might be owner or member)
-      const { data: workspaces, error: workspaceError } = await supabase
+      // Fetch workspace - try full table first (owners), fall back to member view
+      // Owners need stripe_customer_id and stripe_subscription_id for billing
+      // Members get a restricted view without payment data
+      let workspace: Workspace | undefined;
+      
+      // First try the full workspaces table (will only return data for owners due to RLS)
+      const { data: ownerWorkspaces, error: ownerError } = await supabase
         .from("workspaces")
         .select("*")
         .limit(1);
-
-      if (workspaceError) throw workspaceError;
       
-      const workspace = workspaces?.[0] as Workspace | undefined;
+      if (!ownerError && ownerWorkspaces && ownerWorkspaces.length > 0) {
+        // User is owner, has full access
+        workspace = ownerWorkspaces[0] as Workspace;
+      } else {
+        // User is not owner, try the member view (excludes Stripe data)
+        const { data: memberWorkspaces, error: memberError } = await supabase
+          .from("workspaces_member_view")
+          .select("*")
+          .limit(1);
+        
+        if (memberError) throw memberError;
+        
+        if (memberWorkspaces && memberWorkspaces.length > 0) {
+          // Member view returns workspace without Stripe fields - cast with nulls
+          const memberData = memberWorkspaces[0];
+          workspace = {
+            ...memberData,
+            stripe_customer_id: null,
+            stripe_subscription_id: null,
+          } as Workspace;
+        }
+      }
 
       if (!workspace) {
         setState(prev => ({
