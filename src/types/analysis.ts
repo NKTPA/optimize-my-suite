@@ -21,6 +21,26 @@ export interface ConfidenceFinding extends Finding {
   evidence?: string[];
 }
 
+/** Website type categories */
+export type WebsiteType = 
+  | 'local_service'
+  | 'saas_software'
+  | 'ecommerce'
+  | 'professional_services'
+  | 'content_media'
+  | 'restaurant_hospitality'
+  | 'nonprofit'
+  | 'portfolio_personal'
+  | 'unknown';
+
+/** Website type detection info */
+export interface WebsiteTypeInfo {
+  type: WebsiteType;
+  displayName: string;
+  confidence: 'high' | 'medium' | 'low';
+  signals: string[];
+}
+
 /** NOT SCORABLE state - when analysis cannot produce a valid score */
 export interface NotScorableState {
   isNotScorable: true;
@@ -114,6 +134,8 @@ export interface AnalysisResult {
   unverifiedItems?: string[];
   /** NOT SCORABLE state - when analysis cannot produce a valid score */
   notScorable?: NotScorableState;
+  /** Detected website type with adaptive scoring */
+  websiteType?: WebsiteTypeInfo;
 }
 
 /**
