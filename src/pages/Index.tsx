@@ -1,11 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ArrowRight, 
-  Zap, 
   Target, 
   FileText, 
-  BarChart3, 
   MessageSquare, 
   MousePointerClick, 
   Palette, 
@@ -15,12 +13,10 @@ import {
   Shield, 
   Wrench, 
   Sparkles,
-  LogIn,
   Check,
   ShieldCheck,
   TrendingUp,
   Users,
-  Clock,
   BadgeCheck,
   ChevronRight
 } from "lucide-react";
@@ -87,9 +83,15 @@ export default function Index() {
   const navigate = useNavigate();
   const [showPlanModal, setShowPlanModal] = useState(false);
 
-  // If logged in, redirect to dashboard
+  // Redirect logged-in users to dashboard
+  useEffect(() => {
+    if (!isLoading && user) {
+      navigate("/dashboard");
+    }
+  }, [user, isLoading, navigate]);
+
+  // Prevent flash of landing page while redirecting
   if (!isLoading && user) {
-    navigate("/dashboard");
     return null;
   }
 
@@ -138,12 +140,12 @@ export default function Index() {
                 Start Your 3-Day Free Trial
                 <ArrowRight className="w-5 h-5 flex-shrink-0" />
               </Button>
-              <Link to="/pricing" className="w-full sm:w-auto">
+              <a href="#revenue" className="w-full sm:w-auto">
                 <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[200px]">
                   See How Agencies Use This
                   <ChevronRight className="w-4 h-4 flex-shrink-0" />
                 </Button>
-              </Link>
+              </a>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-muted-foreground">
@@ -211,7 +213,7 @@ export default function Index() {
         </section>
 
         {/* Revenue Levers Section */}
-        <section className="py-16 lg:py-20 bg-secondary/30">
+        <section id="revenue" className="py-16 lg:py-20 bg-secondary/30">
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">This Helps You Make Money</h2>
@@ -310,7 +312,7 @@ export default function Index() {
                   <ul className="space-y-2 mb-6">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className={`w-4 h-4 ${plan.popular ? "text-primary" : "text-primary"}`} />{f}
+                        <Check className={`w-4 h-4 ${plan.popular ? "text-primary" : "text-emerald-500"}`} />{f}
                       </li>
                     ))}
                   </ul>
