@@ -36,6 +36,8 @@ export default function Analyze() {
   const [analyzedUrl, setAnalyzedUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
+  const [analysisDebounce, setAnalysisDebounce] = useState(false);
+  const [debounceCountdown, setDebounceCountdown] = useState(0);
 
   // Blueprint state
   const [blueprint, setBlueprint] = useState<WebsiteBlueprint | null>(null);
@@ -104,6 +106,20 @@ export default function Analyze() {
       setShowUsageLimitModal(true);
       return;
     }
+    
+    // Activate debounce to prevent duplicate submissions
+    setAnalysisDebounce(true);
+    setDebounceCountdown(30);
+    const debounceInterval = setInterval(() => {
+      setDebounceCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(debounceInterval);
+          setAnalysisDebounce(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
     
     setIsLoading(true);
     setResults(null);
@@ -311,11 +327,22 @@ export default function Analyze() {
                     variant="hero"
                     size="lg"
                     onClick={() => handleAnalyze()}
-                    disabled={isLoading || isGeneratingBlueprint}
+                    disabled={isLoading || isGeneratingBlueprint || analysisDebounce}
                     className="w-full sm:w-auto min-w-[180px]"
                   >
-                    {isLoading ? "Analyzing..." : "Run Analysis"}
-                    <ArrowRight className="w-5 h-5" />
+                    {isLoading ? (
+                      "Analyzing..."
+                    ) : analysisDebounce ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Wait {debounceCountdown}s
+                      </>
+                    ) : (
+                      <>
+                        Run Analysis
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
                   </Button>
                 </div>
                 
