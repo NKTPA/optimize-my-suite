@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 
 // Eagerly loaded - needed for initial render
 import Index from "./pages/Index";
