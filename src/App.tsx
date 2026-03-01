@@ -8,6 +8,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
 
 // Eagerly loaded - needed for initial render
 import Index from "./pages/Index";
@@ -52,14 +53,14 @@ const App = () => (
                 <Route path="/pricing" element={<Pricing />} />
                 
                 {/* Protected dashboard routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                <Route path="/dashboard/analyze" element={<ProtectedRoute><DashboardAnalyze /></ProtectedRoute>} />
-                <Route path="/dashboard/batch" element={<ProtectedRoute><DashboardBatch /></ProtectedRoute>} />
-                <Route path="/dashboard/history" element={<ProtectedRoute><DashboardHistory /></ProtectedRoute>} />
+                <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGate><Dashboard /></SubscriptionGate></ProtectedRoute>} />
+                <Route path="/dashboard/analyze" element={<ProtectedRoute><SubscriptionGate><DashboardAnalyze /></SubscriptionGate></ProtectedRoute>} />
+                <Route path="/dashboard/batch" element={<ProtectedRoute><SubscriptionGate><DashboardBatch /></SubscriptionGate></ProtectedRoute>} />
+                <Route path="/dashboard/history" element={<ProtectedRoute><SubscriptionGate><DashboardHistory /></SubscriptionGate></ProtectedRoute>} />
                 <Route path="/dashboard/account" element={<ProtectedRoute><DashboardAccount /></ProtectedRoute>} />
                 
                 {/* Other protected routes */}
-                <Route path="/preview" element={<ProtectedRoute><GeneratedSitePreview /></ProtectedRoute>} />
+                <Route path="/preview" element={<ProtectedRoute><SubscriptionGate><GeneratedSitePreview /></SubscriptionGate></ProtectedRoute>} />
                 <Route path="/logo-preview" element={<LogoPreview />} />
                 
                 {/* Catch-all */}
