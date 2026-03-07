@@ -1,4 +1,4 @@
-import { Loader2, Globe, Search, FileText, Sparkles } from "lucide-react";
+import { Loader2, Globe, Search, FileText, Sparkles, Code2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
 const loadingSteps = [
@@ -10,12 +10,19 @@ const loadingSteps = [
 
 export function LoadingState() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [showFallbackHint, setShowFallbackHint] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentStep((prev) => (prev + 1) % loadingSteps.length);
     }, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  // After 18s, show the JS-rendering fallback hint
+  useEffect(() => {
+    const timer = setTimeout(() => setShowFallbackHint(true), 18000);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -64,8 +71,23 @@ export function LoadingState() {
         })}
       </div>
 
+      {/* JS-rendering fallback hint */}
+      {showFallbackHint && (
+        <div className="mt-6 flex items-center gap-3 px-5 py-3 rounded-xl bg-accent/10 border border-accent/20 animate-fade-in max-w-sm">
+          <div className="p-2 rounded-lg bg-accent/20">
+            <Code2 className="w-5 h-5 text-accent-foreground" />
+          </div>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-medium text-foreground">Rendering JavaScript…</p>
+            <p className="text-xs text-muted-foreground">This site needs JS rendering — may take a bit longer.</p>
+          </div>
+        </div>
+      )}
+
       <p className="mt-10 text-sm text-muted-foreground text-center max-w-md leading-relaxed">
-        This usually takes 30-60 seconds. We're thoroughly analyzing your website to provide actionable insights.
+        {showFallbackHint
+          ? "JavaScript-heavy sites take up to 90 seconds. Hang tight — we're rendering the full page for an accurate score."
+          : "This usually takes 30-60 seconds. We're thoroughly analyzing your website to provide actionable insights."}
       </p>
     </div>
   );
