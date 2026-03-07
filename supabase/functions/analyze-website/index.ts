@@ -1583,7 +1583,71 @@ serve(async (req) => {
     // ========================================
     // CHECK CONTENT SUFFICIENCY (NOT SCORABLE detection)
     // ========================================
-    const contentCheck = checkContentSufficiency(html, url);
+    const isManualHtml = !!(manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0);
+    let contentCheck = checkContentSufficiency(html, url);
+    
+    // For manual HTML submissions, skip js_only_shell detection — user explicitly provided rendered content
+    if (contentCheck && contentCheck.reason === 'js_only_shell' && isManualHtml) {
+      logStep("Skipping js_only_shell check for manual HTML submission", { bodyTextLength: html.length });
+      contentCheck = null;
+    }
+    
+    // Auto-fallback: retry with Firecrawl when js_only_shell detected (SPA/React sites)
+    if (contentCheck && contentCheck.reason === 'js_only_shell' && !isManualHtml) {
+      const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+      if (firecrawlApiKey) {
+        try {
+          logStep("JS-only shell detected; attempting Firecrawl JS-rendering fallback", { url });
+          const fcResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${firecrawlApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url,
+              formats: ['html'],
+              onlyMainContent: false,
+              waitFor: 7000,
+            }),
+          });
+
+          if (fcResponse.ok) {
+            const fcData = await fcResponse.json();
+            const fcHtml = fcData.data?.html || fcData.html;
+            if (typeof fcHtml === 'string' && fcHtml.length > 500) {
+              if (fcHtml.length > 5000000) {
+                html = fcHtml.slice(0, 5000000);
+                logStep("WARNING: Firecrawl JS-shell fallback HTML truncated to 5MB");
+              } else {
+                html = fcHtml;
+              }
+              logStep("Firecrawl JS-shell fallback successful", { length: html.length });
+              
+              // Re-check content sufficiency with the new HTML
+              const recheck = checkContentSufficiency(html, url);
+              if (!recheck) {
+                logStep("Firecrawl fallback HTML passes content check — proceeding to analysis");
+                contentCheck = null; // Clear the NOT SCORABLE state
+              } else {
+                logStep("Firecrawl fallback HTML still insufficient", { reason: recheck.reason });
+                contentCheck = recheck; // Use the new check result
+              }
+            } else {
+              logStep("Firecrawl JS-shell fallback returned insufficient HTML", { length: typeof fcHtml === 'string' ? fcHtml.length : 0 });
+            }
+          } else {
+            const fcText = await fcResponse.text().catch(() => '');
+            logStep("Firecrawl JS-shell fallback failed", { status: fcResponse.status, body: fcText.slice(0, 500) });
+          }
+        } catch (fcError) {
+          logStep("Firecrawl JS-shell fallback error", { error: fcError instanceof Error ? fcError.message : String(fcError) });
+        }
+      } else {
+        logStep("Firecrawl JS-shell fallback not available (missing FIRECRAWL_API_KEY)");
+      }
+    }
+    
     if (contentCheck) {
       logStep("NOT SCORABLE: Insufficient content", { reason: contentCheck.reason });
       
