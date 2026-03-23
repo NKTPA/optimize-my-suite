@@ -177,6 +177,11 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
         </div>
       </div>
 
+      {/* SPA Detected Warning Banner */}
+      {results.spaDetected && (
+        <SpaDetectedBanner className="mb-4" />
+      )}
+
       {/* Placeholder Warning Banner */}
       {isPlaceholder && (
         <PlaceholderWarningBanner className="mb-4" />
