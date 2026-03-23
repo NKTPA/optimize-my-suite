@@ -1392,6 +1392,7 @@ serve(async (req) => {
     // FETCH AND ANALYZE WEBSITE
     // ========================================
     let html: string | undefined;
+    let rawHtml: string | undefined; // For head metadata extraction from Firecrawl
     
     // Option 1: Use manually provided HTML (for age-gated/blocked sites)
     if (manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0) {
