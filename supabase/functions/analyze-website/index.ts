@@ -1701,7 +1701,7 @@ serve(async (req) => {
     }
 
     // Extract data from HTML
-    const extractedData = extractDataFromHtml(html, url);
+    const extractedData = extractDataFromHtml(html, url, rawHtml);
     logStep("Data extracted", { 
       title: extractedData.title?.slice(0, 50),
       hasPhone: extractedData.phoneNumbers.length > 0
