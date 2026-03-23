@@ -1704,7 +1704,11 @@ serve(async (req) => {
     const extractedData = extractDataFromHtml(html, url, rawHtml);
     logStep("Data extracted", { 
       title: extractedData.title?.slice(0, 50),
-      hasPhone: extractedData.phoneNumbers.length > 0
+      hasPhone: extractedData.phoneNumbers.length > 0,
+      hasViewport: extractedData.technical.hasViewport,
+      hasFavicon: extractedData.technical.hasFavicon,
+      hasMetaDesc: !!extractedData.metaDescription,
+      usedRawHtml: !!rawHtml,
     });
 
     // Detect website type for adaptive scoring
