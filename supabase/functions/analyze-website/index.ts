@@ -1627,7 +1627,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               url,
-              formats: ['html'],
+              formats: ['html', 'rawHtml'],
               onlyMainContent: false,
               waitFor: 7000,
             }),
@@ -1636,6 +1636,7 @@ serve(async (req) => {
           if (fcResponse.ok) {
             const fcData = await fcResponse.json();
             const fcHtml = fcData.data?.html || fcData.html;
+            const fcRawHtml = fcData.data?.rawHtml || fcData.rawHtml;
             if (typeof fcHtml === 'string' && fcHtml.length > 500) {
               if (fcHtml.length > 5000000) {
                 html = fcHtml.slice(0, 5000000);
@@ -1643,6 +1644,7 @@ serve(async (req) => {
               } else {
                 html = fcHtml;
               }
+              if (fcRawHtml) rawHtml = fcRawHtml;
               logStep("Firecrawl JS-shell fallback successful", { length: html.length });
               
               // Re-check content sufficiency with the new HTML
