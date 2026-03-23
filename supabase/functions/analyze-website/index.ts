@@ -1393,6 +1393,7 @@ serve(async (req) => {
     // ========================================
     let html: string | undefined;
     let rawHtml: string | undefined; // For head metadata extraction from Firecrawl
+    let spaDetected = false; // Track if JS-rendering fallback was used
     
     // Option 1: Use manually provided HTML (for age-gated/blocked sites)
     if (manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0) {
@@ -1646,6 +1647,7 @@ serve(async (req) => {
               }
               if (fcRawHtml) rawHtml = fcRawHtml;
               logStep("Firecrawl JS-shell fallback successful", { length: html.length });
+              spaDetected = true;
               
               // Re-check content sufficiency with the new HTML
               const recheck = checkContentSufficiency(html, url);
@@ -1852,6 +1854,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // Add unverified items indicator
     analysisResult.hasUnverifiedChecks = dualScore.unverifiedItems.length > 0;
     analysisResult.unverifiedItems = dualScore.unverifiedItems;
+    
+    // Flag SPA detection
+    if (spaDetected) {
+      analysisResult.spaDetected = true;
+    }
 
     logStep("Analysis complete", { 
       url, 
