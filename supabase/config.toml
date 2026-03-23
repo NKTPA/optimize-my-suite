@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.generate-api-key]
 verify_jwt = true
+
+[functions.firecrawl-scrape]
+verify_jwt = true

@@ -579,16 +579,29 @@ function checkContentSufficiency(html: string, url: string, httpStatus?: number)
 }
 
 // Extract data from HTML
-function extractDataFromHtml(html: string, url: string) {
+// rawHtml parameter: when provided (e.g. from Firecrawl rawHtml), use it for <head> metadata
+// extraction since the processed 'html' format may strip <head> tags.
+function extractDataFromHtml(html: string, url: string, rawHtml?: string) {
+  // Use rawHtml for head metadata extraction if available, otherwise fall back to html
+  const headSource = rawHtml || html;
+
   const getMetaContent = (name: string) => {
-    const match = html.match(new RegExp(`<meta[^>]*(?:name|property)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i')) ||
-                  html.match(new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["']${name}["']`, 'i'));
-    return match ? match[1] : '';
+    // Search both headSource and html to maximize detection
+    for (const source of [headSource, html]) {
+      const match = source.match(new RegExp(`<meta[^>]*(?:name|property)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i')) ||
+                    source.match(new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["']${name}["']`, 'i'));
+      if (match) return match[1];
+    }
+    return '';
   };
 
   const getTagContent = (tag: string) => {
-    const match = html.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i'));
-    return match ? match[1].trim() : '';
+    // Search both headSource and html
+    for (const source of [headSource, html]) {
+      const match = source.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i'));
+      if (match && match[1].trim()) return match[1].trim();
+    }
+    return '';
   };
 
   const getAllTags = (tag: string) => {
@@ -638,8 +651,11 @@ function extractDataFromHtml(html: string, url: string) {
   const scriptMatches = html.match(/<script[^>]*src=["'][^"']+["']/gi) || [];
   const externalScripts = scriptMatches.length;
   const hasSSL = url.startsWith('https://');
-  const hasViewport = /<meta[^>]*name=["']viewport["']/i.test(html);
-  const hasFavicon = /<link[^>]*rel=["'](?:icon|shortcut icon)["']/i.test(html);
+  
+  // Check viewport and favicon in both headSource and html
+  const hasViewport = /<meta[^>]*name=["']viewport["']/i.test(headSource) || /<meta[^>]*name=["']viewport["']/i.test(html);
+  const hasFavicon = /<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["']/i.test(headSource) || 
+                     /<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["']/i.test(html);
 
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   const bodyHtml = bodyMatch ? bodyMatch[1] : html;
@@ -1376,6 +1392,7 @@ serve(async (req) => {
     // FETCH AND ANALYZE WEBSITE
     // ========================================
     let html: string | undefined;
+    let rawHtml: string | undefined; // For head metadata extraction from Firecrawl
     
     // Option 1: Use manually provided HTML (for age-gated/blocked sites)
     if (manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0) {
@@ -1405,7 +1422,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               url,
-              formats: ['html'],
+              formats: ['html', 'rawHtml'],
               onlyMainContent: false,
               waitFor: 5000,
             }),
@@ -1414,9 +1431,11 @@ serve(async (req) => {
           if (fcResponse.ok) {
             const fcData = await fcResponse.json();
             const fcHtml = fcData.data?.html || fcData.html;
+            const fcRawHtml = fcData.data?.rawHtml || fcData.rawHtml;
             if (fcHtml && fcHtml.length > 500) {
               logStep("Firecrawl fetch successful", { length: fcHtml.length });
               html = fcHtml;
+              if (fcRawHtml) rawHtml = fcRawHtml;
             }
           } else {
             logStep("Firecrawl fetch failed", { status: fcResponse.status });
@@ -1504,7 +1523,7 @@ serve(async (req) => {
               },
               body: JSON.stringify({
                 url,
-                formats: ['html'],
+                formats: ['html', 'rawHtml'],
                 onlyMainContent: false,
                 waitFor: 7000,
               }),
@@ -1513,8 +1532,10 @@ serve(async (req) => {
             if (fcResponse.ok) {
               const fcData = await fcResponse.json();
               const fcHtml = fcData.data?.html || fcData.html;
+              const fcRawHtml = fcData.data?.rawHtml || fcData.rawHtml;
               if (typeof fcHtml === 'string' && fcHtml.length > 500) {
                 html = fcHtml;
+                if (fcRawHtml) rawHtml = fcRawHtml;
                 if (html.length > 5000000) {
                   html = html.slice(0, 5000000);
                   logStep("WARNING: Firecrawl HTML truncated to 5MB");
@@ -1606,7 +1627,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               url,
-              formats: ['html'],
+              formats: ['html', 'rawHtml'],
               onlyMainContent: false,
               waitFor: 7000,
             }),
@@ -1615,6 +1636,7 @@ serve(async (req) => {
           if (fcResponse.ok) {
             const fcData = await fcResponse.json();
             const fcHtml = fcData.data?.html || fcData.html;
+            const fcRawHtml = fcData.data?.rawHtml || fcData.rawHtml;
             if (typeof fcHtml === 'string' && fcHtml.length > 500) {
               if (fcHtml.length > 5000000) {
                 html = fcHtml.slice(0, 5000000);
@@ -1622,6 +1644,7 @@ serve(async (req) => {
               } else {
                 html = fcHtml;
               }
+              if (fcRawHtml) rawHtml = fcRawHtml;
               logStep("Firecrawl JS-shell fallback successful", { length: html.length });
               
               // Re-check content sufficiency with the new HTML
@@ -1678,10 +1701,14 @@ serve(async (req) => {
     }
 
     // Extract data from HTML
-    const extractedData = extractDataFromHtml(html, url);
+    const extractedData = extractDataFromHtml(html, url, rawHtml);
     logStep("Data extracted", { 
       title: extractedData.title?.slice(0, 50),
-      hasPhone: extractedData.phoneNumbers.length > 0
+      hasPhone: extractedData.phoneNumbers.length > 0,
+      hasViewport: extractedData.technical.hasViewport,
+      hasFavicon: extractedData.technical.hasFavicon,
+      hasMetaDesc: !!extractedData.metaDescription,
+      usedRawHtml: !!rawHtml,
     });
 
     // Detect website type for adaptive scoring
