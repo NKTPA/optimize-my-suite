@@ -579,16 +579,29 @@ function checkContentSufficiency(html: string, url: string, httpStatus?: number)
 }
 
 // Extract data from HTML
-function extractDataFromHtml(html: string, url: string) {
+// rawHtml parameter: when provided (e.g. from Firecrawl rawHtml), use it for <head> metadata
+// extraction since the processed 'html' format may strip <head> tags.
+function extractDataFromHtml(html: string, url: string, rawHtml?: string) {
+  // Use rawHtml for head metadata extraction if available, otherwise fall back to html
+  const headSource = rawHtml || html;
+
   const getMetaContent = (name: string) => {
-    const match = html.match(new RegExp(`<meta[^>]*(?:name|property)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i')) ||
-                  html.match(new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["']${name}["']`, 'i'));
-    return match ? match[1] : '';
+    // Search both headSource and html to maximize detection
+    for (const source of [headSource, html]) {
+      const match = source.match(new RegExp(`<meta[^>]*(?:name|property)=["']${name}["'][^>]*content=["']([^"']*)["']`, 'i')) ||
+                    source.match(new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*(?:name|property)=["']${name}["']`, 'i'));
+      if (match) return match[1];
+    }
+    return '';
   };
 
   const getTagContent = (tag: string) => {
-    const match = html.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i'));
-    return match ? match[1].trim() : '';
+    // Search both headSource and html
+    for (const source of [headSource, html]) {
+      const match = source.match(new RegExp(`<${tag}[^>]*>([^<]*)</${tag}>`, 'i'));
+      if (match && match[1].trim()) return match[1].trim();
+    }
+    return '';
   };
 
   const getAllTags = (tag: string) => {
@@ -638,8 +651,11 @@ function extractDataFromHtml(html: string, url: string) {
   const scriptMatches = html.match(/<script[^>]*src=["'][^"']+["']/gi) || [];
   const externalScripts = scriptMatches.length;
   const hasSSL = url.startsWith('https://');
-  const hasViewport = /<meta[^>]*name=["']viewport["']/i.test(html);
-  const hasFavicon = /<link[^>]*rel=["'](?:icon|shortcut icon)["']/i.test(html);
+  
+  // Check viewport and favicon in both headSource and html
+  const hasViewport = /<meta[^>]*name=["']viewport["']/i.test(headSource) || /<meta[^>]*name=["']viewport["']/i.test(html);
+  const hasFavicon = /<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["']/i.test(headSource) || 
+                     /<link[^>]*rel=["'](?:icon|shortcut icon|apple-touch-icon)["']/i.test(html);
 
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
   const bodyHtml = bodyMatch ? bodyMatch[1] : html;
