@@ -27,6 +27,7 @@ import { NotScorableDisplay } from "./scoring/NotScorableDisplay";
 import { PlaceholderWarningBanner } from "./scoring/PlaceholderWarningBanner";
 import { ScoringIntegrityTooltip } from "./scoring/ScoringIntegrityTooltip";
 import { ScoreCredibilityStatement } from "./scoring/ScoreCredibilityStatement";
+import { SpaDetectedBanner } from "./scoring/SpaDetectedBanner";
 
 import { ImplementationPack } from "./ImplementationPack";
 import { Button } from "./ui/button";
