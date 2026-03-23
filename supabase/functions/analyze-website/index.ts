@@ -1523,7 +1523,7 @@ serve(async (req) => {
               },
               body: JSON.stringify({
                 url,
-                formats: ['html'],
+                formats: ['html', 'rawHtml'],
                 onlyMainContent: false,
                 waitFor: 7000,
               }),
@@ -1532,8 +1532,10 @@ serve(async (req) => {
             if (fcResponse.ok) {
               const fcData = await fcResponse.json();
               const fcHtml = fcData.data?.html || fcData.html;
+              const fcRawHtml = fcData.data?.rawHtml || fcData.rawHtml;
               if (typeof fcHtml === 'string' && fcHtml.length > 500) {
                 html = fcHtml;
+                if (fcRawHtml) rawHtml = fcRawHtml;
                 if (html.length > 5000000) {
                   html = html.slice(0, 5000000);
                   logStep("WARNING: Firecrawl HTML truncated to 5MB");
