@@ -136,6 +136,8 @@ export interface AnalysisResult {
   notScorable?: NotScorableState;
   /** Detected website type with adaptive scoring */
   websiteType?: WebsiteTypeInfo;
+  /** SPA detection — true when Firecrawl JS-rendering fallback was used */
+  spaDetected?: boolean;
 }
 
 /**
