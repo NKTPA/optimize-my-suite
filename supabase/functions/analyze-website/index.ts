@@ -1647,6 +1647,7 @@ serve(async (req) => {
               }
               if (fcRawHtml) rawHtml = fcRawHtml;
               logStep("Firecrawl JS-shell fallback successful", { length: html.length });
+              spaDetected = true;
               
               // Re-check content sufficiency with the new HTML
               const recheck = checkContentSufficiency(html, url);
