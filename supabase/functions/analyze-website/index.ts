@@ -1854,6 +1854,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // Add unverified items indicator
     analysisResult.hasUnverifiedChecks = dualScore.unverifiedItems.length > 0;
     analysisResult.unverifiedItems = dualScore.unverifiedItems;
+    
+    // Flag SPA detection
+    if (spaDetected) {
+      analysisResult.spaDetected = true;
+    }
 
     logStep("Analysis complete", { 
       url, 
