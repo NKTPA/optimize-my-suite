@@ -1422,7 +1422,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
               url,
-              formats: ['html'],
+              formats: ['html', 'rawHtml'],
               onlyMainContent: false,
               waitFor: 5000,
             }),
@@ -1431,9 +1431,11 @@ serve(async (req) => {
           if (fcResponse.ok) {
             const fcData = await fcResponse.json();
             const fcHtml = fcData.data?.html || fcData.html;
+            const fcRawHtml = fcData.data?.rawHtml || fcData.rawHtml;
             if (fcHtml && fcHtml.length > 500) {
               logStep("Firecrawl fetch successful", { length: fcHtml.length });
               html = fcHtml;
+              if (fcRawHtml) rawHtml = fcRawHtml;
             }
           } else {
             logStep("Firecrawl fetch failed", { status: fcResponse.status });
