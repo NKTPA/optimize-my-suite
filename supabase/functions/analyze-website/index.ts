@@ -1,4 +1,4 @@
-// v5 - screenshot timeout fix
+// v6 - screenshot disabled, Claude Sonnet active
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getOrCreateWorkspaceForUser, isWorkspaceError, getOrCreateWorkspaceUsage } from "../_shared/workspace.ts";
@@ -1987,11 +1987,11 @@ serve(async (req) => {
     }
 
     // ========================================
-    // SCREENSHOT CAPTURE (for visual AI scoring)
+    // SCREENSHOT CAPTURE (disabled - re-enable after confirming core upgrades work)
     // ========================================
     let screenshotBase64: string | undefined;
     const firecrawlKeyForScreenshot = Deno.env.get("FIRECRAWL_API_KEY");
-    if (firecrawlKeyForScreenshot && !isManualHtml) {
+    if (false && firecrawlKeyForScreenshot && !isManualHtml) {
       try {
         logStep("Capturing screenshot via Firecrawl", { url });
         const ssController = new AbortController();
