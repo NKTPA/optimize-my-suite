@@ -1195,15 +1195,8 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "paragraph": "string",
     "bullets": ["string", "string", "string"]
   }
-}
+}`;
 
-CRITICAL RULES:
-- NEVER write generic advice like "add more content" or "improve your CTAs" — always be specific to THIS site.
-- Quote actual text, headlines, or elements you found on the page to prove you read it.
-- Every recommendation must be a concrete action, not a suggestion to "consider" something.
-- If a screenshot was provided, reference specific visual elements you can see in it.
-- Use scores on a 0–100 scale.
-- If some data is missing, explain that and still give a recommendation.`;
 
   switch (siteType.type) {
     case "saas_software":
