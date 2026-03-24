@@ -60,7 +60,7 @@ export function HeaderBrand({
 
   // Dev-only warning for oversized logo images
   useEffect(() => {
-    if (import.meta.env.MODE !== "development") return;
+    if (process.env.NODE_ENV !== "development") return;
     if (textFallback) return;
 
     const img = imgRef.current;

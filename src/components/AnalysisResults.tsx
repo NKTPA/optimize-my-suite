@@ -27,7 +27,6 @@ import { NotScorableDisplay } from "./scoring/NotScorableDisplay";
 import { PlaceholderWarningBanner } from "./scoring/PlaceholderWarningBanner";
 import { ScoringIntegrityTooltip } from "./scoring/ScoringIntegrityTooltip";
 import { ScoreCredibilityStatement } from "./scoring/ScoreCredibilityStatement";
-import { SpaDetectedBanner } from "./scoring/SpaDetectedBanner";
 
 import { ImplementationPack } from "./ImplementationPack";
 import { Button } from "./ui/button";
@@ -176,11 +175,6 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
           </Button>
         </div>
       </div>
-
-      {/* SPA Detected Warning Banner */}
-      {results.spaDetected && (
-        <SpaDetectedBanner className="mb-4" />
-      )}
 
       {/* Placeholder Warning Banner */}
       {isPlaceholder && (
