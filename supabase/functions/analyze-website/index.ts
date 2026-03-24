@@ -957,7 +957,20 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
   }
 }
 
-- Use scores on a 0–100 scale.
+SCORING CALIBRATION (use the FULL 0–100 range — do NOT default everything to 50):
+- 90–100: Excellent. Best-in-class execution. Very few issues. Reserve for genuinely outstanding work.
+- 75–89: Good. Solid execution with minor improvements possible. Most professional sites land here on their strengths.
+- 55–74: Needs Work. Noticeable gaps or missed opportunities. Common for sites that haven't been optimized.
+- 35–54: Poor. Significant issues that are actively hurting conversions or credibility.
+- 0–34: Critical. Fundamental problems — broken, missing, or severely undermining the site's goals.
+
+IMPORTANT SCORING RULES:
+- Each category score MUST be independent. A site can score 85 on Trust but 40 on SEO.
+- DO NOT cluster all scores around 50. Differentiate strengths from weaknesses.
+- Base scores on EVIDENCE from the extracted data. Cite specific elements you found (or didn't find).
+- A site with a clear headline, strong CTA, and testimonials should score 75+ on Messaging and Trust.
+- A site missing meta descriptions, H1 tags, or schema markup should score below 40 on SEO.
+- A site with no clear CTA or contact form should score below 30 on Conversion.
 - If some data is missing, explain that and still give a recommendation.`;
 
   switch (siteType.type) {
@@ -1714,7 +1727,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         temperature: 0, // Deterministic scoring for consistent results
         messages: [
           { role: "system", content: analysisPrompt },
