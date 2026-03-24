@@ -1,4 +1,5 @@
-// v4 - upgraded import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// v5 - screenshot timeout fix
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getOrCreateWorkspaceForUser, isWorkspaceError, getOrCreateWorkspaceUsage } from "../_shared/workspace.ts";
 const corsHeaders = {
@@ -1993,6 +1994,8 @@ serve(async (req) => {
     if (firecrawlKeyForScreenshot && !isManualHtml) {
       try {
         logStep("Capturing screenshot via Firecrawl", { url });
+        const ssController = new AbortController();
+        const ssTimeout = setTimeout(() => ssController.abort(), 15000); // 15s hard timeout
         const screenshotResponse = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
           headers: {
@@ -2002,9 +2005,11 @@ serve(async (req) => {
           body: JSON.stringify({
             url,
             formats: ["screenshot"],
-            waitFor: 3000,
+            waitFor: 2000,
           }),
+          signal: ssController.signal,
         });
+        clearTimeout(ssTimeout);
         if (screenshotResponse.ok) {
           const ssData = await screenshotResponse.json();
           // Firecrawl v1 returns screenshot URL at multiple possible paths
