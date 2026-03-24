@@ -1140,82 +1140,55 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
 {
   "summary": {
     "overallScore": number,
-    "overview": "string — 3 to 4 sentences summarizing the site's biggest strengths and most critical problems",
+    "overview": "string",
     "quickWins": ["string", "string", "string", "string", "string"]
   },
   "messaging": {
     "score": number,
-    "findings": [
-      "string — specific observation with evidence from the actual page (e.g. quote a real headline or describe what is/isn't present)",
-      "string", "string", "string", "string"
-    ],
-    "recommendedHeadline": "string — a ready-to-use replacement headline",
-    "recommendedSubheadline": "string — a ready-to-use replacement subheadline",
-    "elevatorPitch": "string — 2-3 sentence pitch for this business written as if for a homepage hero"
+    "findings": ["string", "string", "string", "string", "string"],
+    "recommendedHeadline": "string",
+    "recommendedSubheadline": "string",
+    "elevatorPitch": "string"
   },
   "conversion": {
     "score": number,
-    "findings": [
-      "string — specific CTA or form observation with page location if possible",
-      "string", "string", "string", "string"
-    ],
-    "recommendations": [
-      "string — exact actionable fix, not generic advice",
-      "string", "string", "string", "string"
-    ],
+    "findings": ["string", "string", "string", "string", "string"],
+    "recommendations": ["string", "string", "string", "string", "string"],
     "sampleButtons": ["string", "string", "string"]
   },
   "designUx": {
     "score": number,
-    "findings": [
-      "string — specific visual or layout observation. If screenshot provided, reference what you SEE.",
-      "string", "string", "string", "string"
-    ],
+    "findings": ["string", "string", "string", "string", "string"],
     "recommendations": ["string", "string", "string", "string"]
   },
   "mobile": {
     "score": number,
-    "findings": [
-      "string — specific mobile UX issue with context",
-      "string", "string", "string"
-    ],
+    "findings": ["string", "string", "string", "string"],
     "recommendations": ["string", "string", "string", "string"]
   },
   "performance": {
     "score": number,
-    "findings": [
-      "string — specific performance issue (image count, script count, load time signals)",
-      "string", "string", "string"
-    ],
+    "findings": ["string", "string", "string", "string"],
     "heavyImages": ["string"],
     "recommendations": ["string", "string", "string"]
   },
   "seo": {
     "score": number,
-    "findings": [
-      "string — specific SEO issue with the actual value found (e.g. quote the existing title tag)",
-      "string", "string", "string", "string"
-    ],
-    "recommendedTitle": "string — exact replacement title tag, under 60 chars",
-    "recommendedMetaDescription": "string — exact replacement meta description, under 155 chars",
-    "recommendedH1": "string — exact replacement H1",
+    "findings": ["string", "string", "string", "string", "string"],
+    "recommendedTitle": "string",
+    "recommendedMetaDescription": "string",
+    "recommendedH1": "string",
     "keywords": ["string", "string", "string", "string", "string", "string"],
     "checklist": ["string", "string", "string", "string"]
   },
   "trust": {
     "score": number,
-    "findings": [
-      "string — specific trust signal that is present or missing",
-      "string", "string", "string", "string"
-    ],
+    "findings": ["string", "string", "string", "string", "string"],
     "whyChooseUs": ["string", "string", "string", "string"],
-    "testimonialsBlock": "string — a ready-to-use sample testimonial block they could add"
+    "testimonialsBlock": "string"
   },
   "technical": {
-    "findings": [
-      "string — specific technical issue (SSL, viewport, favicon, schema, analytics, structured data)",
-      "string", "string", "string"
-    ],
+    "findings": ["string", "string", "string", "string"],
     "recommendations": ["string", "string", "string", "string"]
   },
   "aiServicePitch": {
