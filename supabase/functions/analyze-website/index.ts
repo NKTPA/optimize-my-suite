@@ -2122,7 +2122,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "anthropic/claude-sonnet-4-5", // Vision-capable, superior CRO reasoning vs Gemini Flash
+        model: "google/gemini-2.5-pro", // Vision-capable, strong reasoning for CRO analysis
         temperature: 0, // Deterministic scoring for consistent results
         max_tokens: 4096,
         messages: [
