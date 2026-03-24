@@ -1727,8 +1727,10 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
-        temperature: 0, // Deterministic scoring for consistent results
+        model: "google/gemini-2.5-flash",
+        temperature: 0,
+        top_p: 1,
+        seed: 42, // Fixed seed for deterministic scoring
         messages: [
           { role: "system", content: analysisPrompt },
           {
