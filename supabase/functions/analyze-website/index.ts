@@ -620,16 +620,16 @@ function extractDataFromHtml(html: string, url: string) {
   const h1s = getAllTags('h1');
   const h2s = getAllTags('h2');
 
-  const phoneRegex = /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g;
-  const rawPhones = [...new Set(html.match(phoneRegex) || [])];
+  const phoneRegex = /(?:\+?1[-.\s]?)?\(?([2-9][0-9]{2})\)?[-.\s]([2-9][0-9]{2})[-.\s]([0-9]{4})/g;
+  const rawPhones = [...new Set((html.match(phoneRegex) || []))];
   const phoneNumbers = rawPhones
     .map(p => p.trim())
     .filter(p => {
       if (p.length > 14) return false;
+      if (p.includes('.') && /\d+\.\d+\.\d+\.\d+/.test(p)) return false;
       const digitsOnly = p.replace(/\D/g, '');
-      if (digitsOnly.length > 10 && !digitsOnly.startsWith('1')) return false;
       if (digitsOnly.length > 11) return false;
-      return /^(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}$/.test(p.trim());
+      return true;
     })
     .slice(0, 3);
 
