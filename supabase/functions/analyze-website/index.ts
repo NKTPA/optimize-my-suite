@@ -653,6 +653,43 @@ function extractDataFromHtml(html: string, url: string) {
 
   const addressPattern = /\d+\s+[\w\s]+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd)[^<]{0,100}/gi;
   const addresses = html.match(addressPattern) || [];
+  // Analytics & tracking detection
+  const lowerHtml = html.toLowerCase();
+  const hasGoogleAnalytics = /google-analytics\.com|gtag\(|['"]G-[A-Z0-9]+['"]|['"]UA-[0-9]+-[0-9]+['"]/i.test(html);
+  const hasGoogleTagManager = /googletagmanager\.com|GTM-[A-Z0-9]+/i.test(html);
+
+  // Schema / JSON-LD detection
+  const hasSchema = /<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>/i.test(html);
+  const jsonLdBlocks = html.match(/<script[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi) || [];
+  const schemaTypes: string[] = [];
+  for (const block of jsonLdBlocks) {
+    const inner = block.replace(/<\/?script[^>]*>/gi, '');
+    try {
+      const parsed = JSON.parse(inner);
+      const extract = (obj: any) => {
+        if (obj && typeof obj === 'object') {
+          if (obj['@type']) {
+            const types = Array.isArray(obj['@type']) ? obj['@type'] : [obj['@type']];
+            schemaTypes.push(...types);
+          }
+          if (obj['@graph'] && Array.isArray(obj['@graph'])) {
+            obj['@graph'].forEach(extract);
+          }
+        }
+      };
+      extract(parsed);
+    } catch { /* ignore malformed JSON-LD */ }
+  }
+
+  // Social links detection
+  const socialPlatforms = ['facebook.com', 'instagram.com', 'linkedin.com', 'yelp.com', 'youtube.com'];
+  const socialLinks = socialPlatforms.filter(p => lowerHtml.includes(p));
+
+  // Chat widget detection
+  const hasChatWidget = /tawk\.to|intercom\.io|tidio|crisp\.chat/i.test(html);
+
+  // Booking widget detection
+  const hasBookingWidget = /calendly|acuityscheduling|setmore/i.test(html);
 
   return {
     title,
@@ -675,6 +712,13 @@ function extractDataFromHtml(html: string, url: string) {
     },
     bodyTextPreview: bodyText.slice(0, 8000),
     addresses,
+    hasGoogleAnalytics,
+    hasGoogleTagManager,
+    hasSchema,
+    schemaTypes,
+    socialLinks,
+    hasChatWidget,
+    hasBookingWidget,
   };
 }
 
