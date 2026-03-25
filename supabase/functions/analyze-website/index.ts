@@ -1063,6 +1063,8 @@ IMPORTANT SCORING RULES:
 - A site with a clear headline, strong CTA, and testimonials should score 75+ on Messaging and Trust.
 - A site missing meta descriptions, H1 tags, or schema markup should score below 40 on SEO.
 - A site with no clear CTA or contact form should score below 30 on Conversion.
+
+CONVERSION SCORE ANCHORS: Score exactly 50 if: phone number visible but no sticky CTA and no above-fold form. Score exactly 55 if: phone number visible + one CTA present but not sticky. Score exactly 65 if: sticky CTA present but form is complex or buried. Score exactly 75 if: sticky CTA + simple above-fold form both present. Do not deviate from these anchors based on interpretation.
 - If some data is missing, explain that and still give a recommendation.
 
 ABSOLUTE RULE for Trust scoring: A site that displays a BBB logo or mention, a state license number, AND any social media presence (Facebook, Instagram, YouTube) must score a minimum of 50 on Trust. A score below 50 for a site with these three signals present is an error. Do not score Trust below 40 unless the site has zero trust signals of any kind.
