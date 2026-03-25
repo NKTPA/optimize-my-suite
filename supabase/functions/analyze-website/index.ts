@@ -1079,8 +1079,7 @@ ABSOLUTE RULE - Performance section only: You are ONLY allowed to write about th
 COPYRIGHT YEAR RULES:
 - When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
 
-STRICT RULE for quickWins (Immediate Opportunities):
-- This list must reflect the site's actual highest-priority issues based on scores. NEVER list alt text, meta descriptions, or H1 tags as quickWins if they are already covered in the SEO section — these are SEO findings, not general opportunities. NEVER surface a Performance-specific finding (e.g., image compression, script reduction) as a quickWin unless Performance is one of the two lowest-scoring categories. quickWins must be drawn from the lowest-scoring categories only. If SEO is the lowest scorer, its items may appear here — but label them as SEO improvements, not generic 'image optimization' tasks that blur category lines.`;
+ABSOLUTE RULE — IMMEDIATE OPPORTUNITIES: Immediate Opportunities MUST only surface findings from categories that score 55 or below. Do NOT include findings from any category scoring 56 or higher, even if the finding seems impactful or high value. Count the qualifying categories first, then pull one finding from each. Maximum 4 items. If fewer than 4 categories score 55 or below, leave the remaining slots empty rather than pulling from higher-scoring categories.`;
 
   switch (siteType.type) {
     case 'saas_software':
