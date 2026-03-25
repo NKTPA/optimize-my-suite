@@ -922,6 +922,18 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   scores.portfolio_personal = portfolioScore;
   if (portfolioScore >= 3) signals.push('Portfolio/personal patterns detected');
 
+  // Tiebreaker: professional_services vs content_media
+  if (Math.abs(scores.professional_services - scores.content_media) <= 5) {
+    const hasPhone = extractedData.phoneNumbers.length > 0;
+    const schemaTypes = (extractedData.schemaTypes || []).map(s => s.toLowerCase());
+    const hasProSchema = schemaTypes.some(s => s.includes('medicalorganization') || s.includes('localbusiness') || s.includes('person'));
+    const urlHasNoBlog = !url.toLowerCase().includes('/blog');
+    if (hasPhone || hasProSchema || urlHasNoBlog) {
+      scores.professional_services = Math.max(scores.professional_services, scores.content_media + 1);
+      signals.push('Tiebreaker: professional services favored over content/media');
+    }
+  }
+
   // Determine winner
   let maxType: WebsiteType = 'unknown';
   let maxScore = 0;
