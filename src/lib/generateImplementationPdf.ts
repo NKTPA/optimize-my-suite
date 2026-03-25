@@ -765,7 +765,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(ex.forImageType + ":", margin + 8, y + 6);
+    doc.text((ex.forImageType ?? 'Image') + ":", margin + 8, y + 6);
     
     // Alt text - render ALL lines with word wrap using Helvetica (not Courier for better embedding)
     doc.setFontSize(8);
