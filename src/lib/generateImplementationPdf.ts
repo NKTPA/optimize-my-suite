@@ -808,7 +808,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     addPageIfNeeded(38);
     
     // Parse hex and description from value (format: "#HEXCODE - Description")
-    const parts = color.value.split(" - ");
+    const parts = safeStr(color.value).split(" - ");
     const hexCode = parts[0] || color.value;
     const description = parts[1] || "";
     
