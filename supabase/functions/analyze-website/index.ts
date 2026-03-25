@@ -1066,7 +1066,10 @@ TEXT FORMATTING RULES:
 - Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
 
 SCORING BOUNDARY RULES:
-- Performance score should ONLY reflect speed-related signals: number of external scripts, image file sizes, lazy loading, WebP usage, and load time indicators. Do NOT penalize Performance for missing alt text or missing meta descriptions — those belong in SEO only.`;
+- Performance score should ONLY reflect speed-related signals: number of external scripts, image file sizes, lazy loading, WebP usage, and load time indicators. Do NOT penalize Performance for missing alt text or missing meta descriptions — those belong in SEO only.
+
+COPYRIGHT YEAR RULES:
+- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).`;
 
   switch (siteType.type) {
     case 'saas_software':
