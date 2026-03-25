@@ -1061,6 +1061,8 @@ IMPORTANT SCORING RULES:
 - A site with no clear CTA or contact form should score below 30 on Conversion.
 - If some data is missing, explain that and still give a recommendation.
 
+ABSOLUTE RULE for Trust scoring: A site that displays a BBB logo or mention, a state license number, AND any social media presence (Facebook, Instagram, YouTube) must score a minimum of 50 on Trust. A score below 50 for a site with these three signals present is an error. Do not score Trust below 40 unless the site has zero trust signals of any kind.
+
 PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
 
