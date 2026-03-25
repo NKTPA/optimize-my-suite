@@ -169,8 +169,8 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
   const handleExportPdf = () => {
     try {
       console.log("Starting Implementation PDF generation…");
-      const pdfBranding = limits.hasCustomBranding ? {
-        logoUrl: branding?.logo_url,
+      const pdfBranding = (limits.hasCustomBranding && (branding?.logo_url || branding?.footer_text || branding?.primary_color)) ? {
+        logoUrl: branding?.logo_url || undefined,
         footerText: branding?.footer_text,
         primaryColor: branding?.primary_color,
         accentColor: branding?.accent_color,
