@@ -853,7 +853,10 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   // ===== PROFESSIONAL SERVICES SIGNALS =====
   const proKeywords = ['agency', 'consulting', 'consultant', 'law firm', 'attorney', 'lawyer', 'accountant',
     'accounting', 'marketing', 'design agency', 'creative agency', 'our clients', 'case study', 'case studies',
-    'portfolio', 'our work', 'services we offer', 'industries we serve'];
+    'portfolio', 'our work', 'services we offer', 'industries we serve',
+    'surgery', 'surgeon', 'cosmetic', 'plastic surgery', 'medical', 'clinic', 'doctor', 'dr.', 'physician',
+    'dental', 'dentist', 'dermatology', 'medspa', 'med spa', 'botox', 'consultation', 'patient',
+    'treatment', 'procedure', 'board certified', 'hipaa'];
   
   let proScore = 0;
   for (const kw of proKeywords) {
@@ -862,6 +865,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   if (lowerHtml.includes('schedule a consultation') || lowerHtml.includes('book a call')) proScore += 2;
   if (lowerHtml.includes('our team') || lowerHtml.includes('meet the team')) proScore += 1;
   if (lowerHtml.includes('case study') || lowerHtml.includes('case studies')) proScore += 2;
+  if (lowerHtml.includes('book now') || lowerHtml.includes('schedule consultation') || lowerHtml.includes('request appointment')) proScore += 3;
   scores.professional_services = proScore;
   if (proScore >= 4) signals.push('Professional services patterns detected');
 
