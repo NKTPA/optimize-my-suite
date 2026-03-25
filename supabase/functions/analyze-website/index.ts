@@ -1021,10 +1021,12 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "social_proof_above_fold": boolean,
     "nav_item_count": number,
     "button_style_consistent": boolean,
-    "viewport_meta_present": boolean,
-    "nav_collapses_mobile": boolean,
-    "phone_tappable_mobile": boolean,
-    "forms_usable_mobile": boolean,
+    "has_mobile_persistent_cta": boolean,
+    "mobile_form_field_count": number,
+    "images_optimized_for_mobile": boolean,
+    "has_tap_to_call": boolean,
+    "nav_depth_to_service": number,
+    "body_font_size_adequate": boolean,
     "external_script_count": number,
     "image_count": number,
     "images_missing_alt": number,
@@ -1374,10 +1376,12 @@ interface SignalData {
   social_proof_above_fold?: boolean;
   nav_item_count?: number;
   button_style_consistent?: boolean;
-  viewport_meta_present?: boolean;
-  nav_collapses_mobile?: boolean;
-  phone_tappable_mobile?: boolean;
-  forms_usable_mobile?: boolean;
+  has_mobile_persistent_cta?: boolean;
+  mobile_form_field_count?: number;
+  images_optimized_for_mobile?: boolean;
+  has_tap_to_call?: boolean;
+  nav_depth_to_service?: number;
+  body_font_size_adequate?: boolean;
   external_script_count?: number;
   image_count?: number;
   images_missing_alt?: number;
@@ -1426,13 +1430,16 @@ function calculateScoresFromSignals(s: SignalData) {
   if (!s.button_style_consistent) design -= 3;
   design = Math.max(design, 0);
 
-  // MOBILE: Start at 30
-  let mobile = 30;
-  if (s.viewport_meta_present) mobile += 20;
-  if (s.nav_collapses_mobile) mobile += 15;
-  if (s.phone_tappable_mobile) mobile += 15;
-  if (s.forms_usable_mobile) mobile += 15;
-  mobile = Math.min(mobile, 100);
+  // MOBILE: Start at 95, apply deductions
+  let mobile = 95;
+  if (!s.has_mobile_persistent_cta) mobile -= 10;
+  if ((s.mobile_form_field_count ?? 0) > 4) mobile -= 7;
+  if ((s.external_script_count ?? 0) >= 30) mobile -= 5;
+  if (!s.images_optimized_for_mobile) mobile -= 5;
+  if (!s.has_tap_to_call) mobile -= 4;
+  if ((s.nav_depth_to_service ?? 0) > 2) mobile -= 3;
+  if (!s.body_font_size_adequate) mobile -= 3;
+  mobile = Math.max(mobile, 0);
 
   // PERFORMANCE: Start at 100, subtract
   let performance = 100;
@@ -2080,10 +2087,12 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         social_proof_above_fold: false,
         nav_item_count: 5,
         button_style_consistent: true,
-        viewport_meta_present: Boolean(extractedData?.technical?.hasViewport),
-        nav_collapses_mobile: false,
-        phone_tappable_mobile: false,
-        forms_usable_mobile: Boolean(extractedData?.forms?.hasForm),
+        has_mobile_persistent_cta: false,
+        mobile_form_field_count: 0,
+        images_optimized_for_mobile: false,
+        has_tap_to_call: false,
+        nav_depth_to_service: 2,
+        body_font_size_adequate: true,
         external_script_count: extractedData?.externalScripts ?? 0,
         image_count: extractedData?.images?.count ?? 0,
         images_missing_alt: extractedData?.images?.withoutAlt ?? 0,
