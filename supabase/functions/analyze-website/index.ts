@@ -1014,9 +1014,13 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "has_chat_widget": boolean,
     "cta_consistency": "consistent" | "inconsistent",
     "has_lead_magnet": boolean,
-    "nav_clear_and_structured": boolean,
-    "visual_hierarchy_to_cta": boolean,
-    "consistent_branding": boolean,
+    "cta_visually_prominent": boolean,
+    "clear_visual_hierarchy": boolean,
+    "hero_value_prop_specific": boolean,
+    "service_page_scroll_depth": "low" | "medium" | "high",
+    "social_proof_above_fold": boolean,
+    "nav_item_count": number,
+    "button_style_consistent": boolean,
     "viewport_meta_present": boolean,
     "nav_collapses_mobile": boolean,
     "phone_tappable_mobile": boolean,
@@ -1363,9 +1367,13 @@ interface SignalData {
   has_chat_widget?: boolean;
   cta_consistency?: string;
   has_lead_magnet?: boolean;
-  nav_clear_and_structured?: boolean;
-  visual_hierarchy_to_cta?: boolean;
-  consistent_branding?: boolean;
+  cta_visually_prominent?: boolean;
+  clear_visual_hierarchy?: boolean;
+  hero_value_prop_specific?: boolean;
+  service_page_scroll_depth?: string;
+  social_proof_above_fold?: boolean;
+  nav_item_count?: number;
+  button_style_consistent?: boolean;
   viewport_meta_present?: boolean;
   nav_collapses_mobile?: boolean;
   phone_tappable_mobile?: boolean;
@@ -1406,12 +1414,17 @@ function calculateScoresFromSignals(s: SignalData) {
   if (!s.has_lead_magnet) conversion -= 5;
   conversion = Math.max(Math.min(conversion, 100), 0);
 
-  // DESIGN: Start at 50
-  let design = 50;
-  if (s.nav_clear_and_structured) design += 15;
-  if (s.visual_hierarchy_to_cta) design += 15;
-  if (s.consistent_branding) design += 15;
-  design = Math.min(design, 100);
+  // DESIGN: Start at 100, apply deductions
+  let design = 100;
+  if (!s.h1_present) design -= 10;
+  if (!s.cta_visually_prominent) design -= 8;
+  if (!s.clear_visual_hierarchy) design -= 7;
+  if (!s.hero_value_prop_specific) design -= 5;
+  if (s.service_page_scroll_depth === 'high') design -= 5;
+  if (!s.social_proof_above_fold) design -= 5;
+  if ((s.nav_item_count ?? 0) > 7) design -= 3;
+  if (!s.button_style_consistent) design -= 3;
+  design = Math.max(design, 0);
 
   // MOBILE: Start at 30
   let mobile = 30;
@@ -2060,9 +2073,13 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         has_chat_widget: false,
         cta_consistency: 'inconsistent',
         has_lead_magnet: false,
-        nav_clear_and_structured: true,
-        visual_hierarchy_to_cta: false,
-        consistent_branding: true,
+        cta_visually_prominent: false,
+        clear_visual_hierarchy: false,
+        hero_value_prop_specific: false,
+        service_page_scroll_depth: 'medium',
+        social_proof_above_fold: false,
+        nav_item_count: 5,
+        button_style_consistent: true,
         viewport_meta_present: Boolean(extractedData?.technical?.hasViewport),
         nav_collapses_mobile: false,
         phone_tappable_mobile: false,
