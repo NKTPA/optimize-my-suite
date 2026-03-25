@@ -1060,14 +1060,20 @@ IMPORTANT SCORING RULES:
 - Each category score MUST be independent. A site can score 85 on Trust but 40 on SEO.
 - DO NOT cluster all scores around 50. Differentiate strengths from weaknesses.
 - Base scores on EVIDENCE from the extracted data. Cite specific elements you found (or didn't find).
-- A site with a clear headline, strong CTA, and testimonials should score 75+ on Messaging and Trust.
 - A site missing meta descriptions, H1 tags, or schema markup should score below 40 on SEO.
-- A site with no clear CTA or contact form should score below 30 on Conversion.
-
-CONVERSION SCORE ANCHORS: Score exactly 50 if: phone number visible but no sticky CTA and no above-fold form. Score exactly 55 if: phone number visible + one CTA present but not sticky. Score exactly 65 if: sticky CTA present but form is complex or buried. Score exactly 75 if: sticky CTA + simple above-fold form both present. Do not deviate from these anchors based on interpretation.
 - If some data is missing, explain that and still give a recommendation.
 
-ABSOLUTE RULE for Trust scoring: A site that displays a BBB logo or mention, a state license number, AND any social media presence (Facebook, Instagram, YouTube) must score a minimum of 50 on Trust. A score below 50 for a site with these three signals present is an error. Do not score Trust below 40 unless the site has zero trust signals of any kind.
+BINARY CHECKLIST SCORING — Use these exact formulas. Score is sum only, no interpretation:
+
+MESSAGING SCORE: Start at 50. +10 if H1 tag present. +10 if value proposition is above the fold. +8 if service area is explicitly stated. +10 if subheadline present. Score is sum only, no interpretation.
+
+CONVERSION SCORE: Start at 30. +10 if phone number visible in header. +10 if sticky CTA present. +10 if above-fold form or button present. +10 if click-to-call enabled. Score is sum only, no interpretation.
+
+DESIGN SCORE: Start at 50. +10 if navigation is clear and structured. +10 if visual hierarchy guides to CTA. +10 if consistent branding across pages. Score is sum only, no interpretation.
+
+MOBILE SCORE: Start at 40. +10 if viewport meta tag present. +10 if navigation collapses on mobile. +10 if phone number tappable. +10 if forms usable on mobile. Score is sum only, no interpretation.
+
+TRUST SCORE: Start at 40. +10 if BBB present. +10 if license number displayed. +15 if social proof numbers present (reviews, case counts). +10 if team photos present. +15 if certifications displayed. Score is sum only, no interpretation. Minimum score is 50 if BBB + license + social all present.
 
 PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
