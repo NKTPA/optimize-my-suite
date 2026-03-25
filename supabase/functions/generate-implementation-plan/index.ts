@@ -139,6 +139,7 @@ GUIDELINES:
 - SEO titles should include location and service keywords if available.
 - Execution checklist should be in priority order.
 - Be concise but complete.
+- For colorPaletteSuggestion, only suggest colors if you can infer the brand palette from the extracted data or analysis. If you cannot determine actual brand colors, return null for all three values and add a note field saying 'Extract colors from existing brand assets.'
 `;
 
 serve(async (req) => {
