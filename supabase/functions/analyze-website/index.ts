@@ -1364,10 +1364,9 @@ interface SignalData {
   cta_above_fold?: boolean;
   form_field_count?: number;
   has_short_form?: boolean;
-  cta_text_quality?: string;
   has_chat_widget?: boolean;
   cta_consistency?: string;
-  has_lead_magnet?: boolean;
+  has_treatment_planner?: boolean;
   cta_visually_prominent?: boolean;
   clear_visual_hierarchy?: boolean;
   hero_value_prop_specific?: boolean;
@@ -1405,16 +1404,21 @@ function calculateScoresFromSignals(s: SignalData) {
   if (s.subheadline_present) messaging += 10;
   messaging = Math.min(messaging, 100);
 
-  // CONVERSION: Start at 85, apply deductions
-  let conversion = 85;
+  // CONVERSION: Start at 88, apply deductions
+  // cta_text_quality is hardcoded to 'generic' until a CTA text parser is built
+  const ctaTextQuality = 'generic';
+  // has_lead_magnet is derived from has_treatment_planner signal
+  const hasLeadMagnet = s.has_treatment_planner ?? false;
+  let conversion = 88;
   if (!s.has_sticky_cta) conversion -= 15;
   if (!s.cta_above_fold) conversion -= 10;
-  if ((s.form_field_count ?? 0) > 4) conversion -= 8;
+  if ((s.form_field_count ?? 0) > 8) conversion -= 8;
+  if ((s.form_field_count ?? 0) > 15) conversion -= 5; // additional stacking penalty for truly excessive forms
   if (!s.has_short_form) conversion -= 7;
-  if (s.cta_text_quality === 'generic') conversion -= 5;
+  if (ctaTextQuality === 'generic') conversion -= 5;
   if (!s.has_chat_widget) conversion -= 5;
   if (s.cta_consistency === 'inconsistent') conversion -= 5;
-  if (!s.has_lead_magnet) conversion -= 5;
+  if (!hasLeadMagnet) conversion -= 5;
   conversion = Math.max(Math.min(conversion, 100), 0);
 
   // DESIGN: Start at 100, apply deductions
@@ -2075,10 +2079,9 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         cta_above_fold: Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0,
         form_field_count: 0,
         has_short_form: false,
-        cta_text_quality: 'generic',
         has_chat_widget: false,
         cta_consistency: 'inconsistent',
-        has_lead_magnet: false,
+        has_treatment_planner: false,
         cta_visually_prominent: false,
         clear_visual_hierarchy: false,
         hero_value_prop_specific: false,
