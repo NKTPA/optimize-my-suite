@@ -1409,16 +1409,15 @@ function calculateScoresFromSignals(s: SignalData) {
   const ctaTextQuality = 'generic';
   // has_lead_magnet is derived from has_treatment_planner signal
   const hasLeadMagnet = s.has_treatment_planner ?? false;
-  let conversion = 88;
+  let conversion = 92;
   if (!s.has_sticky_cta) conversion -= 15;
   if (!s.cta_above_fold) conversion -= 10;
-  if ((s.form_field_count ?? 0) > 8) conversion -= 8;
-  if ((s.form_field_count ?? 0) > 15) conversion -= 5; // additional stacking penalty for truly excessive forms
-  if (!s.has_short_form) conversion -= 7;
-  if (ctaTextQuality === 'generic') conversion -= 5;
-  if (!s.has_chat_widget) conversion -= 5;
-  if (s.cta_consistency === 'inconsistent') conversion -= 5;
-  if (!hasLeadMagnet) conversion -= 5;
+  if ((s.form_field_count ?? 0) > 15) conversion -= 10;
+  if (!s.has_short_form) conversion -= 5;
+  if (ctaTextQuality === 'generic') conversion -= 3;
+  if (!s.has_chat_widget) conversion -= 3;
+  if (s.cta_consistency === 'inconsistent') conversion -= 3;
+  if (!hasLeadMagnet) conversion -= 3;
   conversion = Math.max(Math.min(conversion, 100), 0);
 
   // DESIGN: Start at 100, apply deductions
