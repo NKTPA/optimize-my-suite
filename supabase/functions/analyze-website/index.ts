@@ -1006,10 +1006,14 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "value_prop_above_fold": boolean,
     "service_area_stated": boolean,
     "subheadline_present": boolean,
-    "phone_in_header": boolean,
-    "sticky_cta_present": boolean,
-    "above_fold_cta_present": boolean,
-    "click_to_call_enabled": boolean,
+    "has_sticky_cta": boolean,
+    "cta_above_fold": boolean,
+    "form_field_count": number,
+    "has_short_form": boolean,
+    "cta_text_quality": "generic" | "benefit-driven",
+    "has_chat_widget": boolean,
+    "cta_consistency": "consistent" | "inconsistent",
+    "has_lead_magnet": boolean,
     "nav_clear_and_structured": boolean,
     "visual_hierarchy_to_cta": boolean,
     "consistent_branding": boolean,
@@ -1351,10 +1355,14 @@ interface SignalData {
   value_prop_above_fold?: boolean;
   service_area_stated?: boolean;
   subheadline_present?: boolean;
-  phone_in_header?: boolean;
-  sticky_cta_present?: boolean;
-  above_fold_cta_present?: boolean;
-  click_to_call_enabled?: boolean;
+  has_sticky_cta?: boolean;
+  cta_above_fold?: boolean;
+  form_field_count?: number;
+  has_short_form?: boolean;
+  cta_text_quality?: string;
+  has_chat_widget?: boolean;
+  cta_consistency?: string;
+  has_lead_magnet?: boolean;
   nav_clear_and_structured?: boolean;
   visual_hierarchy_to_cta?: boolean;
   consistent_branding?: boolean;
@@ -1386,13 +1394,17 @@ function calculateScoresFromSignals(s: SignalData) {
   if (s.subheadline_present) messaging += 10;
   messaging = Math.min(messaging, 100);
 
-  // CONVERSION: Start at 30
-  let conversion = 30;
-  if (s.phone_in_header) conversion += 10;
-  if (s.sticky_cta_present) conversion += 20;
-  if (s.above_fold_cta_present) conversion += 20;
-  if (s.click_to_call_enabled) conversion += 10;
-  conversion = Math.min(conversion, 100);
+  // CONVERSION: Start at 85, apply deductions
+  let conversion = 85;
+  if (!s.has_sticky_cta) conversion -= 15;
+  if (!s.cta_above_fold) conversion -= 10;
+  if ((s.form_field_count ?? 0) > 4) conversion -= 8;
+  if (!s.has_short_form) conversion -= 7;
+  if (s.cta_text_quality === 'generic') conversion -= 5;
+  if (!s.has_chat_widget) conversion -= 5;
+  if (s.cta_consistency === 'inconsistent') conversion -= 5;
+  if (!s.has_lead_magnet) conversion -= 5;
+  conversion = Math.max(Math.min(conversion, 100), 0);
 
   // DESIGN: Start at 50
   let design = 50;
@@ -2040,10 +2052,14 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         value_prop_above_fold: false,
         service_area_stated: false,
         subheadline_present: false,
-        phone_in_header: Array.isArray(extractedData?.phoneNumbers) && extractedData.phoneNumbers.length > 0,
-        sticky_cta_present: false,
-        above_fold_cta_present: Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0,
-        click_to_call_enabled: false,
+        has_sticky_cta: false,
+        cta_above_fold: Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0,
+        form_field_count: 0,
+        has_short_form: false,
+        cta_text_quality: 'generic',
+        has_chat_widget: false,
+        cta_consistency: 'inconsistent',
+        has_lead_magnet: false,
         nav_clear_and_structured: true,
         visual_hierarchy_to_cta: false,
         consistent_branding: true,
