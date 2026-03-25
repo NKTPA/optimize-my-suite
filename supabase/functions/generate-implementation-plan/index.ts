@@ -268,7 +268,7 @@ ${JSON.stringify(analysisResult, null, 2)}
 ${extractedData ? `EXTRACTED WEBSITE DATA:
 ${JSON.stringify(extractedData, null, 2)}` : ""}
 
-Based on the analysis findings, create a concrete, ready-to-implement plan with actual copy and specific recommendations. Return ONLY valid JSON matching the specified structure.`;
+Based on the analysis findings, create a concrete, ready-to-implement plan with actual copy and specific recommendations. For primaryPhoneNumber, use the actual phone number found in the extracted website data. If no phone number was detected, return an empty string — never invent or placeholder a phone number. Return ONLY valid JSON matching the specified structure.`;
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
