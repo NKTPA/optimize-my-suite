@@ -753,7 +753,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   plan.seoSetup.imageAltTextExamples.forEach((ex) => {
     // Calculate height for full alt text (no truncation)
     doc.setFontSize(8);
-    const altTextValue = 'alt="' + ex.altText + '"';
+    const altTextValue = 'alt="' + (ex.altText ?? '') + '"';
     const altLines = doc.splitTextToSize(altTextValue, contentWidth - 16);
     const cardHeight = 18 + altLines.length * 4;
     
