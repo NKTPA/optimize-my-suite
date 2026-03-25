@@ -649,7 +649,7 @@ function extractDataFromHtml(html: string, url: string) {
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 3000);
+    .slice(0, 8000);
 
   const addressPattern = /\d+\s+[\w\s]+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd)[^<]{0,100}/gi;
   const addresses = html.match(addressPattern) || [];
@@ -673,7 +673,7 @@ function extractDataFromHtml(html: string, url: string) {
       hasViewport,
       hasFavicon,
     },
-    bodyTextPreview: bodyText.slice(0, 1500),
+    bodyTextPreview: bodyText.slice(0, 8000),
     addresses,
   };
 }
