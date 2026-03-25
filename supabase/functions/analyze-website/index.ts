@@ -1854,19 +1854,38 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     } catch (parseError) {
       logStep("ERROR: JSON parse failed", { error: parseError instanceof Error ? parseError.message : String(parseError) });
       
+      // Build evidence-based fallback scores from extractedData
+      const hasTitle = Boolean(extractedData?.title);
+      const hasMeta = Boolean(extractedData?.metaDescription);
+      const hasH1 = Array.isArray(extractedData?.headings?.h1s) && extractedData.headings.h1s.length > 0;
+      const hasForm = Boolean(extractedData?.forms?.hasForm);
+      const hasPhone = Array.isArray(extractedData?.phoneNumbers) && extractedData.phoneNumbers.length > 0;
+      const hasSSL = Boolean(extractedData?.technical?.hasSSL);
+      const hasViewport = Boolean(extractedData?.technical?.hasViewport);
+      const hasCTAs = Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0;
+
+      const messagingScore = (hasTitle ? 25 : 0) + (hasH1 ? 25 : 0) + (hasMeta ? 20 : 0) + (hasCTAs ? 15 : 5);
+      const conversionScore = (hasForm ? 30 : 10) + (hasPhone ? 25 : 5) + (hasCTAs ? 25 : 5) + 5;
+      const designScore = (hasViewport ? 30 : 10) + (hasSSL ? 15 : 0) + 20;
+      const mobileScore = hasViewport ? 65 : 30;
+      const seoScore = (hasTitle ? 25 : 0) + (hasMeta ? 25 : 0) + (hasH1 ? 25 : 0) + 10;
+      const trustScore = (hasPhone ? 25 : 5) + (hasSSL ? 20 : 0) + 15;
+      const perfScore = 45; // Can't measure from HTML alone
+      const overallScore = Math.round((messagingScore + conversionScore + designScore + mobileScore + seoScore + trustScore + perfScore) / 7);
+
       analysisResult = {
         summary: {
-          overallScore: 50,
+          overallScore,
           overview: "Analysis partially completed. Some data could not be parsed.",
           quickWins: ["Review website manually for specific recommendations"]
         },
-        messaging: { score: 50, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
-        conversion: { score: 50, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
-        designUx: { score: 50, findings: ["Could not fully analyze"], recommendations: [] },
-        mobile: { score: 50, findings: ["Could not fully analyze"], recommendations: [] },
-        performance: { score: 50, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
-        seo: { score: 50, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
-        trust: { score: 50, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
+        messaging: { score: messagingScore, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
+        conversion: { score: conversionScore, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
+        designUx: { score: designScore, findings: ["Could not fully analyze"], recommendations: [] },
+        mobile: { score: mobileScore, findings: ["Could not fully analyze"], recommendations: [] },
+        performance: { score: perfScore, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
+        seo: { score: seoScore, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
+        trust: { score: trustScore, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
         technical: { findings: ["Could not fully analyze"], recommendations: [] },
         aiServicePitch: { paragraph: "", bullets: [] },
         parseWarning: "Some analysis data could not be parsed correctly"
