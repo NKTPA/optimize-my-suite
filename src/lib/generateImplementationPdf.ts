@@ -758,9 +758,10 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   y += 14;
   
   (plan.seoSetup?.imageAltTextExamples ?? []).forEach((ex) => {
+    if (!ex) return;
     // Calculate height for full alt text (no truncation)
     doc.setFontSize(8);
-    const altTextValue = 'alt="' + (ex.altText ?? '') + '"';
+    const altTextValue = 'alt="' + safeStr(ex.altText) + '"';
     const altLines = doc.splitTextToSize(altTextValue, contentWidth - 16);
     const cardHeight = 18 + altLines.length * 4;
     
@@ -772,14 +773,14 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text((ex.forImageType ?? 'Image') + ":", margin + 8, y + 6);
+    doc.text(safeStr(ex.forImageType || 'Image') + ":", margin + 8, y + 6);
     
-    // Alt text - render ALL lines with word wrap using Helvetica (not Courier for better embedding)
+    // Alt text - render ALL lines with word wrap
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
     altLines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 8, y + 14 + i * 4);
+      doc.text(safeStr(line), margin + 8, y + 14 + i * 4);
     });
     
     y += cardHeight + 4;
