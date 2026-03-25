@@ -642,30 +642,33 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     "3"
   );
   
-  // Phone number highlight
-  addPageIfNeeded(32);
-  doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
-  doc.roundedRect(margin, y, contentWidth, 28, 4, 4, "F");
-  doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-  doc.roundedRect(margin, y, 5, 28, 2, 2, "F");
-  
-  // Phone icon
-  doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-  doc.circle(margin + 18, y + 14, 6, "F");
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(255, 255, 255);
-  doc.text("P", margin + 18, y + 16.5, { align: "center" });
-  
-  doc.setFontSize(8);
-  doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
-  doc.setFont("helvetica", "bold");
-  doc.text("CLICK-TO-CALL PHONE NUMBER", margin + 30, y + 10);
-  
-  doc.setFontSize(16);
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text(safeStr(plan.formsAndCTAs?.primaryPhoneNumber), margin + 30, y + 22);
-  y += 36;
+  // Phone number highlight — only render if a phone number exists
+  const phoneNumber = safeStr(plan.formsAndCTAs?.primaryPhoneNumber).trim();
+  if (phoneNumber) {
+    addPageIfNeeded(32);
+    doc.setFillColor(colors.warningLight[0], colors.warningLight[1], colors.warningLight[2]);
+    doc.roundedRect(margin, y, contentWidth, 28, 4, 4, "F");
+    doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
+    doc.roundedRect(margin, y, 5, 28, 2, 2, "F");
+    
+    // Phone icon
+    doc.setFillColor(colors.warning[0], colors.warning[1], colors.warning[2]);
+    doc.circle(margin + 18, y + 14, 6, "F");
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.text("P", margin + 18, y + 16.5, { align: "center" });
+    
+    doc.setFontSize(8);
+    doc.setTextColor(colors.warning[0], colors.warning[1], colors.warning[2]);
+    doc.setFont("helvetica", "bold");
+    doc.text("CLICK-TO-CALL PHONE NUMBER", margin + 30, y + 10);
+    
+    doc.setFontSize(16);
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    doc.text(phoneNumber, margin + 30, y + 22);
+    y += 36;
+  }
   
   // Form fields
   addPageIfNeeded(15);
