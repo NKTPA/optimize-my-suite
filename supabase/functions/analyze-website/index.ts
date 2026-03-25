@@ -1069,7 +1069,10 @@ SCORING BOUNDARY RULES:
 - Performance score should ONLY reflect speed-related signals: number of external scripts, image file sizes, lazy loading, WebP usage, and load time indicators. Do NOT penalize Performance for missing alt text or missing meta descriptions — those belong in SEO only.
 
 COPYRIGHT YEAR RULES:
-- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).`;
+- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
+
+STRICT RULE for quickWins (Immediate Opportunities):
+- This list must reflect the site's actual highest-priority issues based on scores. NEVER list alt text, meta descriptions, or H1 tags as quickWins if they are already covered in the SEO section — these are SEO findings, not general opportunities. NEVER surface a Performance-specific finding (e.g., image compression, script reduction) as a quickWin unless Performance is one of the two lowest-scoring categories. quickWins must be drawn from the lowest-scoring categories only. If SEO is the lowest scorer, its items may appear here — but label them as SEO improvements, not generic 'image optimization' tasks that blur category lines.`;
 
   switch (siteType.type) {
     case 'saas_software':
