@@ -2032,45 +2032,84 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     } catch (parseError) {
       logStep("ERROR: JSON parse failed", { error: parseError instanceof Error ? parseError.message : String(parseError) });
       
-      // Build evidence-based fallback scores from extractedData
-      const hasTitle = Boolean(extractedData?.title);
-      const hasMeta = Boolean(extractedData?.metaDescription);
-      const hasH1 = Array.isArray(extractedData?.headings?.h1s) && extractedData.headings.h1s.length > 0;
-      const hasForm = Boolean(extractedData?.forms?.hasForm);
-      const hasPhone = Array.isArray(extractedData?.phoneNumbers) && extractedData.phoneNumbers.length > 0;
-      const hasSSL = Boolean(extractedData?.technical?.hasSSL);
-      const hasViewport = Boolean(extractedData?.technical?.hasViewport);
-      const hasCTAs = Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0;
+      // Build fallback signals from extractedData
+      const fallbackSignals: SignalData = {
+        h1_present: Array.isArray(extractedData?.headings?.h1s) && extractedData.headings.h1s.length > 0,
+        h1_missing: !Array.isArray(extractedData?.headings?.h1s) || extractedData.headings.h1s.length === 0,
+        value_prop_above_fold: false,
+        service_area_stated: false,
+        subheadline_present: false,
+        phone_in_header: Array.isArray(extractedData?.phoneNumbers) && extractedData.phoneNumbers.length > 0,
+        sticky_cta_present: false,
+        above_fold_cta_present: Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0,
+        click_to_call_enabled: false,
+        nav_clear_and_structured: true,
+        visual_hierarchy_to_cta: false,
+        consistent_branding: true,
+        viewport_meta_present: Boolean(extractedData?.technical?.hasViewport),
+        nav_collapses_mobile: false,
+        phone_tappable_mobile: false,
+        forms_usable_mobile: Boolean(extractedData?.forms?.hasForm),
+        external_script_count: extractedData?.externalScripts ?? 0,
+        image_count: extractedData?.images?.count ?? 0,
+        images_missing_alt: extractedData?.images?.withoutAlt ?? 0,
+        webp_used: false,
+        meta_description_present: Boolean(extractedData?.metaDescription),
+        schema_markup_present: Boolean(extractedData?.hasSchema),
+        bbb_present: false,
+        license_displayed: false,
+        social_proof_numbers: false,
+        team_photos_present: false,
+        certifications_displayed: false,
+        ssl_present: Boolean(extractedData?.technical?.hasSSL),
+      };
 
-      const messagingScore = (hasTitle ? 25 : 0) + (hasH1 ? 25 : 0) + (hasMeta ? 20 : 0) + (hasCTAs ? 15 : 5);
-      const conversionScore = (hasForm ? 30 : 10) + (hasPhone ? 25 : 5) + (hasCTAs ? 25 : 5) + 5;
-      const designScore = (hasViewport ? 30 : 10) + (hasSSL ? 15 : 0) + 20;
-      const mobileScore = hasViewport ? 65 : 30;
-      const seoScore = (hasTitle ? 25 : 0) + (hasMeta ? 25 : 0) + (hasH1 ? 25 : 0) + 10;
-      const trustScore = (hasPhone ? 25 : 5) + (hasSSL ? 20 : 0) + 15;
-      const perfScore = 45; // Can't measure from HTML alone
-      const overallScore = Math.round((messagingScore + conversionScore + designScore + mobileScore + seoScore + trustScore + perfScore) / 7);
+      const fallbackScores = calculateScoresFromSignals(fallbackSignals);
 
       analysisResult = {
+        signals: fallbackSignals,
         summary: {
-          overallScore,
+          overallScore: fallbackScores.overall,
           overview: "Analysis partially completed. Some data could not be parsed.",
           quickWins: ["Review website manually for specific recommendations"]
         },
-        messaging: { score: messagingScore, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
-        conversion: { score: conversionScore, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
-        designUx: { score: designScore, findings: ["Could not fully analyze"], recommendations: [] },
-        mobile: { score: mobileScore, findings: ["Could not fully analyze"], recommendations: [] },
-        performance: { score: perfScore, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
-        seo: { score: seoScore, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
-        trust: { score: trustScore, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
+        messaging: { score: fallbackScores.messaging, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
+        conversion: { score: fallbackScores.conversion, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
+        designUx: { score: fallbackScores.design, findings: ["Could not fully analyze"], recommendations: [] },
+        mobile: { score: fallbackScores.mobile, findings: ["Could not fully analyze"], recommendations: [] },
+        performance: { score: fallbackScores.performance, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
+        seo: { score: fallbackScores.seo, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
+        trust: { score: fallbackScores.trust, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
         technical: { findings: ["Could not fully analyze"], recommendations: [] },
         aiServicePitch: { paragraph: "", bullets: [] },
         parseWarning: "Some analysis data could not be parsed correctly"
       };
     }
 
-    // Calculate dual scores
+    // ========================================
+    // DETERMINISTIC SCORE INJECTION
+    // ========================================
+    // Extract signals from AI response and calculate scores in code
+    const signals: SignalData = analysisResult.signals || {};
+    const scores = calculateScoresFromSignals(signals);
+    
+    logStep("Deterministic scores calculated from signals", {
+      signals: Object.keys(signals).length,
+      scores,
+    });
+
+    // Inject calculated scores into the analysis result
+    if (analysisResult.messaging) analysisResult.messaging.score = scores.messaging;
+    if (analysisResult.conversion) analysisResult.conversion.score = scores.conversion;
+    if (analysisResult.designUx) analysisResult.designUx.score = scores.design;
+    if (analysisResult.mobile) analysisResult.mobile.score = scores.mobile;
+    if (analysisResult.performance) analysisResult.performance.score = scores.performance;
+    if (analysisResult.seo) analysisResult.seo.score = scores.seo;
+    if (analysisResult.trust) analysisResult.trust.score = scores.trust;
+    if (!analysisResult.summary) analysisResult.summary = {};
+    analysisResult.summary.overallScore = scores.overall;
+
+    // Calculate dual scores using the deterministic scores
     const dualScore = calculateDualScores(analysisResult, url, extractedData);
     
     // Add dual scoring to the result
@@ -2090,7 +2129,6 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     if (analysisResult.summary) {
       analysisResult.summary.websiteQualityScore = dualScore.websiteQualityScore;
       analysisResult.summary.productionReadinessScore = dualScore.productionReadinessScore;
-      // Use the dual score's overall score for fair weighting
       analysisResult.summary.overallScore = dualScore.overallScore;
     }
     
@@ -2105,6 +2143,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       readinessScore: dualScore.productionReadinessScore,
       isPreview: environment.isPreview,
       websiteType: websiteType.type,
+      signalCount: Object.keys(signals).length,
     });
 
     return new Response(JSON.stringify(analysisResult), {
