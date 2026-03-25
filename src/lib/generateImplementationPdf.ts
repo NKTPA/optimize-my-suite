@@ -104,25 +104,25 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   doc.rect(0, 0, pageWidth, 8, "F");
   
-  // Brand logo or mark
-  let logoY = 35;
+  // Brand logo - only shown if explicitly provided via branding prop
+  const logoY = 35;
   if (branding?.logoUrl) {
-    // Agency logo provided - show it
     try {
       doc.addImage(branding.logoUrl, "PNG", margin, logoY, 40, 40);
     } catch (e) {
-      // Fallback: no logo shown if agency logo fails to load
+      // Logo failed to load - show URL as plain text instead
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
+      doc.text(validatedUrl, margin, logoY + 10);
     }
-  } else if (!isWhiteLabel) {
-    // Default OptimizeMySuite mark - only shown when NOT in white-label mode
-    doc.setFillColor(255, 255, 255);
-    doc.circle(margin + 18, logoY + 18, 14, "F");
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
-    doc.text("O", margin + 18, logoY + 24, { align: "center" });
+  } else {
+    // No logo provided - show client URL as plain text
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
+    doc.text(validatedUrl, margin, logoY + 10);
   }
-  // If white-label mode with no logo, no mark is shown (neutral presentation)
   
   // Main title
   doc.setFontSize(36);
