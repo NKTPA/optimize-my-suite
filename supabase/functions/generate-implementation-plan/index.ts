@@ -111,9 +111,10 @@ Return ONLY a valid JSON object with this exact shape (no extra commentary):
   },
   "designAndLayout": {
     "colorPaletteSuggestion": {
-      "primary": "#HEX - description",
-      "secondary": "#HEX - description",
-      "accent": "#HEX - description"
+      "primary": "#HEX - description or null",
+      "secondary": "#HEX - description or null",
+      "accent": "#HEX - description or null",
+      "note": "Optional note if colors could not be determined"
     },
     "layoutChanges": ["Layout change 1", "Layout change 2", "Layout change 3"]
   },
@@ -138,6 +139,7 @@ GUIDELINES:
 - SEO titles should include location and service keywords if available.
 - Execution checklist should be in priority order.
 - Be concise but complete.
+- For colorPaletteSuggestion, only suggest colors if you can infer the brand palette from the extracted data or analysis. If you cannot determine actual brand colors, return null for all three values and add a note field saying 'Extract colors from existing brand assets.'
 `;
 
 serve(async (req) => {
