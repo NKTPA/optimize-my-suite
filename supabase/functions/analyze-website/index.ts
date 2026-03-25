@@ -1410,6 +1410,8 @@ function calculateScoresFromSignals(s: SignalData) {
   // has_lead_magnet is derived from has_treatment_planner signal
   const hasLeadMagnet = s.has_treatment_planner ?? false;
   let conversion = 92;
+  // Bonus: treatment planner, quiz, or interactive tool counts as lead magnet AND bonus
+  if (s.has_treatment_planner) conversion += 8;
   if (!s.has_sticky_cta) conversion -= 15;
   if (!s.cta_above_fold) conversion -= 10;
   if ((s.form_field_count ?? 0) > 15) conversion -= 10;
