@@ -204,7 +204,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   const summaryIntro = "This Implementation Strategy Pack contains comprehensive, ready-to-apply recommendations designed to transform your website from its current state into a high-converting, trust-building digital asset. Every recommendation is based on proven conversion optimization principles and industry best practices.";
   const introLines = doc.splitTextToSize(summaryIntro, contentWidth);
   introLines.forEach((line: string, i: number) => {
-    doc.text(line, margin, y + i * 6);
+    doc.text(safeStr(line), margin, y + i * 6);
   });
   y += introLines.length * 6 + 12;
   
@@ -338,7 +338,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
     const subLines = doc.splitTextToSize(safeStr(subtitle), contentWidth - 30);
     subLines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 24, y + 18 + i * 4);
+      doc.text(safeStr(line), margin + 24, y + 18 + i * 4);
     });
     
     y += 30 + (subLines.length - 1) * 4;
@@ -371,7 +371,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
     contentLines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 12, y + 22 + i * 5);
+      doc.text(safeStr(line), margin + 12, y + 22 + i * 5);
     });
     
     // Impact statement
@@ -386,7 +386,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
       doc.setFont("helvetica", "normal");
       doc.setTextColor(colors.successDark[0], colors.successDark[1], colors.successDark[2]);
       impactLines.forEach((line: string, i: number) => {
-        doc.text(line, margin + 50, impactY + 3 + i * 4);
+        doc.text(safeStr(line), margin + 50, impactY + 3 + i * 4);
       });
     }
     
@@ -444,7 +444,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     // Text
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
     lines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 14, y + 3 + i * 5);
+      doc.text(safeStr(line), margin + 14, y + 3 + i * 5);
     });
     y += blockHeight;
   };
@@ -470,7 +470,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     lines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 20, y + 6 + i * 5);
+      doc.text(safeStr(line), margin + 20, y + 6 + i * 5);
     });
     y += blockHeight;
   };
@@ -503,7 +503,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
     descLines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 12, y + 21 + i * 5);
+      doc.text(safeStr(line), margin + 12, y + 21 + i * 5);
     });
     
     // CTA recommendation badge - positioned after description
@@ -758,9 +758,10 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   y += 14;
   
   (plan.seoSetup?.imageAltTextExamples ?? []).forEach((ex) => {
+    if (!ex) return;
     // Calculate height for full alt text (no truncation)
     doc.setFontSize(8);
-    const altTextValue = 'alt="' + (ex.altText ?? '') + '"';
+    const altTextValue = 'alt="' + safeStr(ex.altText) + '"';
     const altLines = doc.splitTextToSize(altTextValue, contentWidth - 16);
     const cardHeight = 18 + altLines.length * 4;
     
@@ -772,14 +773,14 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text((ex.forImageType ?? 'Image') + ":", margin + 8, y + 6);
+    doc.text(safeStr(ex.forImageType || 'Image') + ":", margin + 8, y + 6);
     
-    // Alt text - render ALL lines with word wrap using Helvetica (not Courier for better embedding)
+    // Alt text - render ALL lines with word wrap
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
     altLines.forEach((line: string, i: number) => {
-      doc.text(line, margin + 8, y + 14 + i * 4);
+      doc.text(safeStr(line), margin + 8, y + 14 + i * 4);
     });
     
     y += cardHeight + 4;
@@ -991,7 +992,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
   const credBodyLines = doc.splitTextToSize(CREDIBILITY_BODY, contentWidth - 10);
   credBodyLines.forEach((line: string, i: number) => {
-    doc.text(line, margin + 5, y + i * 5);
+    doc.text(safeStr(line), margin + 5, y + i * 5);
   });
   y += credBodyLines.length * 5 + 12;
   
@@ -1005,7 +1006,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFont("helvetica", "italic");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
   credFooterLines.forEach((line: string, i: number) => {
-    doc.text(line, margin + 10, y + 10 + i * 5);
+    doc.text(safeStr(line), margin + 10, y + 10 + i * 5);
   });
   y += credFooterHeight + 15;
   
@@ -1027,7 +1028,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   const notScorableText = "NOT SCORABLE is not a negative score. It indicates access or rendering limitations at the time of analysis. This ensures scores represent genuine performance, not guesswork.";
   const notScorableLines = doc.splitTextToSize(notScorableText, contentWidth - 20);
   notScorableLines.forEach((line: string, i: number) => {
-    doc.text(line, margin + 12, y + 18 + i * 4);
+    doc.text(safeStr(line), margin + 12, y + 18 + i * 4);
   });
   y += 40;
   
