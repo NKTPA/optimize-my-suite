@@ -1063,7 +1063,10 @@ PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
 
 TEXT FORMATTING RULES:
-- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.`;
+- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
+
+SCORING BOUNDARY RULES:
+- Performance score should ONLY reflect speed-related signals: number of external scripts, image file sizes, lazy loading, WebP usage, and load time indicators. Do NOT penalize Performance for missing alt text or missing meta descriptions — those belong in SEO only.`;
 
   switch (siteType.type) {
     case 'saas_software':
