@@ -332,7 +332,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    const subLines = doc.splitTextToSize(subtitle, contentWidth - 30);
+    const subLines = doc.splitTextToSize(safeStr(subtitle), contentWidth - 30);
     subLines.forEach((line: string, i: number) => {
       doc.text(line, margin + 24, y + 18 + i * 4);
     });
@@ -343,8 +343,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   // Recommendation card with impact statement
   const addRecommendationCard = (label: string, content: string, impact?: string) => {
     doc.setFontSize(10);
-    const contentLines = doc.splitTextToSize(content, contentWidth - 24);
-    const impactLines = impact ? doc.splitTextToSize(impact, contentWidth - 30) : [];
+    const contentLines = doc.splitTextToSize(safeStr(content), contentWidth - 24);
+    const impactLines = impact ? doc.splitTextToSize(safeStr(impact), contentWidth - 30) : [];
     const blockHeight = 18 + contentLines.length * 5 + (impact ? 12 + impactLines.length * 4 : 0);
     addPageIfNeeded(blockHeight);
     
@@ -413,13 +413,13 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(label.toUpperCase(), margin + 30, y + 8);
+    doc.text(safeStr(label).toUpperCase(), margin + 30, y + 8);
     
     // Text
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    const lines = doc.splitTextToSize(text, contentWidth - 45);
+    const lines = doc.splitTextToSize(safeStr(text), contentWidth - 45);
     doc.text(lines[0], margin + 30, y + 18);
     
     y += 30;
@@ -429,7 +429,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   const addConsultantBullet = (text: string, bulletColor: number[] = colors.primary) => {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    const lines = doc.splitTextToSize(text, contentWidth - 20);
+    const lines = doc.splitTextToSize(safeStr(text), contentWidth - 20);
     const blockHeight = lines.length * 5 + 4;
     addPageIfNeeded(blockHeight);
     
@@ -448,7 +448,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   // Priority numbered item
   const addPriorityItem = (num: number, text: string, isPriority: boolean = false) => {
     doc.setFontSize(10);
-    const lines = doc.splitTextToSize(text, contentWidth - 26);
+    const lines = doc.splitTextToSize(safeStr(text), contentWidth - 26);
     const blockHeight = lines.length * 5 + 10;
     addPageIfNeeded(blockHeight);
     
@@ -475,7 +475,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   const addServiceCardPremium = (serviceName: string, description: string, cta: string) => {
     // Calculate actual height needed for full description
     doc.setFontSize(9);
-    const descLines = doc.splitTextToSize(description, contentWidth - 24);
+    const descLines = doc.splitTextToSize(safeStr(description), contentWidth - 24);
     const descHeight = descLines.length * 5;
     const cardHeight = Math.max(46, 24 + descHeight + 16); // 24 for name, 16 for CTA section
     
@@ -492,7 +492,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(serviceName, margin + 12, y + 12);
+    doc.text(safeStr(serviceName), margin + 12, y + 12);
     
     // Description - render ALL lines (no truncation)
     doc.setFontSize(9);
@@ -509,7 +509,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.setFontSize(7);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-    doc.text("RECOMMENDED CTA: " + cta, margin + 15, ctaY + 5);
+    doc.text("RECOMMENDED CTA: " + safeStr(cta), margin + 15, ctaY + 5);
     
     y += cardHeight + 8;
   };
@@ -677,7 +677,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   
   doc.setFontSize(16);
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text(plan.formsAndCTAs.primaryPhoneNumber, margin + 30, y + 22);
+  doc.text(safeStr(plan.formsAndCTAs.primaryPhoneNumber), margin + 30, y + 22);
   y += 36;
   
   // Form fields
