@@ -810,6 +810,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   ];
   
   colorValues.forEach((color, i) => {
+    if (!color.value) return; // skip null/undefined/empty color entries
     addPageIfNeeded(38);
     
     // Parse hex and description from value (format: "#HEXCODE - Description")
