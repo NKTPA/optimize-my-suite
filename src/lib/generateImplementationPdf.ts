@@ -4,6 +4,9 @@ import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 import { generatePdfFilename, setPdfMetadata } from "./pdfMetadata";
 
+/** Safely coerce any value to a string for PDF rendering — prevents null/undefined crashes in splitTextToSize */
+const safeStr = (v: unknown): string => (v == null ? '' : String(v));
+
 // Branding options for white-label PDFs
 export interface PdfBranding {
   logoUrl?: string | null;
