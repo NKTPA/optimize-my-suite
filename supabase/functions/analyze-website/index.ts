@@ -1343,9 +1343,106 @@ ${baseStructure}
 - Assume the goal is: "Get more phone calls, quote requests, and booked jobs from this website."`;
   }
 }
+// ============================================
+// DETERMINISTIC SCORING FROM SIGNALS
+// ============================================
+interface SignalData {
+  h1_present?: boolean;
+  value_prop_above_fold?: boolean;
+  service_area_stated?: boolean;
+  subheadline_present?: boolean;
+  phone_in_header?: boolean;
+  sticky_cta_present?: boolean;
+  above_fold_cta_present?: boolean;
+  click_to_call_enabled?: boolean;
+  nav_clear_and_structured?: boolean;
+  visual_hierarchy_to_cta?: boolean;
+  consistent_branding?: boolean;
+  viewport_meta_present?: boolean;
+  nav_collapses_mobile?: boolean;
+  phone_tappable_mobile?: boolean;
+  forms_usable_mobile?: boolean;
+  external_script_count?: number;
+  image_count?: number;
+  images_missing_alt?: number;
+  webp_used?: boolean;
+  h1_missing?: boolean;
+  meta_description_present?: boolean;
+  schema_markup_present?: boolean;
+  bbb_present?: boolean;
+  license_displayed?: boolean;
+  social_proof_numbers?: boolean;
+  team_photos_present?: boolean;
+  certifications_displayed?: boolean;
+  ssl_present?: boolean;
+}
+
+function calculateScoresFromSignals(s: SignalData) {
+  // MESSAGING: Start at 50
+  let messaging = 50;
+  if (s.h1_present) messaging += 10;
+  if (s.value_prop_above_fold) messaging += 15;
+  if (s.service_area_stated) messaging += 15;
+  if (s.subheadline_present) messaging += 10;
+  messaging = Math.min(messaging, 100);
+
+  // CONVERSION: Start at 30
+  let conversion = 30;
+  if (s.phone_in_header) conversion += 10;
+  if (s.sticky_cta_present) conversion += 20;
+  if (s.above_fold_cta_present) conversion += 20;
+  if (s.click_to_call_enabled) conversion += 10;
+  conversion = Math.min(conversion, 100);
+
+  // DESIGN: Start at 50
+  let design = 50;
+  if (s.nav_clear_and_structured) design += 15;
+  if (s.visual_hierarchy_to_cta) design += 15;
+  if (s.consistent_branding) design += 15;
+  design = Math.min(design, 100);
+
+  // MOBILE: Start at 30
+  let mobile = 30;
+  if (s.viewport_meta_present) mobile += 20;
+  if (s.nav_collapses_mobile) mobile += 15;
+  if (s.phone_tappable_mobile) mobile += 15;
+  if (s.forms_usable_mobile) mobile += 15;
+  mobile = Math.min(mobile, 100);
+
+  // PERFORMANCE: Start at 100, subtract
+  let performance = 100;
+  const scriptCount = s.external_script_count ?? 0;
+  if (scriptCount > 10) performance -= 20;
+  if (scriptCount > 25) performance -= 15;
+  if (s.image_count && s.images_missing_alt === s.image_count) performance -= 10;
+  if (!s.webp_used) performance -= 10;
+  performance = Math.max(performance, 0);
+
+  // SEO: Start at 60
+  let seo = 60;
+  if (s.h1_missing) seo -= 20;
+  if ((s.images_missing_alt ?? 0) > 0) seo -= 15;
+  if (s.meta_description_present) seo += 5;
+  if (s.schema_markup_present) seo += 10;
+  seo = Math.max(Math.min(seo, 100), 0);
+
+  // TRUST: Start at 40
+  let trust = 40;
+  if (s.bbb_present) trust += 10;
+  if (s.license_displayed) trust += 10;
+  if (s.social_proof_numbers) trust += 15;
+  if (s.team_photos_present) trust += 10;
+  if (s.certifications_displayed) trust += 15;
+  if (s.bbb_present && s.license_displayed && s.social_proof_numbers) trust = Math.max(trust, 50);
+  trust = Math.min(trust, 100);
+
+  // OVERALL: simple average
+  const overall = Math.round((messaging + conversion + design + mobile + performance + seo + trust) / 7);
+
+  return { messaging, conversion, design, mobile, performance, seo, trust, overall };
+}
 
 
-serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
