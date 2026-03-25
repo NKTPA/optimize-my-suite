@@ -1,4 +1,5 @@
 import { ImplementationPlan } from "@/types/implementation";
+import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sparkles,
@@ -167,7 +168,7 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
 
   const handleExportPdf = () => {
     try {
-      // Pass branding only if user has custom branding access
+      console.log("Starting Implementation PDF generation…");
       const pdfBranding = limits.hasCustomBranding ? {
         logoUrl: branding?.logo_url,
         footerText: branding?.footer_text,
@@ -176,8 +177,10 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
       } : undefined;
       
       generateImplementationPdf(plan, url, pdfBranding);
+      console.log("Implementation PDF generated successfully");
     } catch (error) {
       console.error("Error generating Implementation PDF:", error);
+      toast.error("Failed to generate PDF. Check console for details.");
     }
   };
 

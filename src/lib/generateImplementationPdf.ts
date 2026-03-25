@@ -54,7 +54,11 @@ const colors = {
   goldLight: [255, 251, 235],
 };
 
-export function generateImplementationPdf(plan: ImplementationPlan, url: string, branding?: PdfBranding) {
+export function generateImplementationPdf(plan: ImplementationPlan, url: string, branding?: PdfBranding): void {
+  if (!plan) {
+    console.error("generateImplementationPdf: no plan data provided");
+    return;
+  }
   // GUARDRAIL: Validate that URL is not a Lovable/deployment URL
   const validatedUrl = isValidAnalysisSourceUrl(url) ? url : sanitizeAnalysisUrl(url, "Original website URL unavailable");
   
@@ -532,13 +536,13 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   
   addRecommendationCard(
     "Primary Headline",
-    plan.heroSection.headline,
+    safeStr(plan.heroSection?.headline),
     "Clear headlines increase visitor engagement by establishing immediate relevance."
   );
   
   addRecommendationCard(
     "Supporting Subheadline",
-    plan.heroSection.subheadline,
+    safeStr(plan.heroSection?.subheadline),
     "Subheadlines reduce bounce rates by providing essential context."
   );
   
@@ -550,13 +554,13 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Value Proposition Bullets", margin + 4, y);
   y += 8;
   
-  plan.heroSection.supportingBullets.forEach((bullet) => {
+  (plan.heroSection?.supportingBullets ?? []).forEach((bullet) => {
     addConsultantBullet(bullet, colors.success);
   });
   y += 8;
   
-  addCTACard("Primary Call-to-Action", plan.heroSection.primaryCTA);
-  addCTACard("Secondary Call-to-Action", plan.heroSection.secondaryCTA);
+  addCTACard("Primary Call-to-Action", safeStr(plan.heroSection?.primaryCTA));
+  addCTACard("Secondary Call-to-Action", safeStr(plan.heroSection?.secondaryCTA));
   y += 8;
   
   // ============ KEY PAGES COPY ============
@@ -574,8 +578,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Homepage", margin + 4, y);
   y += 8;
   
-  addRecommendationCard("Introduction Copy", plan.keyPages.home.intro);
-  addRecommendationCard("Services Overview", plan.keyPages.home.servicesOverview);
+  addRecommendationCard("Introduction Copy", safeStr(plan.keyPages?.home?.intro));
+  addRecommendationCard("Services Overview", safeStr(plan.keyPages?.home?.servicesOverview));
   
   // Why Choose Us
   addPageIfNeeded(15);
@@ -589,7 +593,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("These points address customer objections and build competitive advantage", margin + 4, y + 6);
   y += 14;
   
-  plan.keyPages.home.whyChooseUs.forEach((item) => {
+  (plan.keyPages?.home?.whyChooseUs ?? []).forEach((item) => {
     addConsultantBullet(item, colors.success);
   });
   y += 6;
@@ -606,13 +610,13 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Strategic credibility signals that reduce buyer hesitation", margin + 4, y + 6);
   y += 14;
   
-  plan.keyPages.home.trustElements.forEach((item) => {
+  (plan.keyPages?.home?.trustElements ?? []).forEach((item) => {
     addConsultantBullet(item, colors.warning);
   });
   y += 10;
   
   // Services Page
-  if (plan.keyPages.servicesPage.sections.length > 0) {
+  if ((plan.keyPages?.servicesPage?.sections ?? []).length > 0) {
     addPageIfNeeded(15);
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
@@ -620,7 +624,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     doc.text("Services Page", margin + 4, y);
     y += 10;
     
-    plan.keyPages.servicesPage.sections.forEach((service) => {
+    (plan.keyPages?.servicesPage?.sections ?? []).forEach((service) => {
       addServiceCardPremium(service.serviceName, service.shortDescription, service.idealCTA);
     });
   }
@@ -633,8 +637,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("About Page", margin + 4, y);
   y += 8;
   
-  addRecommendationCard("About Headline", plan.keyPages.aboutPage.headline);
-  addRecommendationCard("About Body Copy", plan.keyPages.aboutPage.body, "Humanized brand storytelling builds emotional connection and trust.");
+  addRecommendationCard("About Headline", safeStr(plan.keyPages?.aboutPage?.headline));
+  addRecommendationCard("About Body Copy", safeStr(plan.keyPages?.aboutPage?.body), "Humanized brand storytelling builds emotional connection and trust.");
   
   // Contact Page
   addPageIfNeeded(15);
@@ -644,8 +648,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Contact Page", margin + 4, y);
   y += 8;
   
-  addRecommendationCard("Contact Headline", plan.keyPages.contactPage.headline);
-  addRecommendationCard("Contact Body Copy", plan.keyPages.contactPage.body);
+  addRecommendationCard("Contact Headline", safeStr(plan.keyPages?.contactPage?.headline));
+  addRecommendationCard("Contact Body Copy", safeStr(plan.keyPages?.contactPage?.body));
   y += 8;
   
   // ============ FORMS & CTAS ============
@@ -677,7 +681,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   
   doc.setFontSize(16);
   doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text(safeStr(plan.formsAndCTAs.primaryPhoneNumber), margin + 30, y + 22);
+  doc.text(safeStr(plan.formsAndCTAs?.primaryPhoneNumber), margin + 30, y + 22);
   y += 36;
   
   // Form fields
@@ -688,8 +692,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Contact Form Specification", margin + 4, y);
   y += 8;
   
-  addRecommendationCard("Required Fields", (plan.formsAndCTAs.contactFormSpec.fields ?? []).join("  |  "));
-  addRecommendationCard("Form Notes", safeStr(plan.formsAndCTAs.contactFormSpec.notes), "Simplified forms reduce friction and increase submission rates.");
+  addRecommendationCard("Required Fields", (plan.formsAndCTAs?.contactFormSpec?.fields ?? []).join("  |  "));
+  addRecommendationCard("Form Notes", safeStr(plan.formsAndCTAs?.contactFormSpec?.notes), "Simplified forms reduce friction and increase submission rates.");
   
   // CTA Buttons
   addPageIfNeeded(15);
@@ -699,7 +703,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Recommended CTA Button Copy", margin + 4, y);
   y += 8;
   
-  plan.formsAndCTAs.ctaButtons.forEach((cta) => {
+  (plan.formsAndCTAs?.ctaButtons ?? []).forEach((cta) => {
     addConsultantBullet(cta, colors.accent);
   });
   y += 6;
@@ -712,7 +716,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Strategic CTA Placement Guidelines", margin + 4, y);
   y += 8;
   
-  plan.formsAndCTAs.placementGuidelines.forEach((guide) => {
+  (plan.formsAndCTAs?.placementGuidelines ?? []).forEach((guide) => {
     addConsultantBullet(guide);
   });
   y += 10;
@@ -724,9 +728,9 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
     "4"
   );
   
-  addRecommendationCard("Homepage Title Tag", plan.seoSetup.home.title, "Optimized title tags improve click-through rates from search results.");
-  addRecommendationCard("Homepage Meta Description", plan.seoSetup.home.metaDescription);
-  addRecommendationCard("Homepage H1 Tag", plan.seoSetup.home.h1);
+  addRecommendationCard("Homepage Title Tag", safeStr(plan.seoSetup?.home?.title), "Optimized title tags improve click-through rates from search results.");
+  addRecommendationCard("Homepage Meta Description", safeStr(plan.seoSetup?.home?.metaDescription));
+  addRecommendationCard("Homepage H1 Tag", safeStr(plan.seoSetup?.home?.h1));
   
   // Other SEO suggestions
   addPageIfNeeded(15);
@@ -736,7 +740,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Additional SEO Recommendations", margin + 4, y);
   y += 8;
   
-  plan.seoSetup.otherSuggestions.forEach((sug) => {
+  (plan.seoSetup?.otherSuggestions ?? []).forEach((sug) => {
     addConsultantBullet(sug, colors.success);
   });
   y += 6;
@@ -753,7 +757,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Descriptive alt text improves accessibility and image search rankings", margin + 4, y + 6);
   y += 14;
   
-  plan.seoSetup.imageAltTextExamples.forEach((ex) => {
+  (plan.seoSetup?.imageAltTextExamples ?? []).forEach((ex) => {
     // Calculate height for full alt text (no truncation)
     doc.setFontSize(8);
     const altTextValue = 'alt="' + (ex.altText ?? '') + '"';
@@ -799,9 +803,9 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   
   // Color swatches - vertical stacking layout (no truncation)
   const colorValues = [
-    { label: "Primary", value: plan.designAndLayout.colorPaletteSuggestion.primary },
-    { label: "Secondary", value: plan.designAndLayout.colorPaletteSuggestion.secondary },
-    { label: "Accent", value: plan.designAndLayout.colorPaletteSuggestion.accent },
+    { label: "Primary", value: plan.designAndLayout?.colorPaletteSuggestion?.primary },
+    { label: "Secondary", value: plan.designAndLayout?.colorPaletteSuggestion?.secondary },
+    { label: "Accent", value: plan.designAndLayout?.colorPaletteSuggestion?.accent },
   ];
   
   colorValues.forEach((color, i) => {
@@ -851,7 +855,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Layout Improvements", margin + 4, y);
   y += 8;
   
-  plan.designAndLayout.layoutChanges.forEach((change) => {
+  (plan.designAndLayout?.layoutChanges ?? []).forEach((change) => {
     addConsultantBullet(change);
   });
   y += 10;
@@ -871,7 +875,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Required Technical Tasks", margin + 4, y);
   y += 8;
   
-  plan.technicalFixes.tasks.forEach((task) => {
+  (plan.technicalFixes?.tasks ?? []).forEach((task) => {
     addConsultantBullet(task, colors.warning);
   });
   y += 6;
@@ -888,7 +892,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Address these items in sequence for optimal results", margin + 4, y + 6);
   y += 14;
   
-  plan.technicalFixes.priorityOrder.forEach((priority, i) => {
+  (plan.technicalFixes?.priorityOrder ?? []).forEach((priority, i) => {
     addPriorityItem(i + 1, priority, true);
   });
   y += 10;
@@ -910,7 +914,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.success[0], colors.success[1], colors.success[2]);
-  doc.text(`${plan.executionChecklist.length} Action Items`, margin + 14, y + 13);
+  doc.text(`${(plan.executionChecklist ?? []).length} Action Items`, margin + 14, y + 13);
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -918,7 +922,7 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Complete these items to fully implement this strategy", margin + 65, y + 13);
   y += 28;
   
-  plan.executionChecklist.forEach((item, i) => {
+  (plan.executionChecklist ?? []).forEach((item, i) => {
     addPriorityItem(i + 1, item);
   });
   y += 10;
