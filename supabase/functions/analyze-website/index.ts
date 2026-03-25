@@ -1087,7 +1087,7 @@ ABSOLUTE RULE - Performance section only: You are ONLY allowed to write about th
 COPYRIGHT YEAR RULES:
 - When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
 
-ABSOLUTE RULE — IMMEDIATE OPPORTUNITIES: Immediate Opportunities MUST only surface findings from categories that score 55 or below. Do NOT include findings from any category scoring 56 or higher, even if the finding seems impactful or high value. Count the qualifying categories first, then pull one finding from each. Maximum 4 items. If fewer than 4 categories score 55 or below, leave the remaining slots empty rather than pulling from higher-scoring categories.`;
+ABSOLUTE RULE — IMMEDIATE OPPORTUNITIES: Before selecting any item, list every category score. Cross out any category scoring 56 or above. You may ONLY pull findings from categories that remain — meaning scored 55 or below. If a category scores 56 or higher it is completely excluded, even if the finding seems important. Conversion at 60 = excluded. Mobile at 70 = excluded. Design at 70 = excluded. Do not include findings from excluded categories under any circumstance.`;
 
   switch (siteType.type) {
     case 'saas_software':
