@@ -980,50 +980,86 @@ function getAnalysisPromptForType(siteType: WebsiteTypeInfo): string {
   const baseStructure = `
 ABSOLUTE RULE — ALT TEXT: The words "alt text" or "alt attributes" are BANNED from appearing in the Performance section. Before finalizing the Performance section output, scan it for these exact strings. If either string is found, delete the entire sentence containing it. Do not rewrite it. Delete it. Alt text belongs only in SEO.
 
-SCORING CONSISTENCY RULES: Scores must be deterministic and evidence-based, not impressionistic. Follow these anchor points exactly: A site with NO H1, NO meta description, and NO alt text on images must score SEO between 25-40. Never higher. A site with 20+ external scripts and unoptimized images must score Performance between 40-55. Never higher. A site with BBB + license number + 2 social platforms must score Trust between 50-60. Never lower than 50. A site with a contact form and visible phone number but no sticky header CTA must score Conversion between 40-55. Scores should not vary by more than 5 points across runs on the same unchanged site. If you are uncertain between two scores, pick the lower one — conservative scoring is more credible than optimistic scoring.
+IMPORTANT: You do NOT calculate scores. Scores are calculated deterministically in code. Your job is to:
+1. Detect signals (true/false or numeric counts) from the website content.
+2. Write narrative findings, recommendations, and actionable advice for each category.
+3. Return the signals block and the narrative text. Do NOT include any "score" fields.
 
-MANDATORY SCORING RULES: Scores must reflect actual evidence. Examples: No contact form or phone on a local service site = Conversion score 15-25. Missing meta description = SEO score 25-40. No H1 tag = SEO score 20-35. No testimonials or reviews = Trust score 20-35. Strong headline + clear CTA + testimonials = Messaging 75+. DO NOT cluster scores between 45-60. Each category must vary based on evidence.
+PHONE NUMBER RULES:
+- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
+
+TEXT FORMATTING RULES:
+- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
+
+PERFORMANCE SECTION RULES:
+You are ONLY allowed to write about these topics in the Performance section: external script count, render-blocking resources, image file sizes, lazy loading, WebP/AVIF formats, caching headers, CDN, TTFB. NOTHING ELSE.
+
+COPYRIGHT YEAR RULES:
+- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
 
 OUTPUT:
 Return ONLY a valid JSON object with the following shape (no extra commentary):
 
 {
+  "signals": {
+    "h1_present": boolean,
+    "value_prop_above_fold": boolean,
+    "service_area_stated": boolean,
+    "subheadline_present": boolean,
+    "phone_in_header": boolean,
+    "sticky_cta_present": boolean,
+    "above_fold_cta_present": boolean,
+    "click_to_call_enabled": boolean,
+    "nav_clear_and_structured": boolean,
+    "visual_hierarchy_to_cta": boolean,
+    "consistent_branding": boolean,
+    "viewport_meta_present": boolean,
+    "nav_collapses_mobile": boolean,
+    "phone_tappable_mobile": boolean,
+    "forms_usable_mobile": boolean,
+    "external_script_count": number,
+    "image_count": number,
+    "images_missing_alt": number,
+    "webp_used": boolean,
+    "h1_missing": boolean,
+    "meta_description_present": boolean,
+    "schema_markup_present": boolean,
+    "bbb_present": boolean,
+    "license_displayed": boolean,
+    "social_proof_numbers": boolean,
+    "team_photos_present": boolean,
+    "certifications_displayed": boolean,
+    "ssl_present": boolean
+  },
   "summary": {
-    "overallScore": number,
     "overview": "string",
     "quickWins": ["string", "string", "string"]
   },
   "messaging": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendedHeadline": "string",
     "recommendedSubheadline": "string",
     "elevatorPitch": "string"
   },
   "conversion": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendations": ["string", "string"],
     "sampleButtons": ["string", "string"]
   },
   "designUx": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendations": ["string", "string"]
   },
   "mobile": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendations": ["string", "string"]
   },
   "performance": {
-    "score": number,
     "findings": ["string", "string"],
     "heavyImages": ["string"],
     "recommendations": ["string", "string"]
   },
   "seo": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendedTitle": "string",
     "recommendedMetaDescription": "string",
@@ -1032,7 +1068,6 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "checklist": ["string", "string"]
   },
   "trust": {
-    "score": number,
     "findings": ["string", "string"],
     "whyChooseUs": ["string", "string", "string"],
     "testimonialsBlock": "string"
@@ -1047,47 +1082,7 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
   }
 }
 
-ABSOLUTE RULE — SCORE STABILITY: Each category score MUST be derived exclusively from a fixed checklist of criteria signals, not from interpretation or overall impression. For each category: count how many criteria signals are present, how many are missing, and how many are partial. The score is determined by that count alone. Do NOT adjust scores based on context, industry, site quality, or how other categories scored. Running this audit on the same URL twice MUST produce the same score both times. If you are uncertain about a signal, mark it as missing — never inflate. Temperature and randomness must not affect scores.
-
-SCORING CALIBRATION (use the FULL 0–100 range — do NOT default everything to 50):
-- 90–100: Excellent. Best-in-class execution. Very few issues. Reserve for genuinely outstanding work.
-- 75–89: Good. Solid execution with minor improvements possible. Most professional sites land here on their strengths.
-- 55–74: Needs Work. Noticeable gaps or missed opportunities. Common for sites that haven't been optimized.
-- 35–54: Poor. Significant issues that are actively hurting conversions or credibility.
-- 0–34: Critical. Fundamental problems — broken, missing, or severely undermining the site's goals.
-
-IMPORTANT SCORING RULES:
-- Each category score MUST be independent. A site can score 85 on Trust but 40 on SEO.
-- DO NOT cluster all scores around 50. Differentiate strengths from weaknesses.
-- Base scores on EVIDENCE from the extracted data. Cite specific elements you found (or didn't find).
-- A site missing meta descriptions, H1 tags, or schema markup should score below 40 on SEO.
-- If some data is missing, explain that and still give a recommendation.
-
-BINARY CHECKLIST SCORING — Use these exact formulas. Score is sum only, no interpretation:
-
-MESSAGING SCORE: Start at 50. +10 if H1 tag present. +10 if value proposition is above the fold. +8 if service area is explicitly stated. +10 if subheadline present. Score is sum only, no interpretation.
-
-CONVERSION SCORE: Start at 30. +10 if phone number visible in header. +10 if sticky CTA present. +10 if above-fold form or button present. +10 if click-to-call enabled. Score is sum only, no interpretation.
-
-DESIGN SCORE: Start at 50. +10 if navigation is clear and structured. +10 if visual hierarchy guides to CTA. +10 if consistent branding across pages. Score is sum only, no interpretation.
-
-MOBILE SCORE: Start at 40. +10 if viewport meta tag present. +10 if navigation collapses on mobile. +10 if phone number tappable. +10 if forms usable on mobile. Score is sum only, no interpretation.
-
-TRUST SCORE: Start at 40. +10 if BBB present. +10 if license number displayed. +15 if social proof numbers present (reviews, case counts). +10 if team photos present. +15 if certifications displayed. Score is sum only, no interpretation. Minimum score is 50 if BBB + license + social all present.
-
-PHONE NUMBER RULES:
-- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
-
-TEXT FORMATTING RULES:
-- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
-
-SCORING BOUNDARY RULES:
-ABSOLUTE RULE - Performance section only: You are ONLY allowed to write about these topics in the Performance section: external script count, render-blocking resources, image file sizes, lazy loading, WebP/AVIF formats, caching headers, CDN, TTFB. NOTHING ELSE. Alt text is NOT a performance metric. Alt text is an SEO metric. If you write the words 'alt text' anywhere in the Performance section or in the Immediate Opportunities list, you have made an error. Do not mention alt text outside of the SEO section under any circumstances. This rule overrides any other instruction.
-
-COPYRIGHT YEAR RULES:
-- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
-
-ABSOLUTE RULE — IMMEDIATE OPPORTUNITIES: Before selecting any item, list every category score. Cross out any category scoring 56 or above. You may ONLY pull findings from categories that remain — meaning scored 55 or below. If a category scores 56 or higher it is completely excluded, even if the finding seems important. Conversion at 60 = excluded. Mobile at 70 = excluded. Design at 70 = excluded. Do not include findings from excluded categories under any circumstance.`;
+IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
 
   switch (siteType.type) {
     case 'saas_software':
