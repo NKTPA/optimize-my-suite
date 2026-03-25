@@ -1338,8 +1338,6 @@ ${baseStructure}
   }
 }
 
-SCORING CONSISTENCY RULES: Scores must be deterministic and evidence-based, not impressionistic. Follow these anchor points exactly: A site with NO H1, NO meta description, and NO alt text on images must score SEO between 25-40. Never higher. A site with 20+ external scripts and unoptimized images must score Performance between 40-55. Never higher. A site with BBB + license number + 2 social platforms must score Trust between 50-60. Never lower than 50. A site with a contact form and visible phone number but no sticky header CTA must score Conversion between 40-55. Scores should not vary by more than 5 points across runs on the same unchanged site. If you are uncertain between two scores, pick the lower one — conservative scoring is more credible than optimistic scoring.
-
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
