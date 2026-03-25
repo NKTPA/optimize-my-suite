@@ -1091,6 +1091,16 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
   }
 }
 
+SIGNAL DETECTION RULES — DESIGN SIGNALS:
+Each Design signal must be evaluated independently using strict, objective criteria. Do NOT compensate for one negative signal by softening another. Each is binary — true or false — based solely on its own definition:
+- "cta_visually_prominent": true ONLY if the primary CTA button uses a contrasting color from the background AND is at least 44px tall. If uncertain, return false.
+- "clear_visual_hierarchy": true ONLY if the page uses distinct heading sizes (H1 > H2 > H3) with consistent spacing. If headings are similar sizes or spacing is inconsistent, return false.
+- "hero_value_prop_specific": true ONLY if the hero text names a specific benefit or outcome (e.g., "Straighten teeth in 6 months"). Generic phrases like "Welcome" or "Quality Service" = false.
+- "service_page_scroll_depth": "high" if user must scroll more than 2 full viewports to reach CTA or key info on service pages. "low" if CTA is within first viewport.
+- "social_proof_above_fold": true ONLY if review stars, testimonial quotes, or trust badges are visible without scrolling.
+- "button_style_consistent": false if buttons across different pages use different colors, sizes, or border styles.
+When uncertain about ANY design signal, return false. Do not guess true.
+
 IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
 
   switch (siteType.type) {
