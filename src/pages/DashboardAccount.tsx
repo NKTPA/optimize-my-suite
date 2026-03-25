@@ -94,6 +94,10 @@ export default function DashboardAccount() {
       const filePath = `${user.id}/logo.${fileExt}`;
 
       // Upload to Supabase Storage
+      // NOTE: The agency-logos bucket is intentionally public for reads.
+      // Logos must be accessible via public URL for PDF report generation
+      // (generated PDFs embed logo URLs that are rendered outside authenticated contexts).
+      // Write access is restricted to authenticated users via storage RLS policies.
       const { error: uploadError } = await supabase.storage
         .from("agency-logos")
         .upload(filePath, file, { upsert: true });
