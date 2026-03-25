@@ -111,9 +111,10 @@ Return ONLY a valid JSON object with this exact shape (no extra commentary):
   },
   "designAndLayout": {
     "colorPaletteSuggestion": {
-      "primary": "#HEX - description",
-      "secondary": "#HEX - description",
-      "accent": "#HEX - description"
+      "primary": "#HEX - description or null",
+      "secondary": "#HEX - description or null",
+      "accent": "#HEX - description or null",
+      "note": "Optional note if colors could not be determined"
     },
     "layoutChanges": ["Layout change 1", "Layout change 2", "Layout change 3"]
   },
