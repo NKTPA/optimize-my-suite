@@ -288,7 +288,7 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
             <div className="flex flex-wrap gap-2">
               {plan.formsAndCTAs.contactFormSpec.fields.map((field, i) => (
                 <span key={i} className="px-3 py-1.5 bg-secondary text-secondary-foreground text-sm rounded-full">
-                  {field}
+                  {typeof field === 'string' ? field : (field as any)?.label ?? JSON.stringify(field)}
                 </span>
               ))}
             </div>
