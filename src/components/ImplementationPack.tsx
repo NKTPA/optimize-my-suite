@@ -166,15 +166,19 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
   const { branding, limits } = useWorkspace();
 
   const handleExportPdf = () => {
-    // Pass branding only if user has custom branding access
-    const pdfBranding = limits.hasCustomBranding ? {
-      logoUrl: branding?.logo_url,
-      footerText: branding?.footer_text,
-      primaryColor: branding?.primary_color,
-      accentColor: branding?.accent_color,
-    } : undefined;
-    
-    generateImplementationPdf(plan, url, pdfBranding);
+    try {
+      // Pass branding only if user has custom branding access
+      const pdfBranding = limits.hasCustomBranding ? {
+        logoUrl: branding?.logo_url,
+        footerText: branding?.footer_text,
+        primaryColor: branding?.primary_color,
+        accentColor: branding?.accent_color,
+      } : undefined;
+      
+      generateImplementationPdf(plan, url, pdfBranding);
+    } catch (error) {
+      console.error("Error generating Implementation PDF:", error);
+    }
   };
 
   return (
