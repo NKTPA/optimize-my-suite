@@ -1888,12 +1888,42 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       const jsonMatch = jsonContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         jsonContent = jsonMatch[0];
+      } else {
+        // Response may be truncated — find the opening brace and try to repair
+        const braceStart = jsonContent.indexOf('{');
+        if (braceStart !== -1) {
+          jsonContent = jsonContent.substring(braceStart);
+        }
       }
       
       jsonContent = jsonContent
         .replace(/,\s*}/g, '}')
         .replace(/,\s*]/g, ']')
         .replace(/[\x00-\x1F\x7F]/g, ' ');
+      
+      // Detect and repair truncated JSON by balancing braces/brackets
+      const openBraces = (jsonContent.match(/{/g) || []).length;
+      const closeBraces = (jsonContent.match(/}/g) || []).length;
+      const openBrackets = (jsonContent.match(/\[/g) || []).length;
+      const closeBrackets = (jsonContent.match(/]/g) || []).length;
+      
+      if (openBraces !== closeBraces || openBrackets !== closeBrackets) {
+        logStep("WARNING: Truncated JSON detected, attempting repair", { openBraces, closeBraces, openBrackets, closeBrackets });
+        
+        // Remove any trailing partial key-value pair (e.g. `"key": "partial val`)
+        jsonContent = jsonContent.replace(/,\s*"[^"]*":\s*"[^"]*$/, '');
+        jsonContent = jsonContent.replace(/,\s*"[^"]*":\s*$/, '');
+        jsonContent = jsonContent.replace(/,\s*"[^"]*$/, '');
+        // Remove trailing comma
+        jsonContent = jsonContent.replace(/,\s*$/, '');
+        
+        // Close unclosed brackets and braces
+        const remainingBrackets = (jsonContent.match(/\[/g) || []).length - (jsonContent.match(/]/g) || []).length;
+        const remainingBraces = (jsonContent.match(/{/g) || []).length - (jsonContent.match(/}/g) || []).length;
+        
+        for (let i = 0; i < remainingBrackets; i++) jsonContent += ']';
+        for (let i = 0; i < remainingBraces; i++) jsonContent += '}';
+      }
       
       analysisResult = JSON.parse(jsonContent);
     } catch (parseError) {
