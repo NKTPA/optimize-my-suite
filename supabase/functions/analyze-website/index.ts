@@ -152,7 +152,8 @@ interface DualScore {
 
 function calculateDualScores(
   analysisResult: Record<string, unknown>,
-  url: string
+  url: string,
+  extractedData?: Record<string, unknown>
 ): DualScore {
   const environment = detectEnvironment(url);
   
@@ -195,14 +196,27 @@ function calculateDualScores(
 
   // Calculate readiness score
   let indexingScore = seoScore;
-  let analyticsScore = 70;
-  let structuredDataScore = 60;
+
+  const hasAnalytics = Boolean(extractedData?.hasGoogleAnalytics || extractedData?.hasGoogleTagManager);
+  const hasSchema = Boolean(extractedData?.hasSchema);
+
+  let analyticsScore: number;
+  let structuredDataScore: number;
+
+  if (hasAnalytics) {
+    analyticsScore = 90;
+  } else {
+    analyticsScore = environment.isPreview ? 75 : 20;
+  }
+
+  if (hasSchema) {
+    structuredDataScore = 85;
+  } else {
+    structuredDataScore = environment.isPreview ? 70 : 30;
+  }
 
   if (environment.isPreview) {
-    // Don't penalize preview sites for production-readiness items
     indexingScore = Math.max(indexingScore, 70);
-    analyticsScore = 80;
-    structuredDataScore = 70;
   }
 
   const productionReadinessScore = Math.round(
@@ -1858,7 +1872,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     }
 
     // Calculate dual scores
-    const dualScore = calculateDualScores(analysisResult, url);
+    const dualScore = calculateDualScores(analysisResult, url, extractedData);
     
     // Add dual scoring to the result
     analysisResult.dualScore = dualScore;
