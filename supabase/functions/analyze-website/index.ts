@@ -980,50 +980,86 @@ function getAnalysisPromptForType(siteType: WebsiteTypeInfo): string {
   const baseStructure = `
 ABSOLUTE RULE — ALT TEXT: The words "alt text" or "alt attributes" are BANNED from appearing in the Performance section. Before finalizing the Performance section output, scan it for these exact strings. If either string is found, delete the entire sentence containing it. Do not rewrite it. Delete it. Alt text belongs only in SEO.
 
-SCORING CONSISTENCY RULES: Scores must be deterministic and evidence-based, not impressionistic. Follow these anchor points exactly: A site with NO H1, NO meta description, and NO alt text on images must score SEO between 25-40. Never higher. A site with 20+ external scripts and unoptimized images must score Performance between 40-55. Never higher. A site with BBB + license number + 2 social platforms must score Trust between 50-60. Never lower than 50. A site with a contact form and visible phone number but no sticky header CTA must score Conversion between 40-55. Scores should not vary by more than 5 points across runs on the same unchanged site. If you are uncertain between two scores, pick the lower one — conservative scoring is more credible than optimistic scoring.
+IMPORTANT: You do NOT calculate scores. Scores are calculated deterministically in code. Your job is to:
+1. Detect signals (true/false or numeric counts) from the website content.
+2. Write narrative findings, recommendations, and actionable advice for each category.
+3. Return the signals block and the narrative text. Do NOT include any "score" fields.
 
-MANDATORY SCORING RULES: Scores must reflect actual evidence. Examples: No contact form or phone on a local service site = Conversion score 15-25. Missing meta description = SEO score 25-40. No H1 tag = SEO score 20-35. No testimonials or reviews = Trust score 20-35. Strong headline + clear CTA + testimonials = Messaging 75+. DO NOT cluster scores between 45-60. Each category must vary based on evidence.
+PHONE NUMBER RULES:
+- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
+
+TEXT FORMATTING RULES:
+- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
+
+PERFORMANCE SECTION RULES:
+You are ONLY allowed to write about these topics in the Performance section: external script count, render-blocking resources, image file sizes, lazy loading, WebP/AVIF formats, caching headers, CDN, TTFB. NOTHING ELSE.
+
+COPYRIGHT YEAR RULES:
+- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
 
 OUTPUT:
 Return ONLY a valid JSON object with the following shape (no extra commentary):
 
 {
+  "signals": {
+    "h1_present": boolean,
+    "value_prop_above_fold": boolean,
+    "service_area_stated": boolean,
+    "subheadline_present": boolean,
+    "phone_in_header": boolean,
+    "sticky_cta_present": boolean,
+    "above_fold_cta_present": boolean,
+    "click_to_call_enabled": boolean,
+    "nav_clear_and_structured": boolean,
+    "visual_hierarchy_to_cta": boolean,
+    "consistent_branding": boolean,
+    "viewport_meta_present": boolean,
+    "nav_collapses_mobile": boolean,
+    "phone_tappable_mobile": boolean,
+    "forms_usable_mobile": boolean,
+    "external_script_count": number,
+    "image_count": number,
+    "images_missing_alt": number,
+    "webp_used": boolean,
+    "h1_missing": boolean,
+    "meta_description_present": boolean,
+    "schema_markup_present": boolean,
+    "bbb_present": boolean,
+    "license_displayed": boolean,
+    "social_proof_numbers": boolean,
+    "team_photos_present": boolean,
+    "certifications_displayed": boolean,
+    "ssl_present": boolean
+  },
   "summary": {
-    "overallScore": number,
     "overview": "string",
     "quickWins": ["string", "string", "string"]
   },
   "messaging": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendedHeadline": "string",
     "recommendedSubheadline": "string",
     "elevatorPitch": "string"
   },
   "conversion": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendations": ["string", "string"],
     "sampleButtons": ["string", "string"]
   },
   "designUx": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendations": ["string", "string"]
   },
   "mobile": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendations": ["string", "string"]
   },
   "performance": {
-    "score": number,
     "findings": ["string", "string"],
     "heavyImages": ["string"],
     "recommendations": ["string", "string"]
   },
   "seo": {
-    "score": number,
     "findings": ["string", "string"],
     "recommendedTitle": "string",
     "recommendedMetaDescription": "string",
@@ -1032,7 +1068,6 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "checklist": ["string", "string"]
   },
   "trust": {
-    "score": number,
     "findings": ["string", "string"],
     "whyChooseUs": ["string", "string", "string"],
     "testimonialsBlock": "string"
@@ -1047,47 +1082,7 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
   }
 }
 
-ABSOLUTE RULE — SCORE STABILITY: Each category score MUST be derived exclusively from a fixed checklist of criteria signals, not from interpretation or overall impression. For each category: count how many criteria signals are present, how many are missing, and how many are partial. The score is determined by that count alone. Do NOT adjust scores based on context, industry, site quality, or how other categories scored. Running this audit on the same URL twice MUST produce the same score both times. If you are uncertain about a signal, mark it as missing — never inflate. Temperature and randomness must not affect scores.
-
-SCORING CALIBRATION (use the FULL 0–100 range — do NOT default everything to 50):
-- 90–100: Excellent. Best-in-class execution. Very few issues. Reserve for genuinely outstanding work.
-- 75–89: Good. Solid execution with minor improvements possible. Most professional sites land here on their strengths.
-- 55–74: Needs Work. Noticeable gaps or missed opportunities. Common for sites that haven't been optimized.
-- 35–54: Poor. Significant issues that are actively hurting conversions or credibility.
-- 0–34: Critical. Fundamental problems — broken, missing, or severely undermining the site's goals.
-
-IMPORTANT SCORING RULES:
-- Each category score MUST be independent. A site can score 85 on Trust but 40 on SEO.
-- DO NOT cluster all scores around 50. Differentiate strengths from weaknesses.
-- Base scores on EVIDENCE from the extracted data. Cite specific elements you found (or didn't find).
-- A site missing meta descriptions, H1 tags, or schema markup should score below 40 on SEO.
-- If some data is missing, explain that and still give a recommendation.
-
-BINARY CHECKLIST SCORING — Use these exact formulas. Score is sum only, no interpretation:
-
-MESSAGING SCORE: Start at 50. +10 if H1 tag present. +10 if value proposition is above the fold. +8 if service area is explicitly stated. +10 if subheadline present. Score is sum only, no interpretation.
-
-CONVERSION SCORE: Start at 30. +10 if phone number visible in header. +10 if sticky CTA present. +10 if above-fold form or button present. +10 if click-to-call enabled. Score is sum only, no interpretation.
-
-DESIGN SCORE: Start at 50. +10 if navigation is clear and structured. +10 if visual hierarchy guides to CTA. +10 if consistent branding across pages. Score is sum only, no interpretation.
-
-MOBILE SCORE: Start at 40. +10 if viewport meta tag present. +10 if navigation collapses on mobile. +10 if phone number tappable. +10 if forms usable on mobile. Score is sum only, no interpretation.
-
-TRUST SCORE: Start at 40. +10 if BBB present. +10 if license number displayed. +15 if social proof numbers present (reviews, case counts). +10 if team photos present. +15 if certifications displayed. Score is sum only, no interpretation. Minimum score is 50 if BBB + license + social all present.
-
-PHONE NUMBER RULES:
-- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
-
-TEXT FORMATTING RULES:
-- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
-
-SCORING BOUNDARY RULES:
-ABSOLUTE RULE - Performance section only: You are ONLY allowed to write about these topics in the Performance section: external script count, render-blocking resources, image file sizes, lazy loading, WebP/AVIF formats, caching headers, CDN, TTFB. NOTHING ELSE. Alt text is NOT a performance metric. Alt text is an SEO metric. If you write the words 'alt text' anywhere in the Performance section or in the Immediate Opportunities list, you have made an error. Do not mention alt text outside of the SEO section under any circumstances. This rule overrides any other instruction.
-
-COPYRIGHT YEAR RULES:
-- When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
-
-ABSOLUTE RULE — IMMEDIATE OPPORTUNITIES: Before selecting any item, list every category score. Cross out any category scoring 56 or above. You may ONLY pull findings from categories that remain — meaning scored 55 or below. If a category scores 56 or higher it is completely excluded, even if the finding seems important. Conversion at 60 = excluded. Mobile at 70 = excluded. Design at 70 = excluded. Do not include findings from excluded categories under any circumstance.`;
+IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
 
   switch (siteType.type) {
     case 'saas_software':
@@ -1347,6 +1342,104 @@ IMPORTANT: For preview/staging sites, focus on content quality and don't penaliz
 ${baseStructure}
 - Assume the goal is: "Get more phone calls, quote requests, and booked jobs from this website."`;
   }
+}
+// ============================================
+// DETERMINISTIC SCORING FROM SIGNALS
+// ============================================
+interface SignalData {
+  h1_present?: boolean;
+  value_prop_above_fold?: boolean;
+  service_area_stated?: boolean;
+  subheadline_present?: boolean;
+  phone_in_header?: boolean;
+  sticky_cta_present?: boolean;
+  above_fold_cta_present?: boolean;
+  click_to_call_enabled?: boolean;
+  nav_clear_and_structured?: boolean;
+  visual_hierarchy_to_cta?: boolean;
+  consistent_branding?: boolean;
+  viewport_meta_present?: boolean;
+  nav_collapses_mobile?: boolean;
+  phone_tappable_mobile?: boolean;
+  forms_usable_mobile?: boolean;
+  external_script_count?: number;
+  image_count?: number;
+  images_missing_alt?: number;
+  webp_used?: boolean;
+  h1_missing?: boolean;
+  meta_description_present?: boolean;
+  schema_markup_present?: boolean;
+  bbb_present?: boolean;
+  license_displayed?: boolean;
+  social_proof_numbers?: boolean;
+  team_photos_present?: boolean;
+  certifications_displayed?: boolean;
+  ssl_present?: boolean;
+}
+
+function calculateScoresFromSignals(s: SignalData) {
+  // MESSAGING: Start at 50
+  let messaging = 50;
+  if (s.h1_present) messaging += 10;
+  if (s.value_prop_above_fold) messaging += 15;
+  if (s.service_area_stated) messaging += 15;
+  if (s.subheadline_present) messaging += 10;
+  messaging = Math.min(messaging, 100);
+
+  // CONVERSION: Start at 30
+  let conversion = 30;
+  if (s.phone_in_header) conversion += 10;
+  if (s.sticky_cta_present) conversion += 20;
+  if (s.above_fold_cta_present) conversion += 20;
+  if (s.click_to_call_enabled) conversion += 10;
+  conversion = Math.min(conversion, 100);
+
+  // DESIGN: Start at 50
+  let design = 50;
+  if (s.nav_clear_and_structured) design += 15;
+  if (s.visual_hierarchy_to_cta) design += 15;
+  if (s.consistent_branding) design += 15;
+  design = Math.min(design, 100);
+
+  // MOBILE: Start at 30
+  let mobile = 30;
+  if (s.viewport_meta_present) mobile += 20;
+  if (s.nav_collapses_mobile) mobile += 15;
+  if (s.phone_tappable_mobile) mobile += 15;
+  if (s.forms_usable_mobile) mobile += 15;
+  mobile = Math.min(mobile, 100);
+
+  // PERFORMANCE: Start at 100, subtract
+  let performance = 100;
+  const scriptCount = s.external_script_count ?? 0;
+  if (scriptCount > 10) performance -= 20;
+  if (scriptCount > 25) performance -= 15;
+  if (s.image_count && s.images_missing_alt === s.image_count) performance -= 10;
+  if (!s.webp_used) performance -= 10;
+  performance = Math.max(performance, 0);
+
+  // SEO: Start at 60
+  let seo = 60;
+  if (s.h1_missing) seo -= 20;
+  if ((s.images_missing_alt ?? 0) > 0) seo -= 15;
+  if (s.meta_description_present) seo += 5;
+  if (s.schema_markup_present) seo += 10;
+  seo = Math.max(Math.min(seo, 100), 0);
+
+  // TRUST: Start at 40
+  let trust = 40;
+  if (s.bbb_present) trust += 10;
+  if (s.license_displayed) trust += 10;
+  if (s.social_proof_numbers) trust += 15;
+  if (s.team_photos_present) trust += 10;
+  if (s.certifications_displayed) trust += 15;
+  if (s.bbb_present && s.license_displayed && s.social_proof_numbers) trust = Math.max(trust, 50);
+  trust = Math.min(trust, 100);
+
+  // OVERALL: simple average
+  const overall = Math.round((messaging + conversion + design + mobile + performance + seo + trust) / 7);
+
+  return { messaging, conversion, design, mobile, performance, seo, trust, overall };
 }
 
 
@@ -1940,45 +2033,84 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     } catch (parseError) {
       logStep("ERROR: JSON parse failed", { error: parseError instanceof Error ? parseError.message : String(parseError) });
       
-      // Build evidence-based fallback scores from extractedData
-      const hasTitle = Boolean(extractedData?.title);
-      const hasMeta = Boolean(extractedData?.metaDescription);
-      const hasH1 = Array.isArray(extractedData?.headings?.h1s) && extractedData.headings.h1s.length > 0;
-      const hasForm = Boolean(extractedData?.forms?.hasForm);
-      const hasPhone = Array.isArray(extractedData?.phoneNumbers) && extractedData.phoneNumbers.length > 0;
-      const hasSSL = Boolean(extractedData?.technical?.hasSSL);
-      const hasViewport = Boolean(extractedData?.technical?.hasViewport);
-      const hasCTAs = Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0;
+      // Build fallback signals from extractedData
+      const fallbackSignals: SignalData = {
+        h1_present: Array.isArray(extractedData?.headings?.h1s) && extractedData.headings.h1s.length > 0,
+        h1_missing: !Array.isArray(extractedData?.headings?.h1s) || extractedData.headings.h1s.length === 0,
+        value_prop_above_fold: false,
+        service_area_stated: false,
+        subheadline_present: false,
+        phone_in_header: Array.isArray(extractedData?.phoneNumbers) && extractedData.phoneNumbers.length > 0,
+        sticky_cta_present: false,
+        above_fold_cta_present: Array.isArray(extractedData?.ctaButtons) && extractedData.ctaButtons.length > 0,
+        click_to_call_enabled: false,
+        nav_clear_and_structured: true,
+        visual_hierarchy_to_cta: false,
+        consistent_branding: true,
+        viewport_meta_present: Boolean(extractedData?.technical?.hasViewport),
+        nav_collapses_mobile: false,
+        phone_tappable_mobile: false,
+        forms_usable_mobile: Boolean(extractedData?.forms?.hasForm),
+        external_script_count: extractedData?.externalScripts ?? 0,
+        image_count: extractedData?.images?.count ?? 0,
+        images_missing_alt: extractedData?.images?.withoutAlt ?? 0,
+        webp_used: false,
+        meta_description_present: Boolean(extractedData?.metaDescription),
+        schema_markup_present: Boolean(extractedData?.hasSchema),
+        bbb_present: false,
+        license_displayed: false,
+        social_proof_numbers: false,
+        team_photos_present: false,
+        certifications_displayed: false,
+        ssl_present: Boolean(extractedData?.technical?.hasSSL),
+      };
 
-      const messagingScore = (hasTitle ? 25 : 0) + (hasH1 ? 25 : 0) + (hasMeta ? 20 : 0) + (hasCTAs ? 15 : 5);
-      const conversionScore = (hasForm ? 30 : 10) + (hasPhone ? 25 : 5) + (hasCTAs ? 25 : 5) + 5;
-      const designScore = (hasViewport ? 30 : 10) + (hasSSL ? 15 : 0) + 20;
-      const mobileScore = hasViewport ? 65 : 30;
-      const seoScore = (hasTitle ? 25 : 0) + (hasMeta ? 25 : 0) + (hasH1 ? 25 : 0) + 10;
-      const trustScore = (hasPhone ? 25 : 5) + (hasSSL ? 20 : 0) + 15;
-      const perfScore = 45; // Can't measure from HTML alone
-      const overallScore = Math.round((messagingScore + conversionScore + designScore + mobileScore + seoScore + trustScore + perfScore) / 7);
+      const fallbackScores = calculateScoresFromSignals(fallbackSignals);
 
       analysisResult = {
+        signals: fallbackSignals,
         summary: {
-          overallScore,
+          overallScore: fallbackScores.overall,
           overview: "Analysis partially completed. Some data could not be parsed.",
           quickWins: ["Review website manually for specific recommendations"]
         },
-        messaging: { score: messagingScore, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
-        conversion: { score: conversionScore, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
-        designUx: { score: designScore, findings: ["Could not fully analyze"], recommendations: [] },
-        mobile: { score: mobileScore, findings: ["Could not fully analyze"], recommendations: [] },
-        performance: { score: perfScore, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
-        seo: { score: seoScore, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
-        trust: { score: trustScore, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
+        messaging: { score: fallbackScores.messaging, findings: ["Could not fully analyze"], recommendedHeadline: "", recommendedSubheadline: "", elevatorPitch: "" },
+        conversion: { score: fallbackScores.conversion, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
+        designUx: { score: fallbackScores.design, findings: ["Could not fully analyze"], recommendations: [] },
+        mobile: { score: fallbackScores.mobile, findings: ["Could not fully analyze"], recommendations: [] },
+        performance: { score: fallbackScores.performance, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
+        seo: { score: fallbackScores.seo, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
+        trust: { score: fallbackScores.trust, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
         technical: { findings: ["Could not fully analyze"], recommendations: [] },
         aiServicePitch: { paragraph: "", bullets: [] },
         parseWarning: "Some analysis data could not be parsed correctly"
       };
     }
 
-    // Calculate dual scores
+    // ========================================
+    // DETERMINISTIC SCORE INJECTION
+    // ========================================
+    // Extract signals from AI response and calculate scores in code
+    const signals: SignalData = analysisResult.signals || {};
+    const scores = calculateScoresFromSignals(signals);
+    
+    logStep("Deterministic scores calculated from signals", {
+      signals: Object.keys(signals).length,
+      scores,
+    });
+
+    // Inject calculated scores into the analysis result
+    if (analysisResult.messaging) analysisResult.messaging.score = scores.messaging;
+    if (analysisResult.conversion) analysisResult.conversion.score = scores.conversion;
+    if (analysisResult.designUx) analysisResult.designUx.score = scores.design;
+    if (analysisResult.mobile) analysisResult.mobile.score = scores.mobile;
+    if (analysisResult.performance) analysisResult.performance.score = scores.performance;
+    if (analysisResult.seo) analysisResult.seo.score = scores.seo;
+    if (analysisResult.trust) analysisResult.trust.score = scores.trust;
+    if (!analysisResult.summary) analysisResult.summary = {};
+    analysisResult.summary.overallScore = scores.overall;
+
+    // Calculate dual scores using the deterministic scores
     const dualScore = calculateDualScores(analysisResult, url, extractedData);
     
     // Add dual scoring to the result
@@ -1998,7 +2130,6 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     if (analysisResult.summary) {
       analysisResult.summary.websiteQualityScore = dualScore.websiteQualityScore;
       analysisResult.summary.productionReadinessScore = dualScore.productionReadinessScore;
-      // Use the dual score's overall score for fair weighting
       analysisResult.summary.overallScore = dualScore.overallScore;
     }
     
@@ -2013,6 +2144,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       readinessScore: dualScore.productionReadinessScore,
       isPreview: environment.isPreview,
       websiteType: websiteType.type,
+      signalCount: Object.keys(signals).length,
     });
 
     return new Response(JSON.stringify(analysisResult), {
