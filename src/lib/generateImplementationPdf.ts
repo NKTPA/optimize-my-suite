@@ -111,15 +111,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   doc.rect(0, 0, pageWidth, 8, "F");
   
-  // Brand logo - only shown if explicitly provided via branding settings
-  const logoY = 35;
-  if (branding?.logoUrl) {
-    try {
-      doc.addImage(branding.logoUrl, "PNG", margin, logoY, 40, 40);
-    } catch (e) {
-      // Logo failed to load - silently skip, no fallback
-    }
-  }
+  // No logo on the cover page
+
   
   // Main title
   doc.setFontSize(36);
