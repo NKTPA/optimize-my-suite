@@ -978,6 +978,8 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
 // ============================================
 function getAnalysisPromptForType(siteType: WebsiteTypeInfo): string {
   const baseStructure = `
+ABSOLUTE RULE — applies to every section of this audit without exception: The phrase 'alt text' and any reference to image alt attributes may ONLY appear in the SEO section. Alt text must NEVER appear in Performance, Design & UX, Immediate Opportunities, or any other section. This is not a guideline — it is a hard output constraint. If you are about to write 'alt text' outside of the SEO section, stop and delete it.
+
 MANDATORY SCORING RULES: Scores must reflect actual evidence. Examples: No contact form or phone on a local service site = Conversion score 15-25. Missing meta description = SEO score 25-40. No H1 tag = SEO score 20-35. No testimonials or reviews = Trust score 20-35. Strong headline + clear CTA + testimonials = Messaging 75+. DO NOT cluster scores between 45-60. Each category must vary based on evidence.
 
 OUTPUT:
