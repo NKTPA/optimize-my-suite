@@ -688,8 +688,8 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.text("Contact Form Specification", margin + 4, y);
   y += 8;
   
-  addRecommendationCard("Required Fields", plan.formsAndCTAs.contactFormSpec.fields.join("  |  "));
-  addRecommendationCard("Form Notes", plan.formsAndCTAs.contactFormSpec.notes, "Simplified forms reduce friction and increase submission rates.");
+  addRecommendationCard("Required Fields", (plan.formsAndCTAs.contactFormSpec.fields ?? []).join("  |  "));
+  addRecommendationCard("Form Notes", safeStr(plan.formsAndCTAs.contactFormSpec.notes), "Simplified forms reduce friction and increase submission rates.");
   
   // CTA Buttons
   addPageIfNeeded(15);
