@@ -1057,7 +1057,10 @@ IMPORTANT SCORING RULES:
 - A site with a clear headline, strong CTA, and testimonials should score 75+ on Messaging and Trust.
 - A site missing meta descriptions, H1 tags, or schema markup should score below 40 on SEO.
 - A site with no clear CTA or contact form should score below 30 on Conversion.
-- If some data is missing, explain that and still give a recommendation.`;
+- If some data is missing, explain that and still give a recommendation.
+
+PHONE NUMBER RULES:
+- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.`;
 
   switch (siteType.type) {
     case 'saas_software':
