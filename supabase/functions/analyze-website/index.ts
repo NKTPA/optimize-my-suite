@@ -1066,8 +1066,7 @@ TEXT FORMATTING RULES:
 - Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.
 
 SCORING BOUNDARY RULES:
-STRICT RULE: NEVER mention image alt text, meta descriptions, or H1 tags anywhere in the Performance section — not in scores, findings, or recommendations. These belong exclusively in the SEO section. Performance findings must ONLY reference: external script count, render-blocking resources, image file sizes, lazy loading, WebP/AVIF format usage, browser caching headers, CDN usage, or Time to First Byte (TTFB). If you catch yourself writing 'alt text' in the Performance section, move it to SEO instead.
-- Performance score should ONLY reflect speed-related signals: number of external scripts, image file sizes, lazy loading, WebP usage, and load time indicators. Do NOT penalize Performance for missing alt text or missing meta descriptions — those belong in SEO only.
+ABSOLUTE RULE - Performance section only: You are ONLY allowed to write about these topics in the Performance section: external script count, render-blocking resources, image file sizes, lazy loading, WebP/AVIF formats, caching headers, CDN, TTFB. NOTHING ELSE. Alt text is NOT a performance metric. Alt text is an SEO metric. If you write the words 'alt text' anywhere in the Performance section or in the Immediate Opportunities list, you have made an error. Do not mention alt text outside of the SEO section under any circumstances. This rule overrides any other instruction.
 
 COPYRIGHT YEAR RULES:
 - When evaluating copyright years in footers, the current year is 2026. Do not flag a copyright year of 2026 as incorrect. Only flag copyright years that are more than 1 year behind the current year (e.g. 2024 or earlier).
