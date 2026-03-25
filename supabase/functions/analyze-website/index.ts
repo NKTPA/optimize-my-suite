@@ -1060,7 +1060,10 @@ IMPORTANT SCORING RULES:
 - If some data is missing, explain that and still give a recommendation.
 
 PHONE NUMBER RULES:
-- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.`;
+- When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
+
+TEXT FORMATTING RULES:
+- Never use special characters like '+P' or emoji in findings. Write all findings as clean plain text sentences only.`;
 
   switch (siteType.type) {
     case 'saas_software':
