@@ -1047,6 +1047,8 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
   }
 }
 
+ABSOLUTE RULE — SCORE STABILITY: Each category score MUST be derived exclusively from a fixed checklist of criteria signals, not from interpretation or overall impression. For each category: count how many criteria signals are present, how many are missing, and how many are partial. The score is determined by that count alone. Do NOT adjust scores based on context, industry, site quality, or how other categories scored. Running this audit on the same URL twice MUST produce the same score both times. If you are uncertain about a signal, mark it as missing — never inflate. Temperature and randomness must not affect scores.
+
 SCORING CALIBRATION (use the FULL 0–100 range — do NOT default everything to 50):
 - 90–100: Excellent. Best-in-class execution. Very few issues. Reserve for genuinely outstanding work.
 - 75–89: Good. Solid execution with minor improvements possible. Most professional sites land here on their strengths.
