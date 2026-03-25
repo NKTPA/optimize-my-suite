@@ -111,24 +111,14 @@ export function generateImplementationPdf(plan: ImplementationPlan, url: string,
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   doc.rect(0, 0, pageWidth, 8, "F");
   
-  // Brand logo - only shown if explicitly provided via branding prop
+  // Brand logo - only shown if explicitly provided via branding settings
   const logoY = 35;
   if (branding?.logoUrl) {
     try {
       doc.addImage(branding.logoUrl, "PNG", margin, logoY, 40, 40);
     } catch (e) {
-      // Logo failed to load - show URL as plain text instead
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
-      doc.text(validatedUrl, margin, logoY + 10);
+      // Logo failed to load - silently skip, no fallback
     }
-  } else {
-    // No logo provided - show client URL as plain text
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
-    doc.text(validatedUrl, margin, logoY + 10);
   }
   
   // Main title
