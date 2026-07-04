@@ -2263,6 +2263,48 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // Extract signals from AI response and calculate scores in code
     const llmSignals: SignalData = analysisResult.signals || {};
 
+    // Evidence gating: any subjective boolean returned as true without a
+    // non-empty verbatim evidence fragment is discarded (treated as false)
+    // before scoring. Missing evidence = unproven claim = conservative false.
+    const evidenceMap: Record<string, unknown> =
+      (analysisResult.evidence && typeof analysisResult.evidence === "object")
+        ? analysisResult.evidence as Record<string, unknown>
+        : {};
+    const EVIDENCE_GATED_KEYS = [
+      "value_prop_above_fold",
+      "service_area_stated",
+      "subheadline_present",
+      "hero_value_prop_specific",
+      "social_proof_above_fold",
+      "has_treatment_planner",
+      "has_mobile_persistent_cta",
+      "button_style_consistent",
+      "cta_visually_prominent",
+      "clear_visual_hierarchy",
+      "images_optimized_for_mobile",
+      "bbb_present",
+      "license_displayed",
+      "social_proof_numbers",
+      "team_photos_present",
+      "certifications_displayed",
+      "ssl_present",
+    ] as const;
+    const discardedForNoEvidence: string[] = [];
+    for (const key of EVIDENCE_GATED_KEYS) {
+      const raw = (llmSignals as unknown as Record<string, unknown>)[key];
+      if (raw === true) {
+        const ev = evidenceMap[key];
+        const evStr = typeof ev === "string" ? ev.trim() : "";
+        if (evStr.length === 0) {
+          (llmSignals as unknown as Record<string, unknown>)[key] = false;
+          discardedForNoEvidence.push(key);
+        }
+      }
+    }
+    if (discardedForNoEvidence.length > 0) {
+      console.log("[evidence-gate] discarded booleans (no evidence)", discardedForNoEvidence);
+    }
+
     // Override LLM signals with deterministically-parsed factual values.
     // The LLM is only trusted for subjective signals; all facts come from parseSiteSignals.
     const signals: SignalData = {
