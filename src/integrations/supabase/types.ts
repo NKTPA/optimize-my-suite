@@ -151,6 +151,7 @@ export type Database = {
           computed_scores: Json
           created_at: string
           id: string
+          llm_evidence: Json | null
           raw_signals: Json
           url: string
         }
@@ -158,6 +159,7 @@ export type Database = {
           computed_scores: Json
           created_at?: string
           id?: string
+          llm_evidence?: Json | null
           raw_signals: Json
           url: string
         }
@@ -165,6 +167,7 @@ export type Database = {
           computed_scores?: Json
           created_at?: string
           id?: string
+          llm_evidence?: Json | null
           raw_signals?: Json
           url?: string
         }
