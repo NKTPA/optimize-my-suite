@@ -667,7 +667,7 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
     results.performance.score,
     "performance",
     results.performance.findings,
-    results.performance.recommendations
+    buildPerformanceRecommendations(results.performance)
   );
   
   addCategorySection(
