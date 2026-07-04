@@ -1,4 +1,3 @@
-import jsPDF from "jspdf";
 import { AnalysisResult, FindingInput } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 import { generatePdfFilename, setPdfMetadata, PdfMetadataOptions, extractDomainFromUrl } from "./pdfMetadata";

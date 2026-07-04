@@ -12,7 +12,9 @@
  * All PDF generators MUST use these shared components.
  */
 
-import jsPDF from "jspdf";
+// Type-only import — jspdf runtime is loaded lazily inside createPdfContext
+// so it never appears in the initial marketing bundle.
+import type jsPDF from "jspdf";
 
 // ============ TYPES ============
 
@@ -98,8 +100,9 @@ export const PDF_COLORS = {
 /**
  * Create a new PDF context with consistent settings
  */
-export function createPdfContext(options?: { margin?: number; footerHeight?: number }): PdfContext {
-  const doc = new jsPDF();
+export async function createPdfContext(options?: { margin?: number; footerHeight?: number }): Promise<PdfContext> {
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = options?.margin || 18;
