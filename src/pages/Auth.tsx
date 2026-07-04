@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),

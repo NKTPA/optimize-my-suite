@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
+import { SEO } from "@/components/SEO";
 import productScreenshot from "@/assets/product-screenshot.png";
 
 // FAQ Item component with accordion behavior
