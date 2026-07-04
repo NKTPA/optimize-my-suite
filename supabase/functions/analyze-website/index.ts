@@ -75,8 +75,9 @@ type RateLimitOutcome =
   | { ok: true }
   | { ok: false; status: 429 | 503; body: Record<string, unknown> };
 
+// deno-lint-ignore no-explicit-any
 async function enforcePublicRateLimit(
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   ipHash: string,
   email: string | null,
 ): Promise<RateLimitOutcome> {
@@ -1663,7 +1664,8 @@ serve(async (req) => {
     // AUTHENTICATION CHECK
     // ========================================
     const authHeader = req.headers.get("Authorization");
-    let user: { id: string; email?: string | null } | null = null;
+    // deno-lint-ignore no-explicit-any
+    let user: any = null;
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "");
       const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
