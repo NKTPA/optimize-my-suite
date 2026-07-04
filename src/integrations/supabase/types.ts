@@ -148,18 +148,21 @@ export type Database = {
       }
       audit_rate_limits: {
         Row: {
+          allowed: boolean
           created_at: string
           email: string | null
           id: string
           ip_hash: string
         }
         Insert: {
+          allowed?: boolean
           created_at?: string
           email?: string | null
           id?: string
           ip_hash: string
         }
         Update: {
+          allowed?: boolean
           created_at?: string
           email?: string | null
           id?: string
