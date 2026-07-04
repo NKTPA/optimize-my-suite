@@ -926,7 +926,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let contentScore = 0;
   for (const kw of contentKeywords) {
-    if (lowerBody.includes(kw) || lowerHtml.includes(kw)) contentScore++;
+    if (kwMatch(lowerBody, kw)) contentScore++;
   }
   if (lowerHtml.includes('/blog') || lowerHtml.includes('/news') || lowerHtml.includes('/articles')) contentScore += 3;
   if (lowerHtml.includes('read more') && lowerHtml.includes('published')) contentScore += 2;
@@ -939,7 +939,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let nonprofitScore = 0;
   for (const kw of nonprofitKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) nonprofitScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) nonprofitScore++;
   }
   if (lowerHtml.includes('/donate') || lowerHtml.includes('give now')) nonprofitScore += 3;
   if (lowerHtml.includes('501(c)') || lowerHtml.includes('tax-deductible')) nonprofitScore += 3;
@@ -952,7 +952,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let portfolioScore = 0;
   for (const kw of portfolioKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) portfolioScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) portfolioScore++;
   }
   if (lowerHtml.includes('linkedin') && lowerHtml.includes('github')) portfolioScore += 2;
   if (lowerHtml.includes('hire me') || lowerHtml.includes('work with me')) portfolioScore += 2;
