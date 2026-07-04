@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getOrCreateWorkspaceForUser, isWorkspaceError, getOrCreateWorkspaceUsage } from "../_shared/workspace.ts";
 import { parseSiteSignals, type ParsedSignals } from "./parseSiteSignals.ts";
+import { fetchPageSpeed, type PageSpeedResult } from "./pagespeed.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -1637,6 +1638,11 @@ serve(async (req) => {
     // FETCH AND ANALYZE WEBSITE
     // ========================================
     let html: string | undefined;
+
+    // Kick off PageSpeed Insights fetch in parallel with HTML fetch.
+    // Resolves to null on any failure — must never block or break the audit.
+    const pageSpeedPromise = fetchPageSpeed(url);
+    let pageSpeedData: PageSpeedResult | null = null;
     
     // Option 1: Use manually provided HTML (for age-gated/blocked sites)
     if (manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0) {
@@ -1947,6 +1953,29 @@ serve(async (req) => {
 
     // Deterministic factual signal extraction (no LLM)
     let parsedSignals: ParsedSignals;
+
+    // Await PageSpeed result (started in parallel earlier). allSettled ensures
+    // a PSI failure never affects the rest of the audit.
+    try {
+      const [psiSettled] = await Promise.allSettled([pageSpeedPromise]);
+      if (psiSettled.status === "fulfilled") {
+        pageSpeedData = psiSettled.value;
+        if (pageSpeedData) {
+          logStep("PageSpeed data fetched", {
+            performanceScore: pageSpeedData.performanceScore,
+            fieldDataAvailable: pageSpeedData.fieldDataAvailable,
+          });
+        } else {
+          logStep("PageSpeed data unavailable (null)");
+        }
+      } else {
+        logStep("PageSpeed promise rejected", { error: String(psiSettled.reason) });
+        pageSpeedData = null;
+      }
+    } catch (_e) {
+      pageSpeedData = null;
+    }
+
     try {
       parsedSignals = parseSiteSignals(html, url);
       logStep("Parsed site signals", {
