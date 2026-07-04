@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   ArrowRight, 
+  RefreshCw,
   Target, 
   FileText, 
   MessageSquare, 
@@ -306,66 +307,62 @@ export default function Index() {
         {/* Free audit widget — public, near hero */}
         <HomepageAuditWidget />
 
-        {/* Social Proof Section */}
-        <section className="py-12 border-t border-border/50 bg-secondary/20">
+        {/* Built to Justify Your Recommendations */}
+        <section className="py-16 lg:py-20 border-t border-border/50 bg-secondary/20">
           <div className="container">
-            {/* Trust Badges */}
-            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 mb-8">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/50">
-                <Shield className="w-4 h-4 text-primary" />
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium">Data Encrypted in Transit</span>
+            <div className="text-center mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
+                Built to Justify Your Recommendations
+              </h2>
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Every score is backed by something clients can verify — not opinion dressed as analysis.
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
+                  <RefreshCw className="w-6 h-6" />
+                </div>
+                <h3 className="font-semibold text-foreground text-lg mb-2">Deterministic scoring</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Same site, same score, every run. Binary facts are parsed from the DOM, never guessed by AI.
+                </p>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/50">
-                <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M21.5 5.1l-2.8-2.8L12 9l-6.7-6.7L2.5 5.1 9.2 12l-6.7 6.9 2.8 2.8L12 15l6.7 6.7 2.8-2.8-6.7-6.9z"/>
-                </svg>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium">Built on Supabase</span>
+
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
+                  <Gauge className="w-6 h-6" />
+                </div>
+                <h3 className="font-semibold text-foreground text-lg mb-2">Real Google data</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Performance is measured via Google PageSpeed Insights (median of 3 runs), the same data Google uses in ranking.
+                </p>
               </div>
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card border border-border/50">
-                <BadgeCheck className="w-4 h-4 text-primary" />
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium">99.9% Uptime</span>
+
+              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
+                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <h3 className="font-semibold text-foreground text-lg mb-2">Evidence-gated AI</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Every subjective judgment must cite verbatim page text or it's discarded before scoring.
+                </p>
               </div>
             </div>
 
-            {/* Who This Is For */}
-            <p className="text-center text-sm text-foreground/80 font-medium mb-8">
-              Built for marketing agencies, SEO consultants, and web design firms who need to prove their value.
-            </p>
-            
-            {/* Testimonials */}
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
-                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none" aria-hidden="true">"</span>
-                <p className="text-sm text-muted-foreground italic mb-4 mt-6">
-                  "We closed a $12K website rebuild in the first week using the audit reports. The before/after scoring made it a no-brainer for the client."
-                </p>
-                <div>
-                  <p className="font-semibold text-foreground text-sm">Marketing Agency Director</p>
-                  <p className="text-xs text-muted-foreground">Digital Marketing Agency</p>
-                </div>
-              </div>
-              
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
-                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none" aria-hidden="true">"</span>
-                <p className="text-sm text-muted-foreground italic mb-4 mt-6">
-                  "My team used to spend 3 hours per audit manually. Now we batch 50 prospects and have reports ready before lunch."
-                </p>
-                <div>
-                  <p className="font-semibold text-foreground text-sm">SEO Consultant</p>
-                  <p className="text-xs text-muted-foreground">Freelance SEO Specialist</p>
-                </div>
-              </div>
-              
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card relative">
-                <span className="absolute top-4 left-4 text-5xl text-primary/15 font-serif leading-none" aria-hidden="true">"</span>
-                <p className="text-sm text-muted-foreground italic mb-4 mt-6">
-                  "The white-label PDFs look better than what we were producing in-house. Clients actually read these reports."
-                </p>
-                <div>
-                  <p className="font-semibold text-foreground text-sm">Digital Strategist</p>
-                  <p className="text-xs text-muted-foreground">Web Design Agency</p>
-                </div>
-              </div>
+            <div className="text-center">
+              <a
+                href="/sample-report.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex"
+              >
+                <Button variant="outline" size="lg" className="gap-2">
+                  <FileText className="w-4 h-4" />
+                  See a real report
+                </Button>
+              </a>
             </div>
           </div>
         </section>
