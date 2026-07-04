@@ -1412,9 +1412,9 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   if (s.subheadline_present) messaging += 10;
   messaging = Math.min(messaging, 100);
 
-  // CONVERSION: Start at 88, apply deductions
-  // cta_text_quality is hardcoded to 'generic' until a CTA text parser is built
-  const ctaTextQuality = 'generic';
+  // CONVERSION: Start at 92, apply deductions
+  // cta_text_quality: read the actual LLM signal; missing data is treated as generic (conservative default)
+  const ctaTextQuality = s.cta_text_quality;
   // has_lead_magnet is derived from has_treatment_planner signal
   const hasLeadMagnet = s.has_treatment_planner ?? false;
   let conversion = 92;
@@ -1424,11 +1424,12 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   if (!s.cta_above_fold) conversion -= 10;
   if ((s.form_field_count ?? 0) > 15) conversion -= 10;
   if (!s.has_short_form) conversion -= 5;
-  if (ctaTextQuality === 'generic') conversion -= 3;
+  if (ctaTextQuality === 'generic' || ctaTextQuality === undefined) conversion -= 3;
   if (!s.has_chat_widget) conversion -= 3;
-  if (s.cta_consistency === 'inconsistent') conversion -= 3;
+  if (s.cta_consistency !== 'consistent') conversion -= 3;
   if (!hasLeadMagnet) conversion -= 3;
   conversion = Math.max(Math.min(conversion, 100), 0);
+
 
   // DESIGN: Start at 100, apply deductions
   let design = 100;
