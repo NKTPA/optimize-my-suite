@@ -767,6 +767,7 @@ interface WebsiteTypeInfo {
   displayName: string;
   confidence: 'high' | 'medium' | 'low';
   signals: string[];
+  allScores?: Record<WebsiteType, number>;
 }
 
 const WEBSITE_TYPE_DISPLAY: Record<WebsiteType, string> = {
@@ -997,6 +998,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
     displayName: WEBSITE_TYPE_DISPLAY[maxType],
     confidence,
     signals,
+    allScores: scores,
   };
 }
 
