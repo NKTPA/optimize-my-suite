@@ -986,6 +986,9 @@ IMPORTANT: You do NOT calculate scores. Scores are calculated deterministically 
 2. Write narrative findings, recommendations, and actionable advice for each category.
 3. Return the signals block and the narrative text. Do NOT include any "score" fields.
 
+GROUND TRUTH FACTS:
+The user prompt will include a "Verified facts about this page (do not contradict these)" block with measured values for H1 count, form field counts, external script count, image counts, alt-text coverage, WebP usage, tap-to-call links, meta description, schema types, viewport, and canonical. These are measured deterministically in code — treat them as absolute truth. Do NOT restate a contradicting claim in any finding or recommendation. Do NOT include these factual fields in your signals output; you are only responsible for SUBJECTIVE signals (e.g. cta_visually_prominent, hero_value_prop_specific, clear_visual_hierarchy, cta_consistency, value_prop_above_fold, service_area_stated, subheadline_present, has_sticky_cta, cta_above_fold, has_short_form, has_chat_widget, has_treatment_planner, social_proof_above_fold, button_style_consistent, has_mobile_persistent_cta, images_optimized_for_mobile, nav_depth_to_service, body_font_size_adequate, service_page_scroll_depth, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, nav_item_count).
+
 PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
 
