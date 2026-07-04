@@ -106,6 +106,7 @@ const plans = [
 ];
 
 export default function Index() {
+  const currentYear = new Date().getFullYear();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showPlanModal, setShowPlanModal] = useState(false);
