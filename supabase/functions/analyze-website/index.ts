@@ -1034,6 +1034,25 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "certifications_displayed": boolean,
     "ssl_present": boolean
   },
+  "evidence": {
+    "value_prop_above_fold": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "service_area_stated": "string",
+    "subheadline_present": "string",
+    "hero_value_prop_specific": "string",
+    "social_proof_above_fold": "string",
+    "has_treatment_planner": "string",
+    "has_mobile_persistent_cta": "string",
+    "button_style_consistent": "string",
+    "cta_visually_prominent": "string",
+    "clear_visual_hierarchy": "string",
+    "images_optimized_for_mobile": "string",
+    "bbb_present": "string",
+    "license_displayed": "string",
+    "social_proof_numbers": "string",
+    "team_photos_present": "string",
+    "certifications_displayed": "string",
+    "ssl_present": "string"
+  },
   "summary": {
     "overview": "string",
     "quickWins": ["string", "string", "string"]
@@ -1094,6 +1113,10 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "social_proof_above_fold": true ONLY if review stars, testimonial quotes, or trust badges are visible without scrolling.
 - "button_style_consistent": false if buttons across different pages use different colors, sizes, or border styles.
 When uncertain about ANY design signal, return false. Do not guess true.
+
+EVIDENCE REQUIREMENT FOR SUBJECTIVE BOOLEANS:
+For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_treatment_planner, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present.
+When uncertain, return false. A true without quoted evidence will be discarded (treated as false) before scoring. Do NOT fabricate evidence — quote the page verbatim.
 
 IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
 
@@ -2239,6 +2262,48 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // ========================================
     // Extract signals from AI response and calculate scores in code
     const llmSignals: SignalData = analysisResult.signals || {};
+
+    // Evidence gating: any subjective boolean returned as true without a
+    // non-empty verbatim evidence fragment is discarded (treated as false)
+    // before scoring. Missing evidence = unproven claim = conservative false.
+    const evidenceMap: Record<string, unknown> =
+      (analysisResult.evidence && typeof analysisResult.evidence === "object")
+        ? analysisResult.evidence as Record<string, unknown>
+        : {};
+    const EVIDENCE_GATED_KEYS = [
+      "value_prop_above_fold",
+      "service_area_stated",
+      "subheadline_present",
+      "hero_value_prop_specific",
+      "social_proof_above_fold",
+      "has_treatment_planner",
+      "has_mobile_persistent_cta",
+      "button_style_consistent",
+      "cta_visually_prominent",
+      "clear_visual_hierarchy",
+      "images_optimized_for_mobile",
+      "bbb_present",
+      "license_displayed",
+      "social_proof_numbers",
+      "team_photos_present",
+      "certifications_displayed",
+      "ssl_present",
+    ] as const;
+    const discardedForNoEvidence: string[] = [];
+    for (const key of EVIDENCE_GATED_KEYS) {
+      const raw = (llmSignals as unknown as Record<string, unknown>)[key];
+      if (raw === true) {
+        const ev = evidenceMap[key];
+        const evStr = typeof ev === "string" ? ev.trim() : "";
+        if (evStr.length === 0) {
+          (llmSignals as unknown as Record<string, unknown>)[key] = false;
+          discardedForNoEvidence.push(key);
+        }
+      }
+    }
+    if (discardedForNoEvidence.length > 0) {
+      console.log("[evidence-gate] discarded booleans (no evidence)", discardedForNoEvidence);
+    }
 
     // Override LLM signals with deterministically-parsed factual values.
     // The LLM is only trusted for subjective signals; all facts come from parseSiteSignals.
