@@ -1112,6 +1112,7 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "service_page_scroll_depth": "high" if user must scroll more than 2 full viewports to reach CTA or key info on service pages. "low" if CTA is within first viewport.
 - "social_proof_above_fold": true ONLY if review stars, testimonial quotes, or trust badges are visible without scrolling.
 - "button_style_consistent": false if buttons across different pages use different colors, sizes, or border styles.
+- "has_interactive_qualifier": true ONLY if the page offers an interactive tool that qualifies or engages a prospect BEFORE contact — e.g., a treatment planner, quiz, cost/price calculator, or self-assessment. Explicitly EXCLUDED (return false): chat widgets, plain contact forms, newsletter signups, and booking/appointment calendars.
 When uncertain about ANY design signal, return false. Do not guess true.
 
 EVIDENCE REQUIREMENT FOR SUBJECTIVE BOOLEANS:
