@@ -1433,8 +1433,8 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   conversion = Math.max(Math.min(conversion, 100), 0);
 
   // DESIGN: Start at 100, apply deductions
-
   let design = 100;
+
   if (!s.h1_present) design -= 10;
   if (!s.cta_visually_prominent) design -= 8;
   if (!s.clear_visual_hierarchy) design -= 7;
