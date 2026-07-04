@@ -1953,6 +1953,29 @@ serve(async (req) => {
 
     // Deterministic factual signal extraction (no LLM)
     let parsedSignals: ParsedSignals;
+
+    // Await PageSpeed result (started in parallel earlier). allSettled ensures
+    // a PSI failure never affects the rest of the audit.
+    try {
+      const [psiSettled] = await Promise.allSettled([pageSpeedPromise]);
+      if (psiSettled.status === "fulfilled") {
+        pageSpeedData = psiSettled.value;
+        if (pageSpeedData) {
+          logStep("PageSpeed data fetched", {
+            performanceScore: pageSpeedData.performanceScore,
+            fieldDataAvailable: pageSpeedData.fieldDataAvailable,
+          });
+        } else {
+          logStep("PageSpeed data unavailable (null)");
+        }
+      } else {
+        logStep("PageSpeed promise rejected", { error: String(psiSettled.reason) });
+        pageSpeedData = null;
+      }
+    } catch (_e) {
+      pageSpeedData = null;
+    }
+
     try {
       parsedSignals = parseSiteSignals(html, url);
       logStep("Parsed site signals", {
