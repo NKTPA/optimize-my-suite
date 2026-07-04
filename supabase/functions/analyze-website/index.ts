@@ -1369,8 +1369,10 @@ interface SignalData {
   form_field_count?: number;
   has_short_form?: boolean;
   has_chat_widget?: boolean;
+  cta_text_quality?: string;
   cta_consistency?: string;
   has_treatment_planner?: boolean;
+
   cta_visually_prominent?: boolean;
   clear_visual_hierarchy?: boolean;
   hero_value_prop_specific?: boolean;
