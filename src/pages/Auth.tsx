@@ -186,6 +186,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Sign In — OptimizeMySuite"
+        description="Sign in to your OptimizeMySuite agency account to generate white-label website audit reports."
+        canonicalPath="/auth"
+      />
       {/* Background decoration */}
       <div className="absolute inset-0 gradient-hero opacity-[0.03]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />

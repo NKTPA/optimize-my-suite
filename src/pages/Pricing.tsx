@@ -155,6 +155,11 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Pricing — OptimizeMySuite"
+        description="Simple pricing for agencies. Generate unlimited white-label website audit reports with objective scoring. Start free."
+        canonicalPath="/pricing"
+      />
       {/* Navigation */}
       <nav className="container pt-6">
         <div className="flex items-center justify-between">

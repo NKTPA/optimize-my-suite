@@ -122,6 +122,11 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      <SEO
+        title="OptimizeMySuite — White-Label Website Audit Tool for Agencies"
+        description="Generate white-label website audit reports with objective, repeatable scoring. Built for marketing agencies, SEO consultants, and web design firms."
+        canonicalPath="/"
+      />
       {/* Hero Section */}
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-hero opacity-[0.08]" />
