@@ -107,6 +107,17 @@ export default function Index() {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+
+  // Pin sticky header after scrolling past the hero region
+  useEffect(() => {
+    const onScroll = () => {
+      setIsPinned(window.scrollY > 480);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Redirect logged-in users to dashboard
   useEffect(() => {
@@ -122,6 +133,38 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* Sticky pinned header — appears after scrolling past hero */}
+      <div
+        aria-hidden={!isPinned}
+        className={`fixed top-0 inset-x-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md shadow-sm motion-safe:transition-all motion-safe:duration-300 ${
+          isPinned
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 -translate-y-full pointer-events-none"
+        }`}
+      >
+        <div className="container px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14">
+            <HeaderBrand textFallback />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Link to="/pricing" className="hidden sm:inline-flex">
+                <Button variant="ghost" size="sm">Pricing</Button>
+              </Link>
+              <Link to="/auth" className="hidden sm:inline-flex">
+                <Button variant="ghost" size="sm">Login</Button>
+              </Link>
+              <Link to="/dashboard/analyze">
+                <Button
+                  size="sm"
+                  className="text-xs sm:text-sm px-3 sm:px-4 bg-[#2746C7] text-white hover:bg-[#1f3aa8]"
+                >
+                  Get Your Free Audit
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <SEO
         title="OptimizeMySuite — White-Label Website Audit Tool for Agencies"
         description="Generate white-label website audit reports with objective, repeatable scoring. Built for marketing agencies, SEO consultants, and web design firms."
