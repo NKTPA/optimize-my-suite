@@ -1945,6 +1945,23 @@ serve(async (req) => {
       hasPhone: extractedData.phoneNumbers.length > 0
     });
 
+    // Deterministic factual signal extraction (no LLM)
+    let parsedSignals: ParsedSignals;
+    try {
+      parsedSignals = parseSiteSignals(html, url);
+      logStep("Parsed site signals", {
+        h1Count: parsedSignals.h1Count,
+        maxFormFieldCount: parsedSignals.maxFormFieldCount,
+        externalScriptCount: parsedSignals.externalScriptCount,
+        imageCount: parsedSignals.imageCount,
+        imagesMissingAlt: parsedSignals.imagesMissingAlt,
+        isLikelySPA: parsedSignals.isLikelySPA,
+      });
+    } catch (parseErr) {
+      logStep("parseSiteSignals failed, using defaults", { error: parseErr instanceof Error ? parseErr.message : String(parseErr) });
+      parsedSignals = parseSiteSignals("", url);
+    }
+
     // Detect website type for adaptive scoring
     const websiteType = detectWebsiteType(extractedData, html, url);
     logStep("Website type detected", {
