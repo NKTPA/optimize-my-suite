@@ -13,6 +13,7 @@ import {
   Check,
   Download,
   Code2,
+  Loader2,
 } from "lucide-react";
 import { generateLovableRebuildPrompt } from "@/lib/generateLovablePrompt";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "@/lib/urlValidation";
@@ -165,8 +166,11 @@ function LovableRebuildSection({ plan, url }: { plan: ImplementationPlan; url: s
 
 export function ImplementationPack({ plan, url }: ImplementationPackProps) {
   const { branding, limits } = useWorkspace();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
+    if (isExportingPdf) return;
+    setIsExportingPdf(true);
     try {
       console.log("Starting Implementation PDF generation…");
       const pdfBranding = (limits.hasCustomBranding && (branding?.logo_url || branding?.footer_text || branding?.primary_color)) ? {
@@ -176,11 +180,13 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
         accentColor: branding?.accent_color,
       } : undefined;
       
-      generateImplementationPdf(plan, url, pdfBranding);
+      await generateImplementationPdf(plan, url, pdfBranding);
       console.log("Implementation PDF generated successfully");
     } catch (error) {
       console.error("Error generating Implementation PDF:", error);
       toast.error("Failed to generate PDF. Check console for details.");
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 
@@ -191,9 +197,18 @@ export function ImplementationPack({ plan, url }: ImplementationPackProps) {
         <p className="text-muted-foreground mb-4">
           Ready-to-apply copy and specifications. Click the copy icon to grab any section.
         </p>
-        <Button onClick={handleExportPdf} variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
-          Export Implementation PDF
+        <Button onClick={handleExportPdf} disabled={isExportingPdf} variant="outline" className="gap-2">
+          {isExportingPdf ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Preparing report...
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              Export Implementation PDF
+            </>
+          )}
         </Button>
       </div>
 
