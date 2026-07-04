@@ -2180,7 +2180,25 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // DETERMINISTIC SCORE INJECTION
     // ========================================
     // Extract signals from AI response and calculate scores in code
-    const signals: SignalData = analysisResult.signals || {};
+    const llmSignals: SignalData = analysisResult.signals || {};
+
+    // Override LLM signals with deterministically-parsed factual values.
+    // The LLM is only trusted for subjective signals; all facts come from parseSiteSignals.
+    const signals: SignalData = {
+      ...llmSignals,
+      h1_present: parsedSignals.h1Count > 0,
+      h1_missing: parsedSignals.h1Count === 0,
+      form_field_count: parsedSignals.maxFormFieldCount,
+      mobile_form_field_count: parsedSignals.maxFormFieldCount,
+      external_script_count: parsedSignals.externalScriptCount,
+      has_tap_to_call: parsedSignals.hasTapToCallLink,
+      image_count: parsedSignals.imageCount,
+      images_missing_alt: parsedSignals.imagesMissingAlt,
+      webp_used: parsedSignals.usesWebP,
+      meta_description_present: parsedSignals.metaDescription.length > 0,
+      schema_markup_present: parsedSignals.schemaTypes.length > 0,
+    };
+    analysisResult.signals = signals;
     const scores = calculateScoresFromSignals(signals);
     
     logStep("Deterministic scores calculated from signals", {
@@ -2225,6 +2243,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // Add unverified items indicator
     analysisResult.hasUnverifiedChecks = dualScore.unverifiedItems.length > 0;
     analysisResult.unverifiedItems = dualScore.unverifiedItems;
+
+    // Flag pages that appear to be SPA shells where rendered content is limited
+    if (parsedSignals.isLikelySPA) {
+      analysisResult.renderingLimited = true;
+    }
 
     logStep("Analysis complete", { 
       url, 
