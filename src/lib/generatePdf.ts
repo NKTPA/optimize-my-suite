@@ -50,6 +50,38 @@ const colors = {
   accent: PDF_COLORS.accent,
 };
 
+// Build performance-specific recommendation lines that surface real Lighthouse
+// metrics when available, or an estimation notice when they are not.
+function buildPerformanceRecommendations(perf: AnalysisResult["performance"]): string[] {
+  const lines: string[] = [];
+  const source = perf.performanceDataSource ?? "estimated";
+
+  if (source === "measured") {
+    const lcp = typeof perf.lcpMs === "number" ? perf.lcpMs : null;
+    const cls = typeof perf.clsValue === "number" ? perf.clsValue : null;
+    const tbt = typeof perf.tbtMs === "number" ? perf.tbtMs : null;
+
+    if (lcp !== null) {
+      const s = (lcp / 1000).toFixed(1);
+      const rating = lcp < 2500 ? "good" : lcp > 4000 ? "poor" : "needs improvement";
+      lines.push(`Largest Contentful Paint: ${s}s (${rating})`);
+    }
+    if (cls !== null) {
+      const rating = cls < 0.1 ? "good" : cls > 0.25 ? "poor" : "needs improvement";
+      lines.push(`Cumulative Layout Shift: ${cls.toFixed(2)} (${rating})`);
+    }
+    if (tbt !== null) {
+      const rating = tbt < 200 ? "good" : tbt > 600 ? "poor" : "needs improvement";
+      lines.push(`Total Blocking Time: ${Math.round(tbt)}ms (${rating})`);
+    }
+    lines.push("Measured via Google PageSpeed Insights — the same data Google uses in ranking.");
+  } else {
+    lines.push("Note: lab measurement unavailable for this run; score estimated from page composition.");
+  }
+
+  return [...lines, ...(perf.recommendations ?? [])];
+}
+
 // Business impact descriptions for each category
 const CATEGORY_BUSINESS_CONTEXT: Record<string, {
   impacts: string;
@@ -667,7 +699,7 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
     results.performance.score,
     "performance",
     results.performance.findings,
-    results.performance.recommendations
+    buildPerformanceRecommendations(results.performance)
   );
   
   addCategorySection(

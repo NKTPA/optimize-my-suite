@@ -1399,7 +1399,7 @@ interface SignalData {
   ssl_present?: boolean;
 }
 
-function calculateScoresFromSignals(s: SignalData) {
+function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResult | null) {
   // MESSAGING: Start at 50
   let messaging = 50;
   if (s.h1_present) messaging += 10;
@@ -1449,14 +1449,25 @@ function calculateScoresFromSignals(s: SignalData) {
   if (!s.body_font_size_adequate) mobile -= 3;
   mobile = Math.max(mobile, 0);
 
-  // PERFORMANCE: Start at 100, subtract
-  let performance = 100;
+  // PERFORMANCE: legacy signal-based score (kept as fallback and minor factor)
+  let legacySignalScore = 100;
   const scriptCount = s.external_script_count ?? 0;
-  if (scriptCount > 10) performance -= 20;
-  if (scriptCount > 25) performance -= 15;
-  if (s.image_count && s.images_missing_alt === s.image_count) performance -= 10;
-  if (!s.webp_used) performance -= 10;
-  performance = Math.max(performance, 0);
+  if (scriptCount > 10) legacySignalScore -= 20;
+  if (scriptCount > 25) legacySignalScore -= 15;
+  if (s.image_count && s.images_missing_alt === s.image_count) legacySignalScore -= 10;
+  if (!s.webp_used) legacySignalScore -= 10;
+  legacySignalScore = Math.max(legacySignalScore, 0);
+
+  let performance: number;
+  let performanceDataSource: "measured" | "estimated";
+  if (pageSpeedData) {
+    performance = Math.round(0.8 * pageSpeedData.performanceScore + 0.2 * legacySignalScore);
+    performance = Math.max(Math.min(performance, 100), 0);
+    performanceDataSource = "measured";
+  } else {
+    performance = legacySignalScore;
+    performanceDataSource = "estimated";
+  }
 
   // SEO: Start at 60
   let seo = 60;
@@ -1479,7 +1490,7 @@ function calculateScoresFromSignals(s: SignalData) {
   // OVERALL: simple average
   const overall = Math.round((messaging + conversion + design + mobile + performance + seo + trust) / 7);
 
-  return { messaging, conversion, design, mobile, performance, seo, trust, overall };
+  return { messaging, conversion, design, mobile, performance, seo, trust, overall, performanceDataSource };
 }
 
 
@@ -2183,7 +2194,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         ssl_present: Boolean(extractedData?.technical?.hasSSL),
       };
 
-      const fallbackScores = calculateScoresFromSignals(fallbackSignals);
+      const fallbackScores = calculateScoresFromSignals(fallbackSignals, pageSpeedData);
 
       analysisResult = {
         signals: fallbackSignals,
@@ -2196,7 +2207,17 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         conversion: { score: fallbackScores.conversion, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
         designUx: { score: fallbackScores.design, findings: ["Could not fully analyze"], recommendations: [] },
         mobile: { score: fallbackScores.mobile, findings: ["Could not fully analyze"], recommendations: [] },
-        performance: { score: fallbackScores.performance, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
+        performance: {
+          score: fallbackScores.performance,
+          findings: ["Could not fully analyze"],
+          heavyImages: [],
+          recommendations: [],
+          performanceDataSource: fallbackScores.performanceDataSource,
+          lcpMs: pageSpeedData?.lcpMs ?? null,
+          clsValue: pageSpeedData?.clsValue ?? null,
+          tbtMs: pageSpeedData?.tbtMs ?? null,
+          fieldDataAvailable: pageSpeedData?.fieldDataAvailable ?? false,
+        },
         seo: { score: fallbackScores.seo, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
         trust: { score: fallbackScores.trust, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
         technical: { findings: ["Could not fully analyze"], recommendations: [] },
@@ -2228,7 +2249,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       schema_markup_present: parsedSignals.schemaTypes.length > 0,
     };
     analysisResult.signals = signals;
-    const scores = calculateScoresFromSignals(signals);
+    const scores = calculateScoresFromSignals(signals, pageSpeedData);
     
     logStep("Deterministic scores calculated from signals", {
       signals: Object.keys(signals).length,
@@ -2240,7 +2261,14 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     if (analysisResult.conversion) analysisResult.conversion.score = scores.conversion;
     if (analysisResult.designUx) analysisResult.designUx.score = scores.design;
     if (analysisResult.mobile) analysisResult.mobile.score = scores.mobile;
-    if (analysisResult.performance) analysisResult.performance.score = scores.performance;
+    if (analysisResult.performance) {
+      analysisResult.performance.score = scores.performance;
+      analysisResult.performance.performanceDataSource = scores.performanceDataSource;
+      analysisResult.performance.lcpMs = pageSpeedData?.lcpMs ?? null;
+      analysisResult.performance.clsValue = pageSpeedData?.clsValue ?? null;
+      analysisResult.performance.tbtMs = pageSpeedData?.tbtMs ?? null;
+      analysisResult.performance.fieldDataAvailable = pageSpeedData?.fieldDataAvailable ?? false;
+    }
     if (analysisResult.seo) analysisResult.seo.score = scores.seo;
     if (analysisResult.trust) analysisResult.trust.score = scores.trust;
     if (!analysisResult.summary) analysisResult.summary = {};

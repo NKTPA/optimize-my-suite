@@ -98,6 +98,11 @@ export interface AnalysisResult {
     findings: FindingInput[];
     heavyImages: string[];
     recommendations: string[];
+    performanceDataSource?: "measured" | "estimated";
+    lcpMs?: number | null;
+    clsValue?: number | null;
+    tbtMs?: number | null;
+    fieldDataAvailable?: boolean;
   };
   seo: {
     score: number;
