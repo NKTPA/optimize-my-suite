@@ -43,6 +43,89 @@ function logStep(step: string, details?: unknown) {
 }
 
 // ============================================
+// RATE LIMITING (public/unauthenticated audits)
+// ============================================
+const PUBLIC_IP_DAILY_LIMIT = 3;
+const GLOBAL_DAILY_LIMIT = 25;
+
+function getCallerIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0].trim();
+  return req.headers.get("x-real-ip")
+    || req.headers.get("cf-connecting-ip")
+    || "unknown";
+}
+
+async function hashIp(ip: string): Promise<string> {
+  const salt = Deno.env.get("AUDIT_IP_SALT") || "";
+  const data = new TextEncoder().encode(`${ip}:${salt}`);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function rateLimitLog(reason: string, ipHash: string) {
+  console.log(
+    `[analyze-website] ${JSON.stringify({ source: "rate-limit", reason, ip_hash: ipHash })}`,
+  );
+}
+
+type RateLimitOutcome =
+  | { ok: true }
+  | { ok: false; status: 429 | 503; body: Record<string, unknown> };
+
+// deno-lint-ignore no-explicit-any
+async function enforcePublicRateLimit(
+  admin: any,
+  ipHash: string,
+  email: string | null,
+): Promise<RateLimitOutcome> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: insertError } = await admin
+    .from("audit_rate_limits")
+    .insert({ ip_hash: ipHash, email });
+  if (insertError) {
+    // Fail-open on infra error, but log it. Do NOT block legitimate users.
+    logStep("WARNING: rate-limit insert failed", { error: insertError.message });
+    return { ok: true };
+  }
+
+  const { count: ipCount, error: ipErr } = await admin
+    .from("audit_rate_limits")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", ipHash)
+    .gte("created_at", since);
+  if (!ipErr && typeof ipCount === "number" && ipCount > PUBLIC_IP_DAILY_LIMIT) {
+    rateLimitLog("ip_daily_cap", ipHash);
+    return {
+      ok: false,
+      status: 429,
+      body: {
+        error: "You've reached the free audit limit for today. Please try again tomorrow or create an account for higher limits.",
+        rateLimited: true,
+      },
+    };
+  }
+
+  const { count: globalCount, error: gErr } = await admin
+    .from("audit_rate_limits")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", since);
+  if (!gErr && typeof globalCount === "number" && globalCount > GLOBAL_DAILY_LIMIT) {
+    rateLimitLog("global_daily_cap", ipHash);
+    return {
+      ok: false,
+      status: 429,
+      body: { error: "daily audit limit reached — try tomorrow.", rateLimited: true },
+    };
+  }
+
+  return { ok: true };
+}
+
+// ============================================
 // ENVIRONMENT DETECTION
 // ============================================
 type EnvironmentType = 
@@ -1560,46 +1643,65 @@ serve(async (req) => {
 
   try {
     // ========================================
-    // AUTHENTICATION CHECK
+    // KILL SWITCH
     // ========================================
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      logStep("ERROR: No authorization header");
+    const auditsEnabled = (Deno.env.get("AUDITS_ENABLED") ?? "true").toLowerCase();
+    if (auditsEnabled === "false") {
+      const ipHashKS = await hashIp(getCallerIp(req));
+      rateLimitLog("audits_disabled", ipHashKS);
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Audits are temporarily unavailable. Please try again later." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    if (userError || !user) {
-      logStep("ERROR: Invalid token", { error: userError?.message });
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired authentication token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // ========================================
+    // AUTHENTICATION CHECK
+    // ========================================
+    const authHeader = req.headers.get("Authorization");
+    // deno-lint-ignore no-explicit-any
+    let user: any = null;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: { user: authedUser }, error: userError } = await supabaseUser.auth.getUser();
+      if (userError || !authedUser) {
+        logStep("Auth token invalid — treating as public audit", { error: userError?.message });
+      } else {
+        user = authedUser;
+        logStep("User authenticated", { userId: user.id, email: user.email });
+      }
     }
 
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    // ========================================
+    // PUBLIC AUDIT RATE LIMIT (unauthenticated only)
+    // ========================================
+    if (!user) {
+      const ipHash = await hashIp(getCallerIp(req));
+      const outcome = await enforcePublicRateLimit(supabaseAdmin, ipHash, null);
+      if (!outcome.ok) {
+        return new Response(
+          JSON.stringify(outcome.body),
+          { status: outcome.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      logStep("Public audit accepted (rate limit ok)");
+    }
 
     // ========================================
     // USAGE LIMIT CHECK
     // ========================================
     const ownerEmail = getOwnerEmail();
-    const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
-    
-    if (!isOwner) {
+    const isOwner = !!user && !!ownerEmail && user.email?.toLowerCase() === ownerEmail;
+
+    if (user && !isOwner) {
       const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
       
       if (isWorkspaceError(workspaceResult)) {
@@ -1669,8 +1771,10 @@ serve(async (req) => {
       } else {
         logStep("Usage incremented", { newUsage: currentUsage + 1 });
       }
-    } else {
+    } else if (user && isOwner) {
       logStep("Owner account - bypassing usage limits");
+    } else {
+      logStep("Public audit - bypassing workspace/usage");
     }
 
     // ========================================
