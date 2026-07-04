@@ -657,7 +657,7 @@ export default function Index() {
                 Website audit tool for agencies. White-label website reports. Agency SEO audit tool.
               </p>
               <p className="text-xs text-muted-foreground">
-                © 2025 OptimizeMySuite. All rights reserved.
+                © {currentYear} OptimizeMySuite
               </p>
             </div>
             
