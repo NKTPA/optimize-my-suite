@@ -1638,6 +1638,11 @@ serve(async (req) => {
     // FETCH AND ANALYZE WEBSITE
     // ========================================
     let html: string | undefined;
+
+    // Kick off PageSpeed Insights fetch in parallel with HTML fetch.
+    // Resolves to null on any failure — must never block or break the audit.
+    const pageSpeedPromise = fetchPageSpeed(url);
+    let pageSpeedData: PageSpeedResult | null = null;
     
     // Option 1: Use manually provided HTML (for age-gated/blocked sites)
     if (manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0) {
