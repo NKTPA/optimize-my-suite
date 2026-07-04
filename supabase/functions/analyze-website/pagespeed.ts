@@ -28,7 +28,7 @@ function num(v: unknown): number | null {
   return null;
 }
 
-export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | null> {
+async function fetchPageSpeedOnce(url: string, attempt: number): Promise<PageSpeedResult | null> {
   const controller = new AbortController();
   const TIMEOUT_MS = 60_000;
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -118,10 +118,9 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
 
     console.log(JSON.stringify({
       source: "PSI",
-      performanceScore: result.performanceScore,
-      lcp: result.lcpMs,
-      cls: result.clsValue,
-      tbt: result.tbtMs,
+      attempt,
+      score: result.performanceScore,
+      elapsedMs: Date.now() - startedAt,
     }));
 
     return result;
@@ -130,6 +129,7 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
     const isTimeout = msg.includes("aborted") || (err as any)?.name === "AbortError";
     console.error(JSON.stringify({
       source: "PSI",
+      attempt,
       url,
       httpStatus,
       errorMessage: isTimeout ? `timeout after ${TIMEOUT_MS}ms` : msg,
@@ -140,4 +140,33 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+// Runs PSI 3 times sequentially, picks the median-scoring successful run for
+// its full metric set. If only 2 succeed, uses the lower (conservative). If 1,
+// uses it. If 0, returns null so the caller's estimated fallback engages.
+export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | null> {
+  const ATTEMPTS = 3;
+  const results: PageSpeedResult[] = [];
+  for (let i = 1; i <= ATTEMPTS; i++) {
+    const r = await fetchPageSpeedOnce(url, i);
+    if (r) results.push(r);
+  }
+
+  if (results.length === 0) return null;
+  if (results.length === 1) return results[0];
+
+  // Pick the run whose score is the median (2 successes → lower of the two).
+  const sorted = [...results].sort((a, b) => a.performanceScore - b.performanceScore);
+  const chosen = results.length === 2 ? sorted[0] : sorted[1];
+
+  console.log(JSON.stringify({
+    source: "PSI",
+    summary: "median-selected",
+    successes: results.length,
+    scores: results.map((r) => r.performanceScore),
+    chosenScore: chosen.performanceScore,
+  }));
+
+  return chosen;
 }
