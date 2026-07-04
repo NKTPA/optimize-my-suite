@@ -12,5 +12,8 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /login
+Disallow: /auth
 
 Sitemap: https://optimizemysuite.com/sitemap.xml
