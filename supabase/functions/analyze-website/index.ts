@@ -806,6 +806,18 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   const h2s = extractedData.headings.h2s.map(h => h.toLowerCase());
   const allHeadings = [...h1s, ...h2s].join(' ');
 
+  // Word-boundary keyword matcher: prevents substring collisions like
+  // "in order to" -> order, "restore" -> store, "returns on investment" -> returns,
+  // "financial products" -> product. Escapes regex metachars and treats internal
+  // whitespace as flexible (\s+). Uses lookarounds so digits/underscores/letters
+  // adjacent to a keyword don't match; multi-word phrases still work.
+  const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const kwMatch = (haystack: string, kw: string): boolean => {
+    const pattern = escapeRe(kw).replace(/\s+/g, '\\s+');
+    const re = new RegExp(`(?:^|[^a-z0-9_])${pattern}(?:$|[^a-z0-9_])`, 'i');
+    return re.test(haystack);
+  };
+
   // ===== SAAS / SOFTWARE SIGNALS =====
   const saasKeywords = ['saas', 'software', 'platform', 'api', 'dashboard', 'pricing', 'free trial', 
     'sign up', 'get started', 'demo', 'features', 'integrations', 'automation', 'workflow',
@@ -815,7 +827,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let saasScore = 0;
   for (const kw of saasKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw) || allHeadings.includes(kw)) saasScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw) || kwMatch(allHeadings, kw)) saasScore++;
   }
   for (const pattern of saasPatterns) {
     if (pattern.test(lowerHtml)) saasScore += 2;
@@ -835,7 +847,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let localScore = 0;
   for (const kw of localKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) localScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) localScore++;
   }
   if (extractedData.phoneNumbers.length > 0) localScore += 2;
   if (extractedData.addresses.length > 0) localScore += 2;
@@ -846,21 +858,28 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   scores.local_service = localScore;
   if (localScore >= 5) signals.push('Local service business patterns detected');
 
-  // ===== E-COMMERCE SIGNALS =====
-  const ecomKeywords = ['shop', 'cart', 'checkout', 'add to cart', 'buy now', 'product', 'products',
-    'shipping', 'free shipping', 'returns', 'order', 'orders', 'store', 'collection', 'catalog'];
-  
-  let ecomScore = 0;
-  for (const kw of ecomKeywords) {
-    if (lowerBody.includes(kw) || lowerHtml.includes(kw)) ecomScore++;
+  // ===== E-COMMERCE SIGNALS (tiered) =====
+  // Weak: generic words that appear on many non-ecom sites (1 pt each, word-bounded).
+  // Strong: platform fingerprints, real cart/checkout paths, add-to-cart / buy-now UI.
+  // Rule: ecommerce classification requires at least one STRONG signal — weak
+  // signals alone can never win. Also removes the /\$\d+\.\d{2}/ price rule since
+  // fee disclosures on service/advisory sites trip it.
+  const ecomWeakKeywords = ['shop', 'product', 'products', 'shipping', 'free shipping',
+    'returns', 'order', 'orders', 'store', 'collection', 'catalog'];
+  let ecomWeak = 0;
+  for (const kw of ecomWeakKeywords) {
+    if (kwMatch(lowerBody, kw)) ecomWeak++;
   }
-  if (/add.to.cart/i.test(lowerHtml)) ecomScore += 3;
-  if (/buy.now/i.test(lowerHtml)) ecomScore += 2;
-  if (lowerHtml.includes('shopify') || lowerHtml.includes('woocommerce') || lowerHtml.includes('bigcommerce')) ecomScore += 3;
-  if (/\$\d+\.\d{2}/.test(lowerHtml)) ecomScore += 2;
-  if (lowerHtml.includes('/cart') || lowerHtml.includes('/checkout')) ecomScore += 3;
-  scores.ecommerce = ecomScore;
-  if (ecomScore >= 5) signals.push('E-commerce shopping patterns detected');
+  let ecomStrong = 0;
+  if (/\/cart(\b|\/|\?|"|')/i.test(lowerHtml)) ecomStrong += 3;
+  if (/\/checkout(\b|\/|\?|"|')/i.test(lowerHtml)) ecomStrong += 3;
+  if (/add[\s\-_]to[\s\-_]cart/i.test(lowerHtml)) ecomStrong += 3;
+  if (/\bbuy\s*now\b/i.test(lowerHtml)) ecomStrong += 2;
+  if (/\b(shopify|woocommerce|bigcommerce|magento|prestashop|squarespace-commerce)\b/i.test(lowerHtml)) ecomStrong += 3;
+  if (/cdn\.shopify\.com|shopifycdn|wc-ajax|woocommerce-page/i.test(lowerHtml)) ecomStrong += 3;
+  // Gate: no strong signal => weak signals cannot classify as ecommerce.
+  scores.ecommerce = ecomStrong > 0 ? ecomStrong + ecomWeak : 0;
+  if (scores.ecommerce >= 5) signals.push('E-commerce shopping patterns detected (strong: ' + ecomStrong + ', weak: ' + ecomWeak + ')');
 
   // ===== PROFESSIONAL SERVICES SIGNALS =====
   const proKeywords = ['agency', 'consulting', 'consultant', 'law firm', 'attorney', 'lawyer', 'accountant',
@@ -868,11 +887,17 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
     'portfolio', 'our work', 'services we offer', 'industries we serve',
     'surgery', 'surgeon', 'cosmetic', 'plastic surgery', 'medical', 'clinic', 'doctor', 'dr.', 'physician',
     'dental', 'dentist', 'dermatology', 'medspa', 'med spa', 'botox', 'consultation', 'patient',
-    'treatment', 'procedure', 'board certified', 'hipaa'];
+    'treatment', 'procedure', 'board certified', 'hipaa',
+    // Financial services (route into professional_services)
+    'financial planning', 'financial advisor', 'financial advisors', 'financial advisory',
+    'wealth management', 'wealth advisor', 'investment advisory', 'investment advisor',
+    'retirement planning', 'retirement', 'estate planning', 'tax planning',
+    'fiduciary', '401k', '401(k)', 'ira', 'annuity', 'annuities', 'portfolio management',
+    'assets under management', 'aum', 'registered investment advisor', 'ria'];
   
   let proScore = 0;
   for (const kw of proKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) proScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) proScore++;
   }
   if (lowerHtml.includes('schedule a consultation') || lowerHtml.includes('book a call')) proScore += 2;
   if (lowerHtml.includes('our team') || lowerHtml.includes('meet the team')) proScore += 1;
@@ -888,7 +913,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let restaurantScore = 0;
   for (const kw of restaurantKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) restaurantScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) restaurantScore++;
   }
   if (lowerHtml.includes('opentable') || lowerHtml.includes('resy') || lowerHtml.includes('yelp')) restaurantScore += 2;
   if (lowerHtml.includes('/menu') || lowerHtml.includes('/reservations')) restaurantScore += 3;
@@ -901,7 +926,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let contentScore = 0;
   for (const kw of contentKeywords) {
-    if (lowerBody.includes(kw) || lowerHtml.includes(kw)) contentScore++;
+    if (kwMatch(lowerBody, kw)) contentScore++;
   }
   if (lowerHtml.includes('/blog') || lowerHtml.includes('/news') || lowerHtml.includes('/articles')) contentScore += 3;
   if (lowerHtml.includes('read more') && lowerHtml.includes('published')) contentScore += 2;
@@ -914,7 +939,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let nonprofitScore = 0;
   for (const kw of nonprofitKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) nonprofitScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) nonprofitScore++;
   }
   if (lowerHtml.includes('/donate') || lowerHtml.includes('give now')) nonprofitScore += 3;
   if (lowerHtml.includes('501(c)') || lowerHtml.includes('tax-deductible')) nonprofitScore += 3;
@@ -927,7 +952,7 @@ function detectWebsiteType(extractedData: ReturnType<typeof extractDataFromHtml>
   
   let portfolioScore = 0;
   for (const kw of portfolioKeywords) {
-    if (lowerBody.includes(kw) || title.includes(kw)) portfolioScore++;
+    if (kwMatch(lowerBody, kw) || kwMatch(title, kw)) portfolioScore++;
   }
   if (lowerHtml.includes('linkedin') && lowerHtml.includes('github')) portfolioScore += 2;
   if (lowerHtml.includes('hire me') || lowerHtml.includes('work with me')) portfolioScore += 2;
