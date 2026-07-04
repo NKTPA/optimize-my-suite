@@ -4,6 +4,7 @@ import { ImplementationPlan } from "@/types/implementation";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 import { generatePdfFilename, setPdfMetadata } from "./pdfMetadata";
+import { omsLogoBase64 } from "@/assets/omsLogoBase64";
 
 /** Safely coerce any value to a string for PDF rendering — prevents null/undefined crashes in splitTextToSize */
 const safeStr = (v: unknown): string => (v == null ? '' : String(v));
@@ -113,8 +114,25 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
   doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
   doc.rect(0, 0, pageWidth, 8, "F");
   
-  // No logo on the cover page
-
+  // OptimizeMySuite logo on cover page (skip in white-label mode)
+  if (!isWhiteLabel) {
+    if (!omsLogoBase64) {
+      console.error("omsLogoBase64 is empty — cannot render OptimizeMySuite logo on Implementation Pack cover.");
+    } else {
+      try {
+        // Max height 40pt (~14.1mm); preserve 2:1 aspect ratio of source logo (1024x512)
+        const logoHeightMm = 14;
+        const logoWidthMm = logoHeightMm * 2;
+        doc.addImage(omsLogoBase64, "PNG", margin, 22, logoWidthMm, logoHeightMm);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
+        doc.text("PREPARED BY OptimizeMySuite", margin + logoWidthMm + 4, 22 + logoHeightMm / 2 + 1);
+      } catch (err) {
+        console.error("Failed to render OptimizeMySuite logo on Implementation Pack cover:", err);
+      }
+    }
+  }
   
   // Main title
   doc.setFontSize(36);
