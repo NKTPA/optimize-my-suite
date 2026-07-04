@@ -1403,7 +1403,11 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   // MESSAGING: Start at 50
   let messaging = 50;
   if (s.h1_present) messaging += 10;
-  if (s.value_prop_above_fold) messaging += 15;
+  // Quality-gated value-prop bonus: full credit only when the hero value prop
+  // is BOTH present above the fold AND judged specific/benefit-oriented.
+  if (s.value_prop_above_fold) {
+    messaging += s.hero_value_prop_specific === true ? 15 : 5;
+  }
   if (s.service_area_stated) messaging += 15;
   if (s.subheadline_present) messaging += 10;
   messaging = Math.min(messaging, 100);
