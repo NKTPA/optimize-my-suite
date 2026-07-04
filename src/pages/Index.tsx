@@ -194,9 +194,17 @@ export default function Index() {
             <div className="flex items-center gap-1 sm:gap-2">
               <Link to="/pricing"><Button variant="ghost" size="sm" className="px-2 sm:px-3">Pricing</Button></Link>
               <Link to="/auth"><Button variant="ghost" size="sm" className="px-2 sm:px-3 hidden sm:inline-flex">Login</Button></Link>
-              <Button variant="default" size="sm" className="text-xs sm:text-sm px-2 sm:px-4" onClick={() => setShowPlanModal(true)}>
+              <Button variant="default" size="sm" className="text-xs sm:text-sm px-2 sm:px-4 hidden sm:inline-flex" onClick={() => setShowPlanModal(true)}>
                 Start Free Trial
               </Button>
+              <Link to="/dashboard/analyze">
+                <Button
+                  size="sm"
+                  className="text-xs sm:text-sm px-3 sm:px-4 bg-[#2746C7] text-white hover:bg-[#1f3aa8]"
+                >
+                  Get Your Free Audit
+                </Button>
+              </Link>
             </div>
           </div>
         </nav>
