@@ -6,9 +6,10 @@ interface SEOProps {
   title: string;
   description: string;
   canonicalPath: string;
+  schema?: Record<string, unknown>;
 }
 
-export function SEO({ title, description, canonicalPath }: SEOProps) {
+export function SEO({ title, description, canonicalPath, schema }: SEOProps) {
   const url = SITE_URL + canonicalPath;
   return (
     <Helmet>
@@ -18,6 +19,9 @@ export function SEO({ title, description, canonicalPath }: SEOProps) {
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
       <meta property="og:url" content={url} />
+      {schema && (
+        <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      )}
     </Helmet>
   );
 }

@@ -126,6 +126,18 @@ export default function Index() {
         title="OptimizeMySuite — White-Label Website Audit Tool for Agencies"
         description="Generate white-label website audit reports with objective, repeatable scoring. Built for marketing agencies, SEO consultants, and web design firms."
         canonicalPath="/"
+        schema={{
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "OptimizeMySuite",
+          applicationCategory: "BusinessApplication",
+          operatingSystem: "Web",
+          offers: {
+            "@type": "Offer",
+            price: "49",
+            priceCurrency: "USD",
+          },
+        }}
       />
       {/* Hero Section */}
       <header className="relative overflow-hidden">
