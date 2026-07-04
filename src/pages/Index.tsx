@@ -303,6 +303,9 @@ export default function Index() {
       </header>
 
       <main>
+        {/* Free audit widget — public, near hero */}
+        <HomepageAuditWidget />
+
         {/* Social Proof Section */}
         <section className="py-12 border-t border-border/50 bg-secondary/20">
           <div className="container">
