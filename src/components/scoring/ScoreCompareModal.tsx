@@ -127,11 +127,14 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
     onClose();
   };
 
-  const handleExportPdf = () => {
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
     if (!productionResults || !previewResults) return;
-    
+    if (isExportingPdf) return;
+    setIsExportingPdf(true);
     try {
-      generateBeforeAfterPdf({
+      await generateBeforeAfterPdf({
         originalUrl: productionUrl,
         optimizedUrl: previewUrl,
         originalResults: productionResults,
@@ -147,6 +150,8 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
         description: "Unable to generate PDF. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 
@@ -287,11 +292,21 @@ export function ScoreCompareModal({ open, onClose, currentUrl, originalUrl }: Sc
           {productionResults && previewResults && (
             <Button
               onClick={handleExportPdf}
+              disabled={isExportingPdf}
               variant="outline"
               className="w-full gap-2"
             >
-              <Download className="w-4 h-4" />
-              Export Before vs After PDF Report
+              {isExportingPdf ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Preparing report...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4" />
+                  Export Before vs After PDF Report
+                </>
+              )}
             </Button>
           )}
         </div>

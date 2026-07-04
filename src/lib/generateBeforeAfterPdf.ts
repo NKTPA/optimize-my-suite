@@ -1,4 +1,5 @@
-import jsPDF from "jspdf";
+// Type-only import — jspdf runtime is loaded lazily inside the export.
+import type jsPDF from "jspdf";
 import { AnalysisResult, isNotScorable, detectLovablePlaceholder } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 import { generatePdfFilename, setPdfMetadata, extractDomainFromUrl } from "./pdfMetadata";
@@ -212,10 +213,11 @@ function truncateUrl(url: string, maxLength: number): string {
   return url.substring(0, maxLength - 3) + "...";
 }
 
-export function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
+export async function generateBeforeAfterPdf(data: BeforeAfterPdfData) {
   const { originalUrl, optimizedUrl, originalResults, optimizedResults, agencyName, clientName, branding } = data;
-  
-  const doc = new jsPDF();
+
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;

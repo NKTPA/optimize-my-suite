@@ -50,8 +50,23 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
   const { toast } = useToast();
   const { session } = useAuth();
 
-  const handleExportPdf = () => {
-    generateAnalysisPdf(results, url);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const handleExportPdf = async () => {
+    if (isExportingPdf) return;
+    setIsExportingPdf(true);
+    try {
+      await generateAnalysisPdf(results, url);
+    } catch (error) {
+      console.error("Error generating Analysis PDF:", error);
+      toast({
+        title: "Export Failed",
+        description: "Unable to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   const handleGenerateImplementation = async () => {
@@ -169,9 +184,18 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
               </>
             )}
           </Button>
-          <Button onClick={handleExportPdf} variant="outline" className="gap-2">
-            <Download className="w-4 h-4" />
-            Export PDF Report
+          <Button onClick={handleExportPdf} disabled={isExportingPdf} variant="outline" className="gap-2">
+            {isExportingPdf ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Preparing report...
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                Export PDF Report
+              </>
+            )}
           </Button>
         </div>
       </div>
