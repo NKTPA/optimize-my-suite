@@ -123,7 +123,8 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
         // Max height 40pt (~14.1mm); preserve 2:1 aspect ratio of source logo (1024x512)
         const logoHeightMm = 14;
         const logoWidthMm = logoHeightMm * 2;
-        doc.addImage(omsLogoBase64, "PNG", margin, 22, logoWidthMm, logoHeightMm);
+        // Source data URI is JPEG-encoded; use JPEG format for addImage
+        doc.addImage(omsLogoBase64, "JPEG", margin, 22, logoWidthMm, logoHeightMm);
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(colors.textLight[0], colors.textLight[1], colors.textLight[2]);
