@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { getOrCreateWorkspaceForUser, isWorkspaceError, getOrCreateWorkspaceUsage } from "../_shared/workspace.ts";
+import { parseSiteSignals, type ParsedSignals } from "./parseSiteSignals.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -985,6 +986,9 @@ IMPORTANT: You do NOT calculate scores. Scores are calculated deterministically 
 2. Write narrative findings, recommendations, and actionable advice for each category.
 3. Return the signals block and the narrative text. Do NOT include any "score" fields.
 
+GROUND TRUTH FACTS:
+The user prompt will include a "Verified facts about this page (do not contradict these)" block with measured values for H1 count, form field counts, external script count, image counts, alt-text coverage, WebP usage, tap-to-call links, meta description, schema types, viewport, and canonical. These are measured deterministically in code — treat them as absolute truth. Do NOT restate a contradicting claim in any finding or recommendation. Do NOT include these factual fields in your signals output; you are only responsible for SUBJECTIVE signals (e.g. cta_visually_prominent, hero_value_prop_specific, clear_visual_hierarchy, cta_consistency, value_prop_above_fold, service_area_stated, subheadline_present, has_sticky_cta, cta_above_fold, has_short_form, has_chat_widget, has_treatment_planner, social_proof_above_fold, button_style_consistent, has_mobile_persistent_cta, images_optimized_for_mobile, nav_depth_to_service, body_font_size_adequate, service_page_scroll_depth, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, nav_item_count).
+
 PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
 
@@ -1002,13 +1006,11 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
 
 {
   "signals": {
-    "h1_present": boolean,
     "value_prop_above_fold": boolean,
     "service_area_stated": boolean,
     "subheadline_present": boolean,
     "has_sticky_cta": boolean,
     "cta_above_fold": boolean,
-    "form_field_count": number,
     "has_short_form": boolean,
     "has_chat_widget": boolean,
     "cta_consistency": "consistent" | "inconsistent",
@@ -1021,18 +1023,9 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "nav_item_count": number,
     "button_style_consistent": boolean,
     "has_mobile_persistent_cta": boolean,
-    "mobile_form_field_count": number,
     "images_optimized_for_mobile": boolean,
-    "has_tap_to_call": boolean,
     "nav_depth_to_service": number,
     "body_font_size_adequate": boolean,
-    "external_script_count": number,
-    "image_count": number,
-    "images_missing_alt": number,
-    "webp_used": boolean,
-    "h1_missing": boolean,
-    "meta_description_present": boolean,
-    "schema_markup_present": boolean,
     "bbb_present": boolean,
     "license_displayed": boolean,
     "social_proof_numbers": boolean,
@@ -1952,6 +1945,23 @@ serve(async (req) => {
       hasPhone: extractedData.phoneNumbers.length > 0
     });
 
+    // Deterministic factual signal extraction (no LLM)
+    let parsedSignals: ParsedSignals;
+    try {
+      parsedSignals = parseSiteSignals(html, url);
+      logStep("Parsed site signals", {
+        h1Count: parsedSignals.h1Count,
+        maxFormFieldCount: parsedSignals.maxFormFieldCount,
+        externalScriptCount: parsedSignals.externalScriptCount,
+        imageCount: parsedSignals.imageCount,
+        imagesMissingAlt: parsedSignals.imagesMissingAlt,
+        isLikelySPA: parsedSignals.isLikelySPA,
+      });
+    } catch (parseErr) {
+      logStep("parseSiteSignals failed, using defaults", { error: parseErr instanceof Error ? parseErr.message : String(parseErr) });
+      parsedSignals = parseSiteSignals("", url);
+    }
+
     // Detect website type for adaptive scoring
     const websiteType = detectWebsiteType(extractedData, html, url);
     logStep("Website type detected", {
@@ -1975,6 +1985,30 @@ serve(async (req) => {
       ? `\n\nNOTE: This is a PREVIEW/STAGING environment (${environment.provider}). Score the content quality fairly but don't penalize for missing production items like analytics, canonical URLs, custom domains, or robots.txt blocking.`
       : '';
 
+    const verifiedFactsBlock = `\n\nVerified facts about this page (do not contradict these):
+${JSON.stringify({
+  h1Count: parsedSignals.h1Count,
+  h1Text: parsedSignals.h1Text,
+  titleText: parsedSignals.titleText,
+  titleLength: parsedSignals.titleLength,
+  metaDescription: parsedSignals.metaDescription,
+  metaDescriptionLength: parsedSignals.metaDescriptionLength,
+  canonicalHref: parsedSignals.canonicalHref,
+  imageCount: parsedSignals.imageCount,
+  imagesMissingAlt: parsedSignals.imagesMissingAlt,
+  altCoveragePct: parsedSignals.altCoveragePct,
+  externalScriptCount: parsedSignals.externalScriptCount,
+  maxFormFieldCount: parsedSignals.maxFormFieldCount,
+  hasViewportMeta: parsedSignals.hasViewportMeta,
+  schemaTypes: parsedSignals.schemaTypes,
+  hasOgTitle: parsedSignals.hasOgTitle,
+  hasOgImage: parsedSignals.hasOgImage,
+  usesWebP: parsedSignals.usesWebP,
+  hasTapToCallLink: parsedSignals.hasTapToCallLink,
+  bodyTextLength: parsedSignals.bodyTextLength,
+  isLikelySPA: parsedSignals.isLikelySPA,
+}, null, 2)}`;
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -1990,7 +2024,7 @@ serve(async (req) => {
           { role: "system", content: analysisPrompt },
           {
             role: "user",
-            content: `Analyze this website: ${url}${environmentContext}
+            content: `Analyze this website: ${url}${environmentContext}${verifiedFactsBlock}
 
 Website Type: ${websiteType.displayName} (${websiteType.confidence} confidence)
 
@@ -2146,7 +2180,25 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // DETERMINISTIC SCORE INJECTION
     // ========================================
     // Extract signals from AI response and calculate scores in code
-    const signals: SignalData = analysisResult.signals || {};
+    const llmSignals: SignalData = analysisResult.signals || {};
+
+    // Override LLM signals with deterministically-parsed factual values.
+    // The LLM is only trusted for subjective signals; all facts come from parseSiteSignals.
+    const signals: SignalData = {
+      ...llmSignals,
+      h1_present: parsedSignals.h1Count > 0,
+      h1_missing: parsedSignals.h1Count === 0,
+      form_field_count: parsedSignals.maxFormFieldCount,
+      mobile_form_field_count: parsedSignals.maxFormFieldCount,
+      external_script_count: parsedSignals.externalScriptCount,
+      has_tap_to_call: parsedSignals.hasTapToCallLink,
+      image_count: parsedSignals.imageCount,
+      images_missing_alt: parsedSignals.imagesMissingAlt,
+      webp_used: parsedSignals.usesWebP,
+      meta_description_present: parsedSignals.metaDescription.length > 0,
+      schema_markup_present: parsedSignals.schemaTypes.length > 0,
+    };
+    analysisResult.signals = signals;
     const scores = calculateScoresFromSignals(signals);
     
     logStep("Deterministic scores calculated from signals", {
@@ -2191,6 +2243,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // Add unverified items indicator
     analysisResult.hasUnverifiedChecks = dualScore.unverifiedItems.length > 0;
     analysisResult.unverifiedItems = dualScore.unverifiedItems;
+
+    // Flag pages that appear to be SPA shells where rendered content is limited
+    if (parsedSignals.isLikelySPA) {
+      analysisResult.renderingLimited = true;
+    }
 
     logStep("Analysis complete", { 
       url, 
