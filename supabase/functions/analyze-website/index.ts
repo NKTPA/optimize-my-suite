@@ -988,7 +988,7 @@ IMPORTANT: You do NOT calculate scores. Scores are calculated deterministically 
 3. Return the signals block and the narrative text. Do NOT include any "score" fields.
 
 GROUND TRUTH FACTS:
-The user prompt will include a "Verified facts about this page (do not contradict these)" block with measured values for H1 count, form field counts, external script count, image counts, alt-text coverage, WebP usage, tap-to-call links, meta description, schema types, viewport, and canonical. These are measured deterministically in code — treat them as absolute truth. Do NOT restate a contradicting claim in any finding or recommendation. Do NOT include these factual fields in your signals output; you are only responsible for SUBJECTIVE signals (e.g. cta_visually_prominent, hero_value_prop_specific, clear_visual_hierarchy, cta_consistency, value_prop_above_fold, service_area_stated, subheadline_present, has_sticky_cta, cta_above_fold, has_short_form, has_chat_widget, has_treatment_planner, social_proof_above_fold, button_style_consistent, has_mobile_persistent_cta, images_optimized_for_mobile, nav_depth_to_service, body_font_size_adequate, service_page_scroll_depth, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, nav_item_count).
+The user prompt will include a "Verified facts about this page (do not contradict these)" block with measured values for H1 count, form field counts, external script count, image counts, alt-text coverage, WebP usage, tap-to-call links, meta description, schema types, viewport, and canonical. These are measured deterministically in code — treat them as absolute truth. Do NOT restate a contradicting claim in any finding or recommendation. Do NOT include these factual fields in your signals output; you are only responsible for SUBJECTIVE signals (e.g. cta_visually_prominent, hero_value_prop_specific, clear_visual_hierarchy, cta_consistency, value_prop_above_fold, service_area_stated, subheadline_present, has_sticky_cta, cta_above_fold, has_short_form, has_chat_widget, has_interactive_qualifier, social_proof_above_fold, button_style_consistent, has_mobile_persistent_cta, images_optimized_for_mobile, nav_depth_to_service, body_font_size_adequate, service_page_scroll_depth, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, nav_item_count).
 
 PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
@@ -1015,7 +1015,7 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "has_short_form": boolean,
     "has_chat_widget": boolean,
     "cta_consistency": "consistent" | "inconsistent",
-    "has_treatment_planner": boolean,
+    "has_interactive_qualifier": boolean,
     "cta_visually_prominent": boolean,
     "clear_visual_hierarchy": boolean,
     "hero_value_prop_specific": boolean,
@@ -1040,7 +1040,7 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "subheadline_present": "string",
     "hero_value_prop_specific": "string",
     "social_proof_above_fold": "string",
-    "has_treatment_planner": "string",
+    "has_interactive_qualifier": "string",
     "has_mobile_persistent_cta": "string",
     "button_style_consistent": "string",
     "cta_visually_prominent": "string",
@@ -1115,7 +1115,7 @@ Each Design signal must be evaluated independently using strict, objective crite
 When uncertain about ANY design signal, return false. Do not guess true.
 
 EVIDENCE REQUIREMENT FOR SUBJECTIVE BOOLEANS:
-For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_treatment_planner, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present.
+For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_interactive_qualifier, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present.
 When uncertain, return false. A true without quoted evidence will be discarded (treated as false) before scoring. Do NOT fabricate evidence — quote the page verbatim.
 
 IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
@@ -1394,7 +1394,7 @@ interface SignalData {
   has_chat_widget?: boolean;
   cta_text_quality?: string;
   cta_consistency?: string;
-  has_treatment_planner?: boolean;
+  has_interactive_qualifier?: boolean;
 
   cta_visually_prominent?: boolean;
   clear_visual_hierarchy?: boolean;
@@ -1440,11 +1440,11 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   // CONVERSION: Start at 92, apply deductions
   // cta_text_quality: read the actual LLM signal; missing data is treated as generic (conservative default)
   const ctaTextQuality = s.cta_text_quality;
-  // has_lead_magnet is derived from has_treatment_planner signal
-  const hasLeadMagnet = s.has_treatment_planner ?? false;
+  // has_lead_magnet is derived from has_interactive_qualifier signal
+  const hasLeadMagnet = s.has_interactive_qualifier ?? false;
   let conversion = 92;
   // Bonus: treatment planner, quiz, or interactive tool counts as lead magnet AND bonus
-  if (s.has_treatment_planner) conversion += 8;
+  if (s.has_interactive_qualifier) conversion += 8;
   if (!s.has_sticky_cta) conversion -= 15;
   if (!s.cta_above_fold) conversion -= 10;
   if ((s.form_field_count ?? 0) > 15) conversion -= 10;
@@ -2197,7 +2197,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         has_short_form: false,
         has_chat_widget: false,
         cta_consistency: 'inconsistent',
-        has_treatment_planner: false,
+        has_interactive_qualifier: false,
         cta_visually_prominent: false,
         clear_visual_hierarchy: false,
         hero_value_prop_specific: false,
@@ -2276,7 +2276,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       "subheadline_present",
       "hero_value_prop_specific",
       "social_proof_above_fold",
-      "has_treatment_planner",
+      "has_interactive_qualifier",
       "has_mobile_persistent_cta",
       "button_style_consistent",
       "cta_visually_prominent",
