@@ -1034,6 +1034,25 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "certifications_displayed": boolean,
     "ssl_present": boolean
   },
+  "evidence": {
+    "value_prop_above_fold": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "service_area_stated": "string",
+    "subheadline_present": "string",
+    "hero_value_prop_specific": "string",
+    "social_proof_above_fold": "string",
+    "has_treatment_planner": "string",
+    "has_mobile_persistent_cta": "string",
+    "button_style_consistent": "string",
+    "cta_visually_prominent": "string",
+    "clear_visual_hierarchy": "string",
+    "images_optimized_for_mobile": "string",
+    "bbb_present": "string",
+    "license_displayed": "string",
+    "social_proof_numbers": "string",
+    "team_photos_present": "string",
+    "certifications_displayed": "string",
+    "ssl_present": "string"
+  },
   "summary": {
     "overview": "string",
     "quickWins": ["string", "string", "string"]
