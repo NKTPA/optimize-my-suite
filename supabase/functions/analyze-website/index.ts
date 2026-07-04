@@ -1437,11 +1437,12 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   if (!s.cta_visually_prominent) design -= 8;
   if (!s.clear_visual_hierarchy) design -= 7;
   if (!s.hero_value_prop_specific) design -= 5;
-  if (s.service_page_scroll_depth === 'high') design -= 5;
+  if (s.service_page_scroll_depth === 'high' || s.service_page_scroll_depth === undefined) design -= 5;
   if (!s.social_proof_above_fold) design -= 5;
-  if ((s.nav_item_count ?? 0) > 7) design -= 3;
+  if (s.nav_item_count === undefined || s.nav_item_count > 7) design -= 3;
   if (!s.button_style_consistent) design -= 3;
   design = Math.max(design, 0);
+
 
   // MOBILE: Start at 95, apply deductions
   let mobile = 95;
