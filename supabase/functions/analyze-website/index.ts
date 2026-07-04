@@ -2320,7 +2320,16 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       images_missing_alt: parsedSignals.imagesMissingAlt,
       webp_used: parsedSignals.usesWebP,
       meta_description_present: parsedSignals.metaDescription.length > 0,
-      schema_markup_present: parsedSignals.schemaTypes.length > 0,
+      // Only organization-level schema qualifies for the SEO bonus. Generic
+      // WordPress defaults (Breadcrumb / WebSite / WebPage alone) do NOT count.
+      schema_markup_present: parsedSignals.schemaTypes.some((t) => {
+        const s = String(t).toLowerCase();
+        return (
+          s.includes("organization") ||        // Organization, MedicalOrganization, NGO, etc.
+          s.includes("localbusiness") ||       // LocalBusiness + all subtypes
+          s.includes("medicalbusiness")        // MedicalBusiness + subtypes
+        );
+      }),
     };
     analysisResult.signals = signals;
     const scores = calculateScoresFromSignals(signals, pageSpeedData);
