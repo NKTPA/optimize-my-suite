@@ -2345,6 +2345,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
           url,
           raw_signals: signals as unknown as Record<string, unknown>,
           computed_scores: scores as unknown as Record<string, unknown>,
+          llm_evidence: evidenceMap as unknown as Record<string, unknown>,
         });
       if (logError) {
         console.error("[audit_signal_log] insert failed", logError.message);

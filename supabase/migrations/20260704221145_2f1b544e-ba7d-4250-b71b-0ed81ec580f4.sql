@@ -1,0 +1,1 @@
+ALTER TABLE public.audit_signal_log ADD COLUMN IF NOT EXISTS llm_evidence jsonb;
