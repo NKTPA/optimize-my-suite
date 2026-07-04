@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
+import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const plans = [
@@ -154,6 +155,11 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Pricing — OptimizeMySuite"
+        description="Simple pricing for agencies. Generate unlimited white-label website audit reports with objective scoring. Start free."
+        canonicalPath="/pricing"
+      />
       {/* Navigation */}
       <nav className="container pt-6">
         <div className="flex items-center justify-between">

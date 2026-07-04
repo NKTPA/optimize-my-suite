@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -185,6 +186,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Sign In — OptimizeMySuite"
+        description="Sign in to your OptimizeMySuite agency account to generate white-label website audit reports."
+        canonicalPath="/auth"
+      />
       {/* Background decoration */}
       <div className="absolute inset-0 gradient-hero opacity-[0.03]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />
