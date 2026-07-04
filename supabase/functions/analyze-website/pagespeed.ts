@@ -30,10 +30,14 @@ function num(v: unknown): number | null {
 
 export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | null> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 45_000);
+  const TIMEOUT_MS = 60_000;
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const startedAt = Date.now();
+  const apiKey = Deno.env.get("PAGESPEED_API_KEY");
+  const hasApiKey = Boolean(apiKey);
+  let httpStatus: number | null = null;
 
   try {
-    const apiKey = Deno.env.get("PAGESPEED_API_KEY");
     const params = new URLSearchParams({
       url,
       strategy: "mobile",
@@ -48,15 +52,31 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
       signal: controller.signal,
       headers: { "Accept": "application/json" },
     });
+    httpStatus = response.status;
 
     if (!response.ok) {
-      log("non-200 response", { status: response.status });
+      const bodyText = await response.text().catch(() => "");
+      console.error(JSON.stringify({
+        source: "PSI",
+        url,
+        httpStatus,
+        errorMessage: bodyText.slice(0, 500) || `HTTP ${response.status}`,
+        elapsedMs: Date.now() - startedAt,
+        hasApiKey,
+      }));
       return null;
     }
 
     const data = await response.json().catch(() => null);
     if (!data || typeof data !== "object") {
-      log("parse failure: empty or invalid JSON");
+      console.error(JSON.stringify({
+        source: "PSI",
+        url,
+        httpStatus,
+        errorMessage: "parse failure: empty or invalid JSON",
+        elapsedMs: Date.now() - startedAt,
+        hasApiKey,
+      }));
       return null;
     }
 
@@ -96,14 +116,26 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
       if (fieldCls !== null) result.fieldClsValue = fieldCls;
     }
 
+    console.log(JSON.stringify({
+      source: "PSI",
+      performanceScore: result.performanceScore,
+      lcp: result.lcpMs,
+      cls: result.clsValue,
+      tbt: result.tbtMs,
+    }));
+
     return result;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("aborted") || (err as any)?.name === "AbortError") {
-      log("timeout after 45s");
-    } else {
-      log("fetch error", { error: msg });
-    }
+    const isTimeout = msg.includes("aborted") || (err as any)?.name === "AbortError";
+    console.error(JSON.stringify({
+      source: "PSI",
+      url,
+      httpStatus,
+      errorMessage: isTimeout ? `timeout after ${TIMEOUT_MS}ms` : msg,
+      elapsedMs: Date.now() - startedAt,
+      hasApiKey,
+    }));
     return null;
   } finally {
     clearTimeout(timeoutId);
