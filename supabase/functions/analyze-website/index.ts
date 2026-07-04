@@ -72,7 +72,7 @@ function rateLimitLog(reason: string, ipHash: string) {
 }
 
 type RateLimitOutcome =
-  | { ok: true }
+  | { ok: true; rowId: string | null }
   | { ok: false; status: 429 | 503; body: Record<string, unknown> };
 
 // deno-lint-ignore no-explicit-any
@@ -83,15 +83,19 @@ async function enforcePublicRateLimit(
 ): Promise<RateLimitOutcome> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-  const { error: insertError } = await admin
+  const { data: inserted, error: insertError } = await admin
     .from("audit_rate_limits")
-    .insert({ ip_hash: ipHash, email });
+    .insert({ ip_hash: ipHash, email, allowed: false })
+    .select("id")
+    .single();
   if (insertError) {
     // Fail-open on infra error, but log it. Do NOT block legitimate users.
     logStep("WARNING: rate-limit insert failed", { error: insertError.message });
-    return { ok: true };
+    return { ok: true, rowId: null };
   }
+  const rowId: string | null = inserted?.id ?? null;
 
+  // Per-IP count includes ALL attempts (allowed + blocked) so retry hammering is capped.
   const { count: ipCount, error: ipErr } = await admin
     .from("audit_rate_limits")
     .select("id", { count: "exact", head: true })
@@ -109,9 +113,12 @@ async function enforcePublicRateLimit(
     };
   }
 
+  // Global cap counts only audits that actually ran, so blocked spam
+  // cannot exhaust the daily budget for legitimate visitors.
   const { count: globalCount, error: gErr } = await admin
     .from("audit_rate_limits")
     .select("id", { count: "exact", head: true })
+    .eq("allowed", true)
     .gte("created_at", since);
   if (!gErr && typeof globalCount === "number" && globalCount > GLOBAL_DAILY_LIMIT) {
     rateLimitLog("global_daily_cap", ipHash);
@@ -122,7 +129,7 @@ async function enforcePublicRateLimit(
     };
   }
 
-  return { ok: true };
+  return { ok: true, rowId };
 }
 
 // ============================================
