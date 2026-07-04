@@ -1769,8 +1769,10 @@ serve(async (req) => {
       } else {
         logStep("Usage incremented", { newUsage: currentUsage + 1 });
       }
-    } else {
+    } else if (user && isOwner) {
       logStep("Owner account - bypassing usage limits");
+    } else {
+      logStep("Public audit - bypassing workspace/usage");
     }
 
     // ========================================
