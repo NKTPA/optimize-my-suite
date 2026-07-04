@@ -1114,6 +1114,10 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "button_style_consistent": false if buttons across different pages use different colors, sizes, or border styles.
 When uncertain about ANY design signal, return false. Do not guess true.
 
+EVIDENCE REQUIREMENT FOR SUBJECTIVE BOOLEANS:
+For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_treatment_planner, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present.
+When uncertain, return false. A true without quoted evidence will be discarded (treated as false) before scoring. Do NOT fabricate evidence — quote the page verbatim.
+
 IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
 
   switch (siteType.type) {
