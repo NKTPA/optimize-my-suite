@@ -2373,6 +2373,13 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
           raw_signals: signals as unknown as Record<string, unknown>,
           computed_scores: scores as unknown as Record<string, unknown>,
           llm_evidence: evidenceMap as unknown as Record<string, unknown>,
+          website_type: {
+            type: websiteType.type,
+            displayName: websiteType.displayName,
+            confidence: websiteType.confidence,
+            signals: websiteType.signals,
+            allScores: websiteType.allScores ?? null,
+          } as unknown as Record<string, unknown>,
         });
       if (logError) {
         console.error("[audit_signal_log] insert failed", logError.message);
