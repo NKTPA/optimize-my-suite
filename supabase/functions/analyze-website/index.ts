@@ -2358,7 +2358,14 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         );
       }),
     };
+
+    // Capture the raw LLM response (including per-signal evidence strings) before
+    // we inject deterministic overrides, so the audit log preserves exactly what
+    // the model returned.
+    const rawLlmResponse = JSON.parse(JSON.stringify(analysisResult));
+
     analysisResult.signals = signals;
+
     const scores = calculateScoresFromSignals(signals, pageSpeedData);
 
     // Persist raw signals + computed scores for QA. Never fail the audit on log error.
