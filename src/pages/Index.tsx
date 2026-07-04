@@ -26,6 +26,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
+import { HomepageAuditWidget } from "@/components/marketing/HomepageAuditWidget";
 import productScreenshot from "@/assets/product-screenshot.png";
 
 // FAQ Item component with accordion behavior
@@ -152,14 +153,14 @@ export default function Index() {
               <Link to="/auth" className="hidden sm:inline-flex">
                 <Button variant="ghost" size="sm">Login</Button>
               </Link>
-              <Link to="/dashboard/analyze">
+              <a href="#free-audit">
                 <Button
                   size="sm"
                   className="text-xs sm:text-sm px-3 sm:px-4 bg-[#2746C7] text-white hover:bg-[#1f3aa8]"
                 >
                   Get Your Free Audit
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -197,14 +198,14 @@ export default function Index() {
               <Button variant="default" size="sm" className="text-xs sm:text-sm px-2 sm:px-4 hidden sm:inline-flex" onClick={() => setShowPlanModal(true)}>
                 Start Free Trial
               </Button>
-              <Link to="/dashboard/analyze">
+              <a href="#free-audit">
                 <Button
                   size="sm"
                   className="text-xs sm:text-sm px-3 sm:px-4 bg-[#2746C7] text-white hover:bg-[#1f3aa8]"
                 >
                   Get Your Free Audit
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </nav>
@@ -302,6 +303,9 @@ export default function Index() {
       </header>
 
       <main>
+        {/* Free audit widget — public, near hero */}
+        <HomepageAuditWidget />
+
         {/* Social Proof Section */}
         <section className="py-12 border-t border-border/50 bg-secondary/20">
           <div className="container">

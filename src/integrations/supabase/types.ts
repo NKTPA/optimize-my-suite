@@ -146,6 +146,33 @@ export type Database = {
           },
         ]
       }
+      audit_leads: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          overall_score: number | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          overall_score?: number | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          overall_score?: number | null
+          url?: string
+        }
+        Relationships: []
+      }
       audit_rate_limits: {
         Row: {
           allowed: boolean
