@@ -154,6 +154,7 @@ export type Database = {
           llm_evidence: Json | null
           raw_signals: Json
           url: string
+          website_type: Json | null
         }
         Insert: {
           computed_scores: Json
@@ -162,6 +163,7 @@ export type Database = {
           llm_evidence?: Json | null
           raw_signals: Json
           url: string
+          website_type?: Json | null
         }
         Update: {
           computed_scores?: Json
@@ -170,6 +172,7 @@ export type Database = {
           llm_evidence?: Json | null
           raw_signals?: Json
           url?: string
+          website_type?: Json | null
         }
         Relationships: []
       }
