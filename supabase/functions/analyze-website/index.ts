@@ -43,6 +43,88 @@ function logStep(step: string, details?: unknown) {
 }
 
 // ============================================
+// RATE LIMITING (public/unauthenticated audits)
+// ============================================
+const PUBLIC_IP_DAILY_LIMIT = 3;
+const GLOBAL_DAILY_LIMIT = 25;
+
+function getCallerIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) return xff.split(",")[0].trim();
+  return req.headers.get("x-real-ip")
+    || req.headers.get("cf-connecting-ip")
+    || "unknown";
+}
+
+async function hashIp(ip: string): Promise<string> {
+  const salt = Deno.env.get("AUDIT_IP_SALT") || "";
+  const data = new TextEncoder().encode(`${ip}:${salt}`);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function rateLimitLog(reason: string, ipHash: string) {
+  console.log(
+    `[analyze-website] ${JSON.stringify({ source: "rate-limit", reason, ip_hash: ipHash })}`,
+  );
+}
+
+type RateLimitOutcome =
+  | { ok: true }
+  | { ok: false; status: 429 | 503; body: Record<string, unknown> };
+
+async function enforcePublicRateLimit(
+  admin: ReturnType<typeof createClient>,
+  ipHash: string,
+  email: string | null,
+): Promise<RateLimitOutcome> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { error: insertError } = await admin
+    .from("audit_rate_limits")
+    .insert({ ip_hash: ipHash, email });
+  if (insertError) {
+    // Fail-open on infra error, but log it. Do NOT block legitimate users.
+    logStep("WARNING: rate-limit insert failed", { error: insertError.message });
+    return { ok: true };
+  }
+
+  const { count: ipCount, error: ipErr } = await admin
+    .from("audit_rate_limits")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", ipHash)
+    .gte("created_at", since);
+  if (!ipErr && typeof ipCount === "number" && ipCount > PUBLIC_IP_DAILY_LIMIT) {
+    rateLimitLog("ip_daily_cap", ipHash);
+    return {
+      ok: false,
+      status: 429,
+      body: {
+        error: "You've reached the free audit limit for today. Please try again tomorrow or create an account for higher limits.",
+        rateLimited: true,
+      },
+    };
+  }
+
+  const { count: globalCount, error: gErr } = await admin
+    .from("audit_rate_limits")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", since);
+  if (!gErr && typeof globalCount === "number" && globalCount > GLOBAL_DAILY_LIMIT) {
+    rateLimitLog("global_daily_cap", ipHash);
+    return {
+      ok: false,
+      status: 429,
+      body: { error: "daily audit limit reached — try tomorrow.", rateLimited: true },
+    };
+  }
+
+  return { ok: true };
+}
+
+// ============================================
 // ENVIRONMENT DETECTION
 // ============================================
 type EnvironmentType = 
