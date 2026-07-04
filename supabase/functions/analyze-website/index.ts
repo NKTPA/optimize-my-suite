@@ -1399,7 +1399,7 @@ interface SignalData {
   ssl_present?: boolean;
 }
 
-function calculateScoresFromSignals(s: SignalData) {
+function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResult | null) {
   // MESSAGING: Start at 50
   let messaging = 50;
   if (s.h1_present) messaging += 10;
@@ -1449,14 +1449,25 @@ function calculateScoresFromSignals(s: SignalData) {
   if (!s.body_font_size_adequate) mobile -= 3;
   mobile = Math.max(mobile, 0);
 
-  // PERFORMANCE: Start at 100, subtract
-  let performance = 100;
+  // PERFORMANCE: legacy signal-based score (kept as fallback and minor factor)
+  let legacySignalScore = 100;
   const scriptCount = s.external_script_count ?? 0;
-  if (scriptCount > 10) performance -= 20;
-  if (scriptCount > 25) performance -= 15;
-  if (s.image_count && s.images_missing_alt === s.image_count) performance -= 10;
-  if (!s.webp_used) performance -= 10;
-  performance = Math.max(performance, 0);
+  if (scriptCount > 10) legacySignalScore -= 20;
+  if (scriptCount > 25) legacySignalScore -= 15;
+  if (s.image_count && s.images_missing_alt === s.image_count) legacySignalScore -= 10;
+  if (!s.webp_used) legacySignalScore -= 10;
+  legacySignalScore = Math.max(legacySignalScore, 0);
+
+  let performance: number;
+  let performanceDataSource: "measured" | "estimated";
+  if (pageSpeedData) {
+    performance = Math.round(0.8 * pageSpeedData.performanceScore + 0.2 * legacySignalScore);
+    performance = Math.max(Math.min(performance, 100), 0);
+    performanceDataSource = "measured";
+  } else {
+    performance = legacySignalScore;
+    performanceDataSource = "estimated";
+  }
 
   // SEO: Start at 60
   let seo = 60;
@@ -1479,7 +1490,7 @@ function calculateScoresFromSignals(s: SignalData) {
   // OVERALL: simple average
   const overall = Math.round((messaging + conversion + design + mobile + performance + seo + trust) / 7);
 
-  return { messaging, conversion, design, mobile, performance, seo, trust, overall };
+  return { messaging, conversion, design, mobile, performance, seo, trust, overall, performanceDataSource };
 }
 
 
