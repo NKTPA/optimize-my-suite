@@ -2249,7 +2249,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       schema_markup_present: parsedSignals.schemaTypes.length > 0,
     };
     analysisResult.signals = signals;
-    const scores = calculateScoresFromSignals(signals);
+    const scores = calculateScoresFromSignals(signals, pageSpeedData);
     
     logStep("Deterministic scores calculated from signals", {
       signals: Object.keys(signals).length,
@@ -2261,7 +2261,14 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     if (analysisResult.conversion) analysisResult.conversion.score = scores.conversion;
     if (analysisResult.designUx) analysisResult.designUx.score = scores.design;
     if (analysisResult.mobile) analysisResult.mobile.score = scores.mobile;
-    if (analysisResult.performance) analysisResult.performance.score = scores.performance;
+    if (analysisResult.performance) {
+      analysisResult.performance.score = scores.performance;
+      analysisResult.performance.performanceDataSource = scores.performanceDataSource;
+      analysisResult.performance.lcpMs = pageSpeedData?.lcpMs ?? null;
+      analysisResult.performance.clsValue = pageSpeedData?.clsValue ?? null;
+      analysisResult.performance.tbtMs = pageSpeedData?.tbtMs ?? null;
+      analysisResult.performance.fieldDataAvailable = pageSpeedData?.fieldDataAvailable ?? false;
+    }
     if (analysisResult.seo) analysisResult.seo.score = scores.seo;
     if (analysisResult.trust) analysisResult.trust.score = scores.trust;
     if (!analysisResult.summary) analysisResult.summary = {};
