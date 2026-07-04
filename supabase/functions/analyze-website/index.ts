@@ -2289,7 +2289,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     // DETERMINISTIC SCORE INJECTION
     // ========================================
     // Extract signals from AI response and calculate scores in code
-    const llmSignals: SignalData = analysisResult.signals || {};
+    const llmSignals: SignalData = { ...(analysisResult.signals || {}) } as SignalData;
 
     // Evidence gating: any subjective boolean returned as true without a
     // non-empty verbatim evidence fragment is discarded (treated as false)
@@ -2358,7 +2358,14 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         );
       }),
     };
+
+    // Capture the raw LLM response (including per-signal evidence strings) before
+    // we inject deterministic overrides, so the audit log preserves exactly what
+    // the model returned.
+    const rawLlmResponse = JSON.parse(JSON.stringify(analysisResult));
+
     analysisResult.signals = signals;
+
     const scores = calculateScoresFromSignals(signals, pageSpeedData);
 
     // Persist raw signals + computed scores for QA. Never fail the audit on log error.
@@ -2372,7 +2379,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
           url,
           raw_signals: signals as unknown as Record<string, unknown>,
           computed_scores: scores as unknown as Record<string, unknown>,
-          llm_evidence: evidenceMap as unknown as Record<string, unknown>,
+          llm_evidence: rawLlmResponse as unknown as Record<string, unknown>,
           website_type: {
             type: websiteType.type,
             displayName: websiteType.displayName,
