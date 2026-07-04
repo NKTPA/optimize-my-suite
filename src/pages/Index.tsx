@@ -106,6 +106,7 @@ const plans = [
 ];
 
 export default function Index() {
+  const currentYear = new Date().getFullYear();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -657,7 +658,7 @@ export default function Index() {
                 Website audit tool for agencies. White-label website reports. Agency SEO audit tool.
               </p>
               <p className="text-xs text-muted-foreground">
-                © 2025 OptimizeMySuite. All rights reserved.
+                © {currentYear} OptimizeMySuite
               </p>
             </div>
             
