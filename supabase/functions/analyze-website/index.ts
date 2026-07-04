@@ -1642,46 +1642,64 @@ serve(async (req) => {
 
   try {
     // ========================================
-    // AUTHENTICATION CHECK
+    // KILL SWITCH
     // ========================================
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      logStep("ERROR: No authorization header");
+    const auditsEnabled = (Deno.env.get("AUDITS_ENABLED") ?? "true").toLowerCase();
+    if (auditsEnabled === "false") {
+      const ipHashKS = await hashIp(getCallerIp(req));
+      rateLimitLog("audits_disabled", ipHashKS);
       return new Response(
-        JSON.stringify({ error: "Authentication required" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "Audits are temporarily unavailable. Please try again later." }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: `Bearer ${token}` } }
-    });
 
-    const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
-    if (userError || !user) {
-      logStep("ERROR: Invalid token", { error: userError?.message });
-      return new Response(
-        JSON.stringify({ error: "Invalid or expired authentication token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    // ========================================
+    // AUTHENTICATION CHECK
+    // ========================================
+    const authHeader = req.headers.get("Authorization");
+    let user: { id: string; email?: string | null } | null = null;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.replace("Bearer ", "");
+      const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+      });
+      const { data: { user: authedUser }, error: userError } = await supabaseUser.auth.getUser();
+      if (userError || !authedUser) {
+        logStep("Auth token invalid — treating as public audit", { error: userError?.message });
+      } else {
+        user = authedUser;
+        logStep("User authenticated", { userId: user.id, email: user.email });
+      }
     }
 
-    logStep("User authenticated", { userId: user.id, email: user.email });
+    // ========================================
+    // PUBLIC AUDIT RATE LIMIT (unauthenticated only)
+    // ========================================
+    if (!user) {
+      const ipHash = await hashIp(getCallerIp(req));
+      const outcome = await enforcePublicRateLimit(supabaseAdmin, ipHash, null);
+      if (!outcome.ok) {
+        return new Response(
+          JSON.stringify(outcome.body),
+          { status: outcome.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      logStep("Public audit accepted (rate limit ok)");
+    }
 
     // ========================================
     // USAGE LIMIT CHECK
     // ========================================
     const ownerEmail = getOwnerEmail();
-    const isOwner = ownerEmail ? user.email?.toLowerCase() === ownerEmail : false;
-    
-    if (!isOwner) {
+    const isOwner = !!user && !!ownerEmail && user.email?.toLowerCase() === ownerEmail;
+
+    if (user && !isOwner) {
       const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
       
       if (isWorkspaceError(workspaceResult)) {
