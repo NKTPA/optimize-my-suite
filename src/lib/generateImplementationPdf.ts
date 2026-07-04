@@ -1,4 +1,5 @@
-import jsPDF from "jspdf";
+// Type-only import — jspdf runtime is loaded lazily inside the export.
+import type jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
@@ -54,15 +55,16 @@ const colors = {
   goldLight: [255, 251, 235],
 };
 
-export function generateImplementationPdf(plan: ImplementationPlan, url: string, branding?: PdfBranding): void {
+export async function generateImplementationPdf(plan: ImplementationPlan, url: string, branding?: PdfBranding): Promise<void> {
   if (!plan) {
     console.error("generateImplementationPdf: no plan data provided");
     return;
   }
   // GUARDRAIL: Validate that URL is not a Lovable/deployment URL
   const validatedUrl = isValidAnalysisSourceUrl(url) ? url : sanitizeAnalysisUrl(url, "Original website URL unavailable");
-  
-  const doc = new jsPDF();
+
+  const { default: JsPDF } = await import("jspdf");
+  const doc = new JsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 18;

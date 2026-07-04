@@ -111,9 +111,9 @@ const CATEGORY_BUSINESS_CONTEXT: Record<string, {
 const getFindingText = (f: FindingInput): string =>
   typeof f === "string" ? f : f.text;
 
-export function generateAnalysisPdf(results: AnalysisResult, url: string, branding?: AnalysisPdfBranding) {
+export async function generateAnalysisPdf(results: AnalysisResult, url: string, branding?: AnalysisPdfBranding) {
   // Create PDF context using shared primitives
-  const ctx = createPdfContext({ margin: 18, footerHeight: 35 });
+  const ctx = await createPdfContext({ margin: 18, footerHeight: 35 });
   const { doc, margin, contentWidth, pageWidth, pageHeight } = ctx;
   
   // Extract domain for display
