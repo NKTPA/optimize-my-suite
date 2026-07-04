@@ -2254,13 +2254,25 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     };
     analysisResult.signals = signals;
     const scores = calculateScoresFromSignals(signals, pageSpeedData);
-    console.log("[messaging-debug]", JSON.stringify({
-      value_prop_above_fold: signals.value_prop_above_fold,
-      hero_value_prop_specific: signals.hero_value_prop_specific,
-      service_area_stated: signals.service_area_stated,
-      subheadline_present: signals.subheadline_present,
-      messagingScore: scores.messaging,
-    }));
+
+    // Persist raw signals + computed scores for QA. Never fail the audit on log error.
+    try {
+      const logUrl = Deno.env.get("SUPABASE_URL")!;
+      const logKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const logClient = createClient(logUrl, logKey);
+      const { error: logError } = await logClient
+        .from("audit_signal_log")
+        .insert({
+          url,
+          raw_signals: signals as unknown as Record<string, unknown>,
+          computed_scores: scores as unknown as Record<string, unknown>,
+        });
+      if (logError) {
+        console.error("[audit_signal_log] insert failed", logError.message);
+      }
+    } catch (logErr) {
+      console.error("[audit_signal_log] insert threw", (logErr as Error).message);
+    }
     
     logStep("Deterministic scores calculated from signals", {
       signals: Object.keys(signals).length,
