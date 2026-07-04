@@ -2194,7 +2194,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         ssl_present: Boolean(extractedData?.technical?.hasSSL),
       };
 
-      const fallbackScores = calculateScoresFromSignals(fallbackSignals);
+      const fallbackScores = calculateScoresFromSignals(fallbackSignals, pageSpeedData);
 
       analysisResult = {
         signals: fallbackSignals,
@@ -2207,7 +2207,17 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         conversion: { score: fallbackScores.conversion, findings: ["Could not fully analyze"], recommendations: [], sampleButtons: [] },
         designUx: { score: fallbackScores.design, findings: ["Could not fully analyze"], recommendations: [] },
         mobile: { score: fallbackScores.mobile, findings: ["Could not fully analyze"], recommendations: [] },
-        performance: { score: fallbackScores.performance, findings: ["Could not fully analyze"], heavyImages: [], recommendations: [] },
+        performance: {
+          score: fallbackScores.performance,
+          findings: ["Could not fully analyze"],
+          heavyImages: [],
+          recommendations: [],
+          performanceDataSource: fallbackScores.performanceDataSource,
+          lcpMs: pageSpeedData?.lcpMs ?? null,
+          clsValue: pageSpeedData?.clsValue ?? null,
+          tbtMs: pageSpeedData?.tbtMs ?? null,
+          fieldDataAvailable: pageSpeedData?.fieldDataAvailable ?? false,
+        },
         seo: { score: fallbackScores.seo, findings: ["Could not fully analyze"], recommendedTitle: "", recommendedMetaDescription: "", recommendedH1: "", keywords: [], checklist: [] },
         trust: { score: fallbackScores.trust, findings: ["Could not fully analyze"], whyChooseUs: [], testimonialsBlock: "" },
         technical: { findings: ["Could not fully analyze"], recommendations: [] },
