@@ -1985,6 +1985,30 @@ serve(async (req) => {
       ? `\n\nNOTE: This is a PREVIEW/STAGING environment (${environment.provider}). Score the content quality fairly but don't penalize for missing production items like analytics, canonical URLs, custom domains, or robots.txt blocking.`
       : '';
 
+    const verifiedFactsBlock = `\n\nVerified facts about this page (do not contradict these):
+${JSON.stringify({
+  h1Count: parsedSignals.h1Count,
+  h1Text: parsedSignals.h1Text,
+  titleText: parsedSignals.titleText,
+  titleLength: parsedSignals.titleLength,
+  metaDescription: parsedSignals.metaDescription,
+  metaDescriptionLength: parsedSignals.metaDescriptionLength,
+  canonicalHref: parsedSignals.canonicalHref,
+  imageCount: parsedSignals.imageCount,
+  imagesMissingAlt: parsedSignals.imagesMissingAlt,
+  altCoveragePct: parsedSignals.altCoveragePct,
+  externalScriptCount: parsedSignals.externalScriptCount,
+  maxFormFieldCount: parsedSignals.maxFormFieldCount,
+  hasViewportMeta: parsedSignals.hasViewportMeta,
+  schemaTypes: parsedSignals.schemaTypes,
+  hasOgTitle: parsedSignals.hasOgTitle,
+  hasOgImage: parsedSignals.hasOgImage,
+  usesWebP: parsedSignals.usesWebP,
+  hasTapToCallLink: parsedSignals.hasTapToCallLink,
+  bodyTextLength: parsedSignals.bodyTextLength,
+  isLikelySPA: parsedSignals.isLikelySPA,
+}, null, 2)}`;
+
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -2000,7 +2024,7 @@ serve(async (req) => {
           { role: "system", content: analysisPrompt },
           {
             role: "user",
-            content: `Analyze this website: ${url}${environmentContext}
+            content: `Analyze this website: ${url}${environmentContext}${verifiedFactsBlock}
 
 Website Type: ${websiteType.displayName} (${websiteType.confidence} confidence)
 
