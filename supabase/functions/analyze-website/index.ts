@@ -1807,6 +1807,19 @@ serve(async (req) => {
       );
     }
 
+    // All gates passed for a public request — mark the rate-limit row as allowed
+    // so it counts against the global daily cap. Blocked attempts stay allowed=false
+    // and only inflate the per-IP retry counter.
+    if (publicRateLimitRowId) {
+      const { error: allowErr } = await supabaseAdmin
+        .from("audit_rate_limits")
+        .update({ allowed: true })
+        .eq("id", publicRateLimitRowId);
+      if (allowErr) {
+        logStep("WARNING: failed to mark rate-limit row allowed", { error: allowErr.message });
+      }
+    }
+
     // Detect environment for fair scoring
     const environment = detectEnvironment(url);
     logStep("Environment detected", { 
