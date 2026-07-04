@@ -146,6 +146,30 @@ export type Database = {
           },
         ]
       }
+      audit_signal_log: {
+        Row: {
+          computed_scores: Json
+          created_at: string
+          id: string
+          raw_signals: Json
+          url: string
+        }
+        Insert: {
+          computed_scores: Json
+          created_at?: string
+          id?: string
+          raw_signals: Json
+          url: string
+        }
+        Update: {
+          computed_scores?: Json
+          created_at?: string
+          id?: string
+          raw_signals?: Json
+          url?: string
+        }
+        Relationships: []
+      }
       client_tags: {
         Row: {
           color: string | null
