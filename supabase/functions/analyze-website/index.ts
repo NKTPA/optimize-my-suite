@@ -2254,6 +2254,13 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     };
     analysisResult.signals = signals;
     const scores = calculateScoresFromSignals(signals, pageSpeedData);
+    console.log("[messaging-debug]", JSON.stringify({
+      value_prop_above_fold: signals.value_prop_above_fold,
+      hero_value_prop_specific: signals.hero_value_prop_specific,
+      service_area_stated: signals.service_area_stated,
+      subheadline_present: signals.subheadline_present,
+      messagingScore: scores.messaging,
+    }));
     
     logStep("Deterministic scores calculated from signals", {
       signals: Object.keys(signals).length,
