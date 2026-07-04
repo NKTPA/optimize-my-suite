@@ -1690,6 +1690,7 @@ serve(async (req) => {
     // ========================================
     // PUBLIC AUDIT RATE LIMIT (unauthenticated only)
     // ========================================
+    let publicRateLimitRowId: string | null = null;
     if (!user) {
       const ipHash = await hashIp(getCallerIp(req));
       const outcome = await enforcePublicRateLimit(supabaseAdmin, ipHash, null);
@@ -1699,6 +1700,7 @@ serve(async (req) => {
           { status: outcome.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+      publicRateLimitRowId = outcome.rowId;
       logStep("Public audit accepted (rate limit ok)");
     }
 
