@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef } from "react";
-import { Sparkles } from "lucide-react";
 import { BRAND_CONFIG } from "@/lib/brandConfig";
+import logoMark from "@/assets/logo-mark.png";
 
 type HeaderBrandVariant = "default" | "compact" | "auth";
 
@@ -97,9 +97,15 @@ export function HeaderBrand({
         to={to}
         className={`flex items-center gap-2 flex-shrink-0 ${className}`}
       >
-        <div className={`flex items-center justify-center ${constraints.iconSize} rounded-lg bg-primary/10`}>
-          <Sparkles className="w-4 h-4 text-primary" />
-        </div>
+        <img
+          src={logoMark}
+          alt={BRAND_CONFIG.alt}
+          width={64}
+          height={64}
+          className={`${constraints.iconSize} object-contain`}
+          loading="eager"
+          decoding="async"
+        />
         <span className={`${constraints.textSize} font-black tracking-tight text-foreground`}>
           Optimize<span className="text-gradient">MySuite</span>
         </span>
