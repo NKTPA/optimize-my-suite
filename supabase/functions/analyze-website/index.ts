@@ -2472,7 +2472,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       image_count: parsedSignals.imageCount,
       images_missing_alt: parsedSignals.imagesMissingAlt,
       webp_used: parsedSignals.usesWebP,
-      meta_description_present: parsedSignals.metaDescription.length > 0,
+      meta_description_present: (parsedSignals.metaDescription ?? "").length > 0,
       // Only organization-level schema qualifies for the SEO bonus. Generic
       // WordPress defaults (Breadcrumb / WebSite / WebPage alone) do NOT count.
       schema_markup_present: parsedSignals.schemaTypes.some((t) => {
