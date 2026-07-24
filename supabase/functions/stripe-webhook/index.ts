@@ -191,6 +191,17 @@ serve(async (req) => {
         const user = users?.users?.find(u => u.email === email);
         if (!user) break;
 
+        // Skip internal accounts — they must never be downgraded/canceled by Stripe events
+        const { data: existingWs } = await supabaseClient
+          .from("workspaces")
+          .select("id, internal_account")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (existingWs?.internal_account) {
+          logStep("Skipping cancel for internal_account", { workspaceId: existingWs.id });
+          break;
+        }
+
         // Update workspace to free/canceled
         await supabaseClient
           .from("workspaces")
