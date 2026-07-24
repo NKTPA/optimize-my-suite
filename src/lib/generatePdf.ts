@@ -160,6 +160,12 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
     ? (branding?.agencyName || branding?.footerText || "Your Agency") 
     : "OptimizeMySuite";
 
+  // Resolve optional custom brand color (Pro/Scale). Invalid hex falls back to default primaryDark.
+  const brandColor = parseHexColor(branding?.primaryColor) || colors.primaryDark;
+
+  // Pre-load agency logo (Pro/Scale). Never fails PDF generation.
+  const brandLogoDataUrl = await loadLogoAsDataUrl(branding?.logoUrl ?? null, 5000);
+
   // Set up footer function
   ctx.addFooter = () => {
     // Subtle divider line
@@ -331,7 +337,7 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
   // ============ PAGE 1: EXECUTIVE COVER ============
   
   // Full-page premium header
-  doc.setFillColor(colors.primaryDark[0], colors.primaryDark[1], colors.primaryDark[2]);
+  doc.setFillColor(brandColor[0], brandColor[1], brandColor[2]);
   doc.rect(0, 0, pageWidth, 85, "F");
   
   // Accent stripe
@@ -384,7 +390,26 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
   doc.text("PREPARED BY", pageWidth / 2 + 10, ctx.y + 14);
-  if (!isWhiteLabel) {
+  if (brandLogoDataUrl) {
+    // Render agency logo instead of any wordmark (Pro/Scale). Preserve aspect ratio, max height 14mm.
+    try {
+      const props = doc.getImageProperties(brandLogoDataUrl);
+      const maxH = 14;
+      const maxW = (pageWidth / 2) - 25;
+      const aspect = props.width && props.height ? props.width / props.height : 3;
+      let h = Math.min(maxH, maxW / aspect);
+      let w = h * aspect;
+      if (w > maxW) { w = maxW; h = w / aspect; }
+      const fmt = detectImageFormat(brandLogoDataUrl);
+      doc.addImage(brandLogoDataUrl, fmt, pageWidth / 2 + 10, ctx.y + 18, w, h);
+    } catch (err) {
+      console.warn("[pdf-branding] addImage failed, falling back to text:", err);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+      doc.text(authorName, pageWidth / 2 + 10, ctx.y + 26);
+    }
+  } else if (!isWhiteLabel) {
     // OptimizeMySuite branded wordmark (brand indigo, bold, ~20pt)
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
