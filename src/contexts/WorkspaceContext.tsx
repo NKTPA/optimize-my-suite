@@ -32,6 +32,7 @@ export interface WorkspaceUsage {
 export interface WorkspaceBranding {
   id: string;
   workspace_id: string;
+  agency_name: string | null;
   logo_url: string | null;
   footer_text: string | null;
   primary_color: string;
