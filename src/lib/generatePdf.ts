@@ -382,10 +382,18 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
   doc.text("PREPARED BY", pageWidth / 2 + 10, ctx.y + 14);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text(authorName, pageWidth / 2 + 10, ctx.y + 26);
+  if (!isWhiteLabel) {
+    // OptimizeMySuite branded wordmark (brand indigo, bold, ~20pt)
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(39, 70, 199);
+    doc.text("OptimizeMySuite", pageWidth / 2 + 10, ctx.y + 28);
+  } else {
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+    doc.text(authorName, pageWidth / 2 + 10, ctx.y + 26);
+  }
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
