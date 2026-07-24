@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Palette, Upload, Loader2, Save, Image } from "lucide-react";
+import { Palette, Upload, Loader2, Save, Image, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ export function BrandingSettings() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [agencyName, setAgencyName] = useState(branding?.agency_name || "");
   const [footerText, setFooterText] = useState(branding?.footer_text || "");
   const [primaryColor, setPrimaryColor] = useState(branding?.primary_color || "#1e3a5f");
   const [accentColor, setAccentColor] = useState(branding?.accent_color || "#3b82f6");
@@ -21,16 +22,21 @@ export function BrandingSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState(branding?.logo_url || "");
 
-  const hasAccess = limits.hasCustomBranding;
+  const hasWhiteLabel = limits.hasWhiteLabelPdf;
+  const hasCustom = limits.hasCustomBranding;
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await updateBranding({
+      const payload: Record<string, unknown> = {
+        agency_name: agencyName.trim() || null,
         footer_text: footerText.trim() || null,
-        primary_color: primaryColor,
-        accent_color: accentColor,
-      });
+      };
+      if (hasCustom) {
+        payload.primary_color = primaryColor;
+        payload.accent_color = accentColor;
+      }
+      await updateBranding(payload as never);
 
       toast({
         title: "Branding Updated",
@@ -119,13 +125,49 @@ export function BrandingSettings() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Logo Upload */}
-        <div className="space-y-3">
-          <Label>Agency Logo</Label>
+        {/* Agency Name */}
+        <div className="space-y-2">
+          <Label htmlFor="agencyName">Agency Name</Label>
+          <Input
+            id="agencyName"
+            value={agencyName}
+            onChange={(e) => setAgencyName(e.target.value)}
+            placeholder="Your Agency, Inc."
+          />
+          <p className="text-xs text-muted-foreground">
+            Shown in the "Prepared by" block on PDF reports. Setting this removes the OptimizeMySuite wordmark.
+          </p>
+        </div>
+
+        {/* Footer Text */}
+        <div className="space-y-2">
+          <Label htmlFor="footerText">PDF Footer Text</Label>
+          <Input
+            id="footerText"
+            value={footerText}
+            onChange={(e) => setFooterText(e.target.value)}
+            placeholder="© 2025 Your Agency Name | yourwebsite.com"
+          />
+          <p className="text-xs text-muted-foreground">
+            This text appears at the bottom of every page in your PDF reports.
+          </p>
+        </div>
+
+        {/* Logo Upload (Pro/Scale only) */}
+        <div className="space-y-3 pt-4 border-t border-border">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              Agency Logo
+              {!hasCustom && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+            </Label>
+            {!hasCustom && (
+              <span className="text-xs text-muted-foreground">Upgrade to Pro</span>
+            )}
+          </div>
           <div className="flex items-center gap-4">
             <div 
               className="w-24 h-24 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/50 overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={() => hasAccess && fileInputRef.current?.click()}
+              onClick={() => hasCustom && fileInputRef.current?.click()}
             >
               {logoPreview ? (
                 <img 
@@ -144,12 +186,12 @@ export function BrandingSettings() {
                 accept="image/*"
                 onChange={handleLogoUpload}
                 className="hidden"
-                disabled={!hasAccess}
+                disabled={!hasCustom}
               />
               <Button
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading || !hasAccess}
+                disabled={isUploading || !hasCustom}
                 className="gap-2"
               >
                 {isUploading ? (
@@ -166,23 +208,18 @@ export function BrandingSettings() {
           </div>
         </div>
 
-        {/* Footer Text */}
-        <div className="space-y-2">
-          <Label htmlFor="footerText">PDF Footer Text</Label>
-          <Input
-            id="footerText"
-            value={footerText}
-            onChange={(e) => setFooterText(e.target.value)}
-            placeholder="© 2025 Your Agency Name | yourwebsite.com"
-            disabled={!hasAccess}
-          />
-          <p className="text-xs text-muted-foreground">
-            This text appears at the bottom of every page in your PDF reports.
-          </p>
-        </div>
-
-        {/* Color Pickers */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        {/* Color Pickers (Pro/Scale only) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              Brand Colors
+              {!hasCustom && <Lock className="w-3.5 h-3.5 text-muted-foreground" />}
+            </Label>
+            {!hasCustom && (
+              <span className="text-xs text-muted-foreground">Upgrade to Pro</span>
+            )}
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="primaryColor">Primary Color</Label>
             <div className="flex items-center gap-2">
@@ -192,13 +229,13 @@ export function BrandingSettings() {
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
                 className="w-10 h-10 rounded border-0 cursor-pointer"
-                disabled={!hasAccess}
+                disabled={!hasCustom}
               />
               <Input
                 value={primaryColor}
                 onChange={(e) => setPrimaryColor(e.target.value)}
                 className="flex-1"
-                disabled={!hasAccess}
+                disabled={!hasCustom}
               />
             </div>
           </div>
@@ -211,22 +248,23 @@ export function BrandingSettings() {
                 value={accentColor}
                 onChange={(e) => setAccentColor(e.target.value)}
                 className="w-10 h-10 rounded border-0 cursor-pointer"
-                disabled={!hasAccess}
+                disabled={!hasCustom}
               />
               <Input
                 value={accentColor}
                 onChange={(e) => setAccentColor(e.target.value)}
                 className="flex-1"
-                disabled={!hasAccess}
+                disabled={!hasCustom}
               />
             </div>
+          </div>
           </div>
         </div>
 
         {/* Save Button */}
         <Button
           onClick={handleSave}
-          disabled={isSaving || !hasAccess}
+          disabled={isSaving || !hasWhiteLabel}
           className="gap-2"
         >
           {isSaving ? (
@@ -240,11 +278,11 @@ export function BrandingSettings() {
     </Card>
   );
 
-  if (!hasAccess) {
+  if (!hasWhiteLabel) {
     return (
       <FeatureLock
-        feature="hasCustomBranding"
-        featureLabel="Custom PDF Branding"
+        feature="hasWhiteLabelPdf"
+        featureLabel="White-Label PDF Branding"
         showLockIcon={false}
       >
         {content}
