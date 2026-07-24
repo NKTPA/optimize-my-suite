@@ -13,6 +13,7 @@ import { ImplementationModal } from "@/components/batch/ImplementationModal";
 import { parseCSV, generateSummaryCSV } from "@/lib/csvParser";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { generateImplementationPdf } from "@/lib/generateImplementationPdf";
+import { usePdfBranding } from "@/hooks/use-pdf-branding";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -36,6 +37,7 @@ export default function DashboardBatch() {
   const { user, session, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { workspace, canUseFeature, incrementUsage, getRemainingUsage } = useWorkspace();
+  const pdfBranding = usePdfBranding();
   const [sites, setSites] = useState<BatchSite[]>([]);
   const [isRunningBatch, setIsRunningBatch] = useState(false);
   const [overallError, setOverallError] = useState<string | null>(null);
@@ -390,13 +392,17 @@ export default function DashboardBatch() {
 
   const handleDownloadPdf = (site: BatchSite) => {
     if (site.analysisResult) {
-      generateAnalysisPdf(site.analysisResult, site.url);
+      generateAnalysisPdf(site.analysisResult, site.url, pdfBranding);
     }
   };
 
   const handleDownloadImplementationPdf = (site: BatchSite) => {
     if (site.implementationPlan) {
-      generateImplementationPdf(site.implementationPlan, site.url);
+      generateImplementationPdf(site.implementationPlan, site.url, pdfBranding ? {
+        logoUrl: pdfBranding.logoUrl,
+        footerText: pdfBranding.footerText,
+        primaryColor: pdfBranding.primaryColor,
+      } : undefined);
     }
   };
 

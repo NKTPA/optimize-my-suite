@@ -10,6 +10,7 @@ import { parseCSV, generateSummaryCSV } from "@/lib/csvParser";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { usePdfBranding } from "@/hooks/use-pdf-branding";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -22,6 +23,7 @@ function generateId(): string {
 export default function BatchMode() {
   const { user, session, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const pdfBranding = usePdfBranding();
   const [sites, setSites] = useState<BatchSite[]>([]);
   const [isRunningBatch, setIsRunningBatch] = useState(false);
   const [overallError, setOverallError] = useState<string | null>(null);
@@ -246,7 +248,7 @@ export default function BatchMode() {
 
   const handleDownloadPdf = (site: BatchSite) => {
     if (site.analysisResult) {
-      generateAnalysisPdf(site.analysisResult, site.url);
+      generateAnalysisPdf(site.analysisResult, site.url, pdfBranding);
     }
   };
 
