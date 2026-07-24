@@ -743,16 +743,6 @@ export default function Index() {
               <p className="font-semibold text-foreground text-sm mb-4">Company</p>
               <ul className="space-y-2">
                 <li>
-                  <a 
-                    href="https://bicc.me" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Built by BICC
-                  </a>
-                </li>
-                <li>
                   <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     Privacy Policy
                   </a>
