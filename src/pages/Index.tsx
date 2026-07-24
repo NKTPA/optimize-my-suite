@@ -743,6 +743,16 @@ export default function Index() {
               <p className="font-semibold text-foreground text-sm mb-4">Company</p>
               <ul className="space-y-2">
                 <li>
+                  <a
+                    href="https://vibingsolutions.ai"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    Built by VibingSolutions.ai
+                  </a>
+                </li>
+                <li>
                   <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     Privacy Policy
                   </Link>
