@@ -1,6 +1,7 @@
 import { AnalysisResult, FindingInput } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 import { generatePdfFilename, setPdfMetadata, PdfMetadataOptions, extractDomainFromUrl } from "./pdfMetadata";
+import { parseHexColor, loadLogoAsDataUrl, detectImageFormat } from "./pdf/brandingHelpers";
 import {
   PdfContext,
   PDF_COLORS,
@@ -28,6 +29,7 @@ export interface AnalysisPdfBranding {
   footerText?: string | null;
   agencyName?: string | null;
   clientName?: string | null;
+  primaryColor?: string | null;
 }
 
 // Legacy color palette for backwards compatibility
