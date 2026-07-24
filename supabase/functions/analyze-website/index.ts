@@ -46,7 +46,7 @@ function logStep(step: string, details?: unknown) {
 // RATE LIMITING (public/unauthenticated audits)
 // ============================================
 const PUBLIC_IP_DAILY_LIMIT = 3;
-const GLOBAL_DAILY_LIMIT = 25;
+const GLOBAL_DAILY_LIMIT = 50;
 
 function getCallerIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
