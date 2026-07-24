@@ -16,6 +16,7 @@ export interface Workspace {
   current_period_end: string | null;
   created_at: string;
   updated_at: string;
+  internal_account?: boolean;
 }
 
 export interface WorkspaceUsage {
@@ -122,6 +123,19 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     // If this is the owner account (determined server-side), grant full Scale plan access
     if (ownerOverride) {
       console.log("[WorkspaceContext] Applying owner override (server-side verified)");
+      return {
+        limits: PLAN_DEFINITIONS.scale.limits,
+        isTrialActive: false,
+        isTrialExpired: false,
+        isSubscriptionActive: true,
+        isLocked: false,
+        isOwnerOverride: true,
+      };
+    }
+
+    // Internal accounts are always fully entitled (Scale-level), regardless of subscription_status
+    if (workspace?.internal_account) {
+      console.log("[WorkspaceContext] Applying internal_account override");
       return {
         limits: PLAN_DEFINITIONS.scale.limits,
         isTrialActive: false,
