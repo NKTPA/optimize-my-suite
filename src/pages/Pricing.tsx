@@ -237,7 +237,7 @@ export default function Pricing() {
               key={plan.name}
               className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
                 plan.popular 
-                  ? "border-primary border-2 shadow-xl scale-[1.02] ring-4 ring-primary/10" 
+                  ? "border-primary border-2 shadow-xl md:scale-[1.02] ring-4 ring-primary/10" 
                   : "border-border/50 hover:border-border hover:shadow-card-hover"
               }`}
             >
@@ -326,8 +326,8 @@ export default function Pricing() {
           <h2 className="text-2xl font-bold text-foreground text-center mb-8">
             Compare All Features
           </h2>
-          <div className="overflow-x-auto rounded-xl border border-border/50 bg-card">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-auto rounded-xl border border-border/50 bg-card -mx-4 sm:mx-0">
+            <table className="w-full min-w-[560px] border-collapse">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-4 px-4 font-medium text-muted-foreground">Feature</th>
