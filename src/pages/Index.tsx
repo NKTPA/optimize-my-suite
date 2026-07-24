@@ -365,7 +365,7 @@ export default function Index() {
 
             <div className="text-center">
               <a
-                href="/sample-report.pdf"
+                href="/sample-audit-report.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex"
