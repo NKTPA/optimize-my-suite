@@ -28,6 +28,7 @@ import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
 import { HomepageAuditWidget } from "@/components/marketing/HomepageAuditWidget";
+import { MobileNavSheet } from "@/components/marketing/MobileNavSheet";
 import productScreenshot from "@/assets/product-screenshot.png";
 
 // FAQ Item component with accordion behavior
@@ -163,6 +164,7 @@ export default function Index() {
                   Get Your Free Audit
                 </Button>
               </a>
+              <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
             </div>
           </div>
         </div>
@@ -195,7 +197,7 @@ export default function Index() {
           <div className="flex items-center justify-between">
             <HeaderBrand textFallback />
             <div className="flex items-center gap-1 sm:gap-2">
-              <Link to="/pricing"><Button variant="ghost" size="sm" className="px-2 sm:px-3">Pricing</Button></Link>
+              <Link to="/pricing" className="hidden sm:inline-flex"><Button variant="ghost" size="sm" className="px-2 sm:px-3">Pricing</Button></Link>
               <Link to="/auth"><Button variant="ghost" size="sm" className="px-2 sm:px-3 hidden sm:inline-flex">Login</Button></Link>
               <Button variant="default" size="sm" className="text-xs sm:text-sm px-2 sm:px-4 hidden sm:inline-flex" onClick={() => setShowPlanModal(true)}>
                 Start Free Trial
@@ -208,6 +210,7 @@ export default function Index() {
                   Get Your Free Audit
                 </Button>
               </a>
+              <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
             </div>
           </div>
         </nav>
