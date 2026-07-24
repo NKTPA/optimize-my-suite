@@ -223,33 +223,37 @@ export default function Index() {
             </div>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight leading-tight break-words font-display">
-              Stop Selling Promises.{" "}
-              <span className="text-gradient">Start Selling Proof.</span>
+              Paste Your Website.{" "}
+              <span className="text-gradient">Get a Free Expert Audit in Minutes.</span>
             </h1>
 
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-4 max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
-              Run an objective audit on any website. Send a white-label report. Close the rebuild with before/after scores.
-            </p>
-            
-            <p className="text-sm sm:text-base text-foreground/70 mb-8 max-w-2xl mx-auto font-medium">
-              White-label reports. Batch analysis. Implementation packs. Everything agencies need to win and retain accounts.
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
+              Objective scores across 7 categories, powered by real Google data. Agencies white-label the report and close clients with before/after proof.
             </p>
 
+            {/* Free audit widget — moved into hero */}
+            <div className="mb-8">
+              <HomepageAuditWidget />
+            </div>
+
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 w-full max-w-lg sm:max-w-none mx-auto">
-              <a href="#free-audit" className="w-full sm:w-auto">
-                <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base shadow-hero-button">
-                  Get Your Free Audit
-                  <ArrowRight className="w-5 h-5 flex-shrink-0" />
-                </Button>
-              </a>
               <Button
                 variant="outline"
-                size="lg"
-                className="gap-2 w-full sm:w-auto sm:min-w-[260px]"
+                size="default"
+                className="gap-2 w-full sm:w-auto"
                 onClick={() => setShowPlanModal(true)}
               >
                 Start Your 3-Day Free Trial
               </Button>
+              <a
+                href="/sample-audit-report.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                See a Sample Report
+              </a>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-muted-foreground">
@@ -265,18 +269,6 @@ export default function Index() {
                 <Check className="w-4 h-4 text-primary" />
                 One closed client pays for itself
               </span>
-            </div>
-
-            <div className="mt-6 text-center">
-              <a
-                href="/sample-audit-report.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-              >
-                <FileText className="w-4 h-4 flex-shrink-0" />
-                See a Sample Report
-              </a>
             </div>
 
             {/* Browser Mockup Placeholder */}
@@ -319,15 +311,12 @@ export default function Index() {
       </header>
 
       <main>
-        {/* Free audit widget — public, near hero */}
-        <HomepageAuditWidget />
-
         {/* Built to Justify Your Recommendations */}
         <section className="py-16 lg:py-20 border-t border-border/50 bg-secondary/20">
           <div className="container">
             <div className="text-center mb-12">
               <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-                Built to Justify Your Recommendations
+                Stop Selling Promises. Start Selling Proof.
               </h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
                 Every score is backed by something clients can verify — not opinion dressed as analysis.
