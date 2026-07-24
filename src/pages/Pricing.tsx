@@ -432,11 +432,13 @@ export default function Pricing() {
             Need a Custom Solution?
           </h2>
           <p className="text-muted-foreground mb-6">
-            Talk to our team about enterprise pricing, custom integrations, and dedicated support for high-volume agencies.
+            Talk to us about high-volume or white-label reseller needs.
           </p>
-          <Button variant="outline" size="lg" className="gap-2">
-            Book a Demo
-            <ArrowRight className="w-4 h-4" />
+          <Button asChild variant="outline" size="lg" className="gap-2">
+            <a href="mailto:support@optimizemysuite.com?subject=Demo%20request%20%E2%80%94%20OptimizeMySuite">
+              Book a Demo
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </Button>
         </div>
       </section>

@@ -331,7 +331,8 @@ export default function DashboardAccount() {
                 <div>
                   {isTrial && (
                     <p className="text-sm text-muted-foreground">
-                      Your 3-day free trial is active. Add a payment method to continue after trial.
+                      Free trial active — full access until {subscriptionEnd ? new Date(subscriptionEnd).toLocaleDateString() : "your trial end"}.
+                      Choose a plan to continue after your trial.
                     </p>
                   )}
                   {subscribed && !isTrial && subscriptionEnd && (
