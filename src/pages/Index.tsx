@@ -225,7 +225,7 @@ export default function Index() {
             </h1>
 
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-4 max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
-              Generate objective, criteria-based website audits that help you close clients, justify rebuilds, and prove your value with before/after score comparisons.
+              Run an objective audit on any website. Send a white-label report. Close the rebuild with before/after scores.
             </p>
             
             <p className="text-sm sm:text-base text-foreground/70 mb-8 max-w-2xl mx-auto font-medium">
