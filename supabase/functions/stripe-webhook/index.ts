@@ -7,6 +7,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, stripe-signature",
 };
 
+// Safely convert a Stripe unix timestamp (seconds) to ISO string, or null.
+const toIsoOrNull = (ts: unknown): string | null => {
+  return typeof ts === "number" && Number.isFinite(ts)
+    ? new Date(ts * 1000).toISOString()
+    : null;
+};
+
 const logStep = (step: string, details?: any) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
@@ -73,6 +80,13 @@ serve(async (req) => {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
+        const item = subscription.items.data[0];
+        const periodStart = (item as any)?.current_period_start
+          ?? (subscription as any).current_period_start
+          ?? null;
+        const periodEnd = (item as any)?.current_period_end
+          ?? (subscription as any).current_period_end
+          ?? null;
         
         // Get customer email
         const customer = await stripe.customers.retrieve(customerId);
@@ -107,11 +121,9 @@ serve(async (req) => {
             subscription_status: subscription.status,
             stripe_customer_id: customerId,
             stripe_subscription_id: subscription.id,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-            trial_ends_at: subscription.trial_end 
-              ? new Date(subscription.trial_end * 1000).toISOString() 
-              : null,
+            current_period_start: toIsoOrNull(periodStart),
+            current_period_end: toIsoOrNull(periodEnd),
+            trial_ends_at: toIsoOrNull(subscription.trial_end),
           })
           .eq("owner_id", user.id)
           .select()
@@ -125,8 +137,11 @@ serve(async (req) => {
 
         // Reset usage on new billing period
         if (event.type === "customer.subscription.updated") {
-          const previousPeriodEnd = (event.data.previous_attributes as any)?.current_period_end;
-          if (previousPeriodEnd && previousPeriodEnd !== subscription.current_period_end) {
+          const prevAttrs = (event.data.previous_attributes as any) ?? {};
+          const previousPeriodEnd = prevAttrs.current_period_end
+            ?? prevAttrs.items?.data?.[0]?.current_period_end
+            ?? null;
+          if (previousPeriodEnd && periodEnd && previousPeriodEnd !== periodEnd) {
             logStep("Billing period changed, resetting usage");
             
             const { error: usageError } = await supabaseClient
@@ -134,8 +149,8 @@ serve(async (req) => {
               .update({
                 analyses_used: 0,
                 packs_used: 0,
-                period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-                period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                period_start: toIsoOrNull(periodStart),
+                period_end: toIsoOrNull(periodEnd),
               })
               .eq("workspace_id", workspace?.id);
 
