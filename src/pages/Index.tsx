@@ -660,6 +660,17 @@ export default function Index() {
               <p className="text-xs text-muted-foreground">
                 © {currentYear} OptimizeMySuite
               </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Made by{" "}
+                <a
+                  href="https://vibingsolutions.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-muted-foreground transition-colors underline-offset-2 hover:underline"
+                >
+                  VibingSolutions.ai
+                </a>
+              </p>
             </div>
             
             {/* Product column */}
