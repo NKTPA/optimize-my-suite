@@ -9,6 +9,7 @@ import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
 import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { MobileNavSheet } from "@/components/marketing/MobileNavSheet";
 
 const plans = [
   {
@@ -165,29 +166,30 @@ export default function Pricing() {
       <nav className="container pt-6">
         <div className="flex items-center justify-between">
           <HeaderBrand textFallback />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             {user ? (
               <>
                 <Link to="/">
-                  <Button variant="ghost" size="sm">Dashboard</Button>
+                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">Dashboard</Button>
                 </Link>
                 <Link to="/history">
-                  <Button variant="ghost" size="sm">History</Button>
+                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">History</Button>
                 </Link>
                 <Link to="/account">
-                  <Button variant="ghost" size="sm">Account</Button>
+                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">Account</Button>
                 </Link>
               </>
             ) : (
               <>
-                <Link to="/auth">
+                <Link to="/auth" className="hidden sm:inline-flex">
                   <Button variant="ghost" size="sm">Login</Button>
                 </Link>
-                <Link to="/auth?tab=signup">
+                <Link to="/auth?tab=signup" className="hidden sm:inline-flex">
                   <Button variant="default" size="sm">Create Agency Account</Button>
                 </Link>
               </>
             )}
+            <MobileNavSheet onStartFreeTrial={() => navigate("/auth?tab=signup")} />
           </div>
         </div>
       </nav>
