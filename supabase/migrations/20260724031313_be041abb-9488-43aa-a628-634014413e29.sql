@@ -1,0 +1,2 @@
+ALTER TABLE public.workspaces ADD COLUMN IF NOT EXISTS internal_account boolean NOT NULL DEFAULT false;
+UPDATE public.workspaces SET internal_account = true WHERE id = 'afac04b3-6b82-4a79-a92d-665fa9871b1c';
