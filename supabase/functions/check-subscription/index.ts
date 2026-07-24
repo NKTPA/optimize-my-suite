@@ -125,13 +125,13 @@ serve(async (req) => {
     // Get or create user's workspace using shared helper
     const workspaceResult = await getOrCreateWorkspaceForUser(supabaseClient, user.id, user.email);
     
-    let workspace: { id: string; plan: string; subscription_status: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null } | null = null;
+    let workspace: { id: string; plan: string; subscription_status: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null; internal_account?: boolean } | null = null;
     
     if (!isWorkspaceError(workspaceResult)) {
       // Fetch additional workspace fields needed for this function
       const { data: fullWorkspace, error: wsError } = await supabaseClient
         .from("workspaces")
-        .select("id, plan, subscription_status, stripe_customer_id, stripe_subscription_id")
+        .select("id, plan, subscription_status, stripe_customer_id, stripe_subscription_id, internal_account")
         .eq("id", workspaceResult.workspace.id)
         .single();
       
