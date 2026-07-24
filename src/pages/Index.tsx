@@ -101,8 +101,8 @@ const trustPoints = [
 
 const plans = [
   { name: "Starter", price: 49, analyses: "25", features: ["25 analyses/month", "White-label PDFs", "10-URL batch mode"], forWho: "Solo consultants testing the waters" },
-  { name: "Pro", price: 149, analyses: "150", features: ["150 analyses/month", "Custom branding", "50-URL batch mode", "5 team members"], popular: true, forWho: "Growing agencies scaling client work" },
-  { name: "Scale", price: 399, analyses: "500", features: ["500 analyses/month", "Unlimited team", "API access", "Dedicated support"], forWho: "High-volume agencies and white-label resellers" },
+  { name: "Pro", price: 149, analyses: "150", features: ["150 analyses/month", "Custom branding", "50-URL batch mode", "Client tagging & organization", "Team seats — coming soon"], popular: true, forWho: "Growing agencies scaling client work" },
+  { name: "Scale", price: 399, analyses: "500", features: ["500 analyses/month", "Unlimited batch mode", "API access — coming soon", "Priority email support", "Team seats — coming soon"], forWho: "High-volume agencies and white-label resellers" },
 ];
 
 export default function Index() {
@@ -625,7 +625,7 @@ export default function Index() {
                 />
                 <FaqItem 
                   question="Can my team use this too?"
-                  answer="Pro and Scale plans include team seats. Everyone shares the same workspace, client list, and report templates."
+                  answer="Team seats are coming soon on Pro and Scale. Today each subscription is single-user — one login per workspace. We'll email existing subscribers when invites go live."
                 />
                 <FaqItem 
                   question="What if I need more analyses than my plan allows?"
