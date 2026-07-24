@@ -476,7 +476,7 @@ export function HomepageAuditWidget() {
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Free audits are limited to 3 per visitor per day and 25 site-wide per day.
+          Free audits are limited to 3 per visitor per day and 50 site-wide per day.
         </p>
       </div>
     </section>
