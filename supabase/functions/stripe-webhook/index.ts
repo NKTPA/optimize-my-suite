@@ -107,6 +107,17 @@ serve(async (req) => {
           break;
         }
 
+        // Skip internal accounts — Stripe sync must never lock/downgrade them
+        const { data: existingWs } = await supabaseClient
+          .from("workspaces")
+          .select("id, internal_account")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (existingWs?.internal_account) {
+          logStep("Skipping workspace update for internal_account", { workspaceId: existingWs.id });
+          break;
+        }
+
         // Determine plan from price
         const priceAmount = subscription.items.data[0]?.price?.unit_amount || 0;
         let plan = "starter";
@@ -179,6 +190,17 @@ serve(async (req) => {
         const { data: users } = await supabaseClient.auth.admin.listUsers();
         const user = users?.users?.find(u => u.email === email);
         if (!user) break;
+
+        // Skip internal accounts — they must never be downgraded/canceled by Stripe events
+        const { data: existingWs } = await supabaseClient
+          .from("workspaces")
+          .select("id, internal_account")
+          .eq("owner_id", user.id)
+          .maybeSingle();
+        if (existingWs?.internal_account) {
+          logStep("Skipping cancel for internal_account", { workspaceId: existingWs.id });
+          break;
+        }
 
         // Update workspace to free/canceled
         await supabaseClient

@@ -125,13 +125,13 @@ serve(async (req) => {
     // Get or create user's workspace using shared helper
     const workspaceResult = await getOrCreateWorkspaceForUser(supabaseClient, user.id, user.email);
     
-    let workspace: { id: string; plan: string; subscription_status: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null } | null = null;
+    let workspace: { id: string; plan: string; subscription_status: string | null; stripe_customer_id: string | null; stripe_subscription_id: string | null; internal_account?: boolean } | null = null;
     
     if (!isWorkspaceError(workspaceResult)) {
       // Fetch additional workspace fields needed for this function
       const { data: fullWorkspace, error: wsError } = await supabaseClient
         .from("workspaces")
-        .select("id, plan, subscription_status, stripe_customer_id, stripe_subscription_id")
+        .select("id, plan, subscription_status, stripe_customer_id, stripe_subscription_id, internal_account")
         .eq("id", workspaceResult.workspace.id)
         .single();
       
@@ -234,7 +234,7 @@ serve(async (req) => {
       });
 
       // Sync subscription data to workspace
-      if (workspace?.id) {
+      if (workspace?.id && !workspace.internal_account) {
         const { error: updateError } = await supabaseClient
           .from("workspaces")
           .update({
@@ -279,7 +279,7 @@ serve(async (req) => {
         logStep("Trialing subscription found", { subscriptionId, plan });
 
         // Sync trialing subscription to workspace
-        if (workspace?.id) {
+        if (workspace?.id && !workspace.internal_account) {
           await supabaseClient
             .from("workspaces")
             .update({
@@ -296,7 +296,7 @@ serve(async (req) => {
         subscriptionStatus = "inactive";
         
         // Update workspace to reflect inactive status
-        if (workspace?.id && workspace.subscription_status !== "trialing") {
+        if (workspace?.id && !workspace.internal_account && workspace.subscription_status !== "trialing") {
           await supabaseClient
             .from("workspaces")
             .update({

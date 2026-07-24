@@ -63,7 +63,10 @@ export function SubscriptionGate({ children }: SubscriptionGateProps) {
             variant="ghost"
             size="sm"
             className="w-full text-muted-foreground"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              // Force full navigation to the public homepage to escape the gate reliably
+              window.location.assign("/");
+            }}
           >
             Back to Home
           </Button>

@@ -482,6 +482,7 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           id: string
+          internal_account: boolean
           name: string
           owner_id: string
           plan: string
@@ -496,6 +497,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          internal_account?: boolean
           name: string
           owner_id: string
           plan?: string
@@ -510,6 +512,7 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           id?: string
+          internal_account?: boolean
           name?: string
           owner_id?: string
           plan?: string
