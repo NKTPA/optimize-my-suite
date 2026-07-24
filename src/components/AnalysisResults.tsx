@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { usePdfBranding } from "@/hooks/use-pdf-branding";
 
 interface AnalysisResultsProps {
   results: AnalysisResult;
@@ -49,6 +50,7 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
   const [activeTab, setActiveTab] = useState("analysis");
   const { toast } = useToast();
   const { session } = useAuth();
+  const pdfBranding = usePdfBranding();
 
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
@@ -56,7 +58,7 @@ export function AnalysisResults({ results, url, onReset, baselineData }: Analysi
     if (isExportingPdf) return;
     setIsExportingPdf(true);
     try {
-      await generateAnalysisPdf(results, url);
+      await generateAnalysisPdf(results, url, pdfBranding);
     } catch (error) {
       console.error("Error generating Analysis PDF:", error);
       toast({

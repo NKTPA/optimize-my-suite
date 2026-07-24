@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { HistoryItem, HistoryItemType } from "@/types/history";
 import { useToast } from "@/hooks/use-toast";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
+import { usePdfBranding } from "@/hooks/use-pdf-branding";
 import { DomainGroupRow } from "@/components/history/DomainGroupRow";
 import { BulkActionBar } from "@/components/history/BulkActionBar";
 import { HistoryPagination } from "@/components/history/HistoryPagination";
@@ -74,6 +75,7 @@ export default function DashboardHistory() {
   const { toast } = useToast();
   const { user, isLoading: authLoading } = useAuth();
   const { history, isLoading: historyLoading, deleteItem, filterHistory } = useHistory();
+  const pdfBranding = usePdfBranding();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<HistoryItemType | "all">("all");
@@ -173,7 +175,7 @@ export default function DashboardHistory() {
 
   const handleDownload = (item: HistoryItem) => {
     if (item.analysisResult) {
-      generateAnalysisPdf(item.analysisResult, item.url);
+      generateAnalysisPdf(item.analysisResult, item.url, pdfBranding);
       toast({
         title: "PDF Downloaded",
         description: "Client report has been downloaded.",
@@ -261,7 +263,7 @@ export default function DashboardHistory() {
 
     itemsToDownload.forEach(item => {
       if (item.analysisResult) {
-        generateAnalysisPdf(item.analysisResult, item.url);
+        generateAnalysisPdf(item.analysisResult, item.url, pdfBranding);
       }
     });
     

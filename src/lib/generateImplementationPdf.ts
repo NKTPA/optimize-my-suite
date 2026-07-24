@@ -4,6 +4,7 @@ import { ImplementationPlan } from "@/types/implementation";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
 import { generatePdfFilename, setPdfMetadata } from "./pdfMetadata";
+import { parseHexColor, loadLogoAsDataUrl, detectImageFormat } from "./pdf/brandingHelpers";
 
 
 /** Safely coerce any value to a string for PDF rendering — prevents null/undefined crashes in splitTextToSize */
@@ -84,6 +85,12 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
 
   // Determine if white-label mode is active (agency branding provided)
   const isWhiteLabel = Boolean(branding?.logoUrl || branding?.footerText);
+
+  // Optional custom brand color (Pro/Scale). Invalid hex ignored.
+  const brandColor = parseHexColor(branding?.primaryColor) || colors.primary;
+
+  // Pre-load agency logo (Pro/Scale). Never fails PDF generation.
+  const brandLogoDataUrl = await loadLogoAsDataUrl(branding?.logoUrl ?? null, 5000);
   
   // Simplified footer - no repetitive credibility badge on every page
   // Credibility statement appears only once in the dedicated methodology section
@@ -111,11 +118,24 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
   doc.rect(0, 0, pageWidth, pageHeight, "F");
   
   // Subtle gradient overlay at top
-  doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  doc.setFillColor(brandColor[0], brandColor[1], brandColor[2]);
   doc.rect(0, 0, pageWidth, 8, "F");
   
-  // OptimizeMySuite wordmark on cover page (skip in white-label mode)
-  if (!isWhiteLabel) {
+  // Agency logo (Pro/Scale) or OptimizeMySuite wordmark (default). Skip entirely in white-label mode without a logo.
+  if (brandLogoDataUrl) {
+    try {
+      const props = doc.getImageProperties(brandLogoDataUrl);
+      const maxH = 14;
+      const maxW = 80;
+      const aspect = props.width && props.height ? props.width / props.height : 3;
+      let h = Math.min(maxH, maxW / aspect);
+      let w = h * aspect;
+      if (w > maxW) { w = maxW; h = w / aspect; }
+      doc.addImage(brandLogoDataUrl, detectImageFormat(brandLogoDataUrl), margin, 22, w, h);
+    } catch (err) {
+      console.warn("[pdf-branding] addImage failed on implementation cover:", err);
+    }
+  } else if (!isWhiteLabel) {
     const preparedBy = "PREPARED BY:";
     doc.setFontSize(8);
     doc.setFont("helvetica", "bold");
