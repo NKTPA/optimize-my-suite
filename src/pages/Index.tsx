@@ -509,7 +509,7 @@ export default function Index() {
                   key={plan.name} 
                   className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
                     plan.popular 
-                      ? "border-primary border-2 shadow-xl scale-[1.02] ring-4 ring-primary/10" 
+                      ? "border-primary border-2 shadow-xl md:scale-[1.02] ring-4 ring-primary/10" 
                       : "border-border/50 hover:border-primary/30 hover:shadow-md"
                   }`}
                 >
