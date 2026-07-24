@@ -31,6 +31,21 @@ const logStep = (step: string, details?: unknown) => {
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
 
+// Safely convert a Stripe unix timestamp (seconds) to ISO string, or null.
+const toIsoOrNull = (ts: unknown): string | null => {
+  return typeof ts === "number" && Number.isFinite(ts)
+    ? new Date(ts * 1000).toISOString()
+    : null;
+};
+
+// Stripe apiVersion 2025-08-27.basil moved current_period_* onto the subscription item.
+const extractPeriod = (subscription: any): { start: number | null; end: number | null } => {
+  const item = subscription?.items?.data?.[0];
+  const start = item?.current_period_start ?? subscription?.current_period_start ?? null;
+  const end = item?.current_period_end ?? subscription?.current_period_end ?? null;
+  return { start, end };
+};
+
 // Price ID to plan mapping
 const PRICE_TO_PLAN: Record<string, { plan: string; limit: number }> = {
   "price_1TwYgbLwiHfOnv90qefzXkAx": { plan: "starter", limit: 25 },
@@ -183,8 +198,9 @@ serve(async (req) => {
       const subscription = subscriptions.data[0];
       subscriptionId = subscription.id;
       subscriptionStatus = subscription.status;
-      currentPeriodStart = new Date(subscription.current_period_start * 1000).toISOString();
-      currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      const { start: pStart, end: pEnd } = extractPeriod(subscription);
+      currentPeriodStart = toIsoOrNull(pStart);
+      currentPeriodEnd = toIsoOrNull(pEnd);
       subscriptionEnd = currentPeriodEnd;
       
       const priceId = subscription.items.data[0]?.price?.id;
@@ -258,7 +274,8 @@ serve(async (req) => {
           usageLimit = PRICE_TO_PLAN[priceId].limit;
         }
         
-        subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+        const { end: tEnd } = extractPeriod(subscription);
+        subscriptionEnd = toIsoOrNull(tEnd);
         logStep("Trialing subscription found", { subscriptionId, plan });
 
         // Sync trialing subscription to workspace
