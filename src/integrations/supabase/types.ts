@@ -338,6 +338,7 @@ export type Database = {
       workspace_branding: {
         Row: {
           accent_color: string | null
+          agency_name: string | null
           created_at: string
           footer_text: string | null
           id: string
@@ -348,6 +349,7 @@ export type Database = {
         }
         Insert: {
           accent_color?: string | null
+          agency_name?: string | null
           created_at?: string
           footer_text?: string | null
           id?: string
@@ -358,6 +360,7 @@ export type Database = {
         }
         Update: {
           accent_color?: string | null
+          agency_name?: string | null
           created_at?: string
           footer_text?: string | null
           id?: string
