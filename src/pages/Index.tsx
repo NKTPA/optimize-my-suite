@@ -216,7 +216,7 @@ export default function Index() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-6 max-w-full">
               <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-              <span className="break-words">Built for Marketing Agencies & SEO Consultants</span>
+              <span className="break-words">White-Label Website Audit Software for Agencies & Consultants</span>
             </div>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight leading-tight break-words font-display">
@@ -225,7 +225,7 @@ export default function Index() {
             </h1>
 
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-4 max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
-              Generate objective, criteria-based website audits that help you close clients, justify rebuilds, and prove your value with before/after score comparisons.
+              Run an objective audit on any website. Send a white-label report. Close the rebuild with before/after scores.
             </p>
             
             <p className="text-sm sm:text-base text-foreground/70 mb-8 max-w-2xl mx-auto font-medium">
@@ -233,21 +233,20 @@ export default function Index() {
             </p>
 
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 w-full max-w-lg sm:max-w-none mx-auto">
-              <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base shadow-hero-button" onClick={() => setShowPlanModal(true)}>
-                Start Your 3-Day Free Trial
-                <ArrowRight className="w-5 h-5 flex-shrink-0" />
-              </Button>
-              <a 
-                href="/sample-audit-report.pdf" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto"
-              >
-                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[200px]">
-                  <FileText className="w-4 h-4 flex-shrink-0" />
-                  See a Sample Report
+              <a href="#free-audit" className="w-full sm:w-auto">
+                <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base shadow-hero-button">
+                  Get Your Free Audit
+                  <ArrowRight className="w-5 h-5 flex-shrink-0" />
                 </Button>
               </a>
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 w-full sm:w-auto sm:min-w-[260px]"
+                onClick={() => setShowPlanModal(true)}
+              >
+                Start Your 3-Day Free Trial
+              </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-muted-foreground">
@@ -263,6 +262,18 @@ export default function Index() {
                 <Check className="w-4 h-4 text-primary" />
                 One closed client pays for itself
               </span>
+            </div>
+
+            <div className="mt-6 text-center">
+              <a
+                href="/sample-audit-report.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                See a Sample Report
+              </a>
             </div>
 
             {/* Browser Mockup Placeholder */}
@@ -354,7 +365,7 @@ export default function Index() {
 
             <div className="text-center">
               <a
-                href="/sample-report.pdf"
+                href="/sample-audit-report.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex"
@@ -731,16 +742,6 @@ export default function Index() {
             <div>
               <p className="font-semibold text-foreground text-sm mb-4">Company</p>
               <ul className="space-y-2">
-                <li>
-                  <a 
-                    href="https://bicc.me" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Built by BICC
-                  </a>
-                </li>
                 <li>
                   <a href="#" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                     Privacy Policy
