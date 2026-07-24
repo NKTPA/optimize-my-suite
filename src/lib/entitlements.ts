@@ -29,9 +29,9 @@ export interface PlanDefinition {
 
 // Stripe price IDs for OptimizeMySuite plans
 export const STRIPE_PRICE_IDS = {
-  starter: "price_1Sdg76JDZeHuCLwazGgchPkh",
-  pro: "price_1Sdg7gJDZeHuCLwardbQggEZ",
-  scale: "price_1Sdg80JDZeHuCLwaVVp0uBbh",
+  starter: "price_1TwYgbLwiHfOnv90qefzXkAx",
+  pro: "price_1TwYhxLwiHfOnv90G1Ajh7pb",
+  scale: "price_1TwYiuLwiHfOnv90jFaf8CoU",
 };
 
 export const PLAN_DEFINITIONS: Record<PlanId, PlanDefinition> = {
