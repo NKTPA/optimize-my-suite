@@ -233,21 +233,20 @@ export default function Index() {
             </p>
 
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 w-full max-w-lg sm:max-w-none mx-auto">
-              <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base shadow-hero-button" onClick={() => setShowPlanModal(true)}>
-                Start Your 3-Day Free Trial
-                <ArrowRight className="w-5 h-5 flex-shrink-0" />
-              </Button>
-              <a 
-                href="/sample-audit-report.pdf" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-full sm:w-auto"
-              >
-                <Button variant="outline" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[200px]">
-                  <FileText className="w-4 h-4 flex-shrink-0" />
-                  See a Sample Report
+              <a href="#free-audit" className="w-full sm:w-auto">
+                <Button variant="hero" size="lg" className="gap-2 w-full sm:w-auto sm:min-w-[260px] text-base shadow-hero-button">
+                  Get Your Free Audit
+                  <ArrowRight className="w-5 h-5 flex-shrink-0" />
                 </Button>
               </a>
+              <Button
+                variant="outline"
+                size="lg"
+                className="gap-2 w-full sm:w-auto sm:min-w-[260px]"
+                onClick={() => setShowPlanModal(true)}
+              >
+                Start Your 3-Day Free Trial
+              </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-muted-foreground">
@@ -263,6 +262,18 @@ export default function Index() {
                 <Check className="w-4 h-4 text-primary" />
                 One closed client pays for itself
               </span>
+            </div>
+
+            <div className="mt-6 text-center">
+              <a
+                href="/sample-audit-report.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                <FileText className="w-4 h-4 flex-shrink-0" />
+                See a Sample Report
+              </a>
             </div>
 
             {/* Browser Mockup Placeholder */}
