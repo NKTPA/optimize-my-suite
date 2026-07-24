@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import type { AnalysisResult } from "@/types/analysis";
 import { generateAnalysisPdf } from "@/lib/generatePdf";
 import { toast } from "@/hooks/use-toast";
@@ -152,31 +153,41 @@ export function HomepageAuditWidget() {
       });
 
       if (error) {
-        // supabase-js wraps HTTP errors here; try to read the body/status.
-        const ctx = (error as { context?: Response }).context;
+        // supabase-js wraps HTTP errors in FunctionsHttpError with a Response context.
         let status = 0;
-        let body: Record<string, unknown> = {};
-        if (ctx && typeof ctx.status === "number") {
-          status = ctx.status;
-          try { body = await ctx.clone().json(); } catch { /* ignore */ }
+        if (error instanceof FunctionsHttpError) {
+          const ctx = (error as unknown as { context?: Response }).context;
+          if (ctx && typeof ctx.status === "number") status = ctx.status;
+        } else {
+          const ctx = (error as { context?: Response }).context;
+          if (ctx && typeof ctx.status === "number") status = ctx.status;
         }
-        if (status === 429 || status === 503) {
+        console.error("[HomepageAuditWidget] analyze-website non-2xx", { status, error });
+        if (status === 429) {
           setRateLimitMsg(
-            status === 503
-              ? "Audits are temporarily paused. Leave your email and we'll run yours as soon as we're back online."
-              : "We've hit today's free audit limit — leave your email and we'll run yours tomorrow.",
+            "We've hit today's free audit limit — leave your email and we'll run yours tomorrow.",
           );
           setPhase("rateLimited");
           return;
         }
-        throw new Error(typeof body.error === "string" ? body.error : error.message);
+        if (status === 503) {
+          setRateLimitMsg(
+            "Audits are temporarily paused. Leave your email and we'll run yours as soon as we're back online.",
+          );
+          setPhase("rateLimited");
+          return;
+        }
+        // Any 5xx / unknown failure — never surface the raw error string.
+        setErrorMsg("We couldn't complete this audit — please try again in a moment.");
+        setPhase("error");
+        return;
       }
 
       setResult(data as AnalysisResult);
       setPhase("preview");
     } catch (err) {
       console.error("[HomepageAuditWidget] analyze failed", err);
-      setErrorMsg(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      setErrorMsg("We couldn't complete this audit — please try again in a moment.");
       setPhase("error");
     }
   }

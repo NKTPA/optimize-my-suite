@@ -28,10 +28,16 @@ function num(v: unknown): number | null {
   return null;
 }
 
-async function fetchPageSpeedOnce(url: string, attempt: number): Promise<PageSpeedResult | null> {
+type AttemptOutcome = { result: PageSpeedResult | null; timedOut: boolean };
+
+async function fetchPageSpeedOnce(
+  url: string,
+  attempt: number,
+  timeoutMs: number,
+  budgetRemainingMs: number,
+): Promise<AttemptOutcome> {
   const controller = new AbortController();
-  const TIMEOUT_MS = 60_000;
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   const startedAt = Date.now();
   const apiKey = Deno.env.get("PAGESPEED_API_KEY");
   const hasApiKey = Boolean(apiKey);
@@ -58,26 +64,30 @@ async function fetchPageSpeedOnce(url: string, attempt: number): Promise<PageSpe
       const bodyText = await response.text().catch(() => "");
       console.error(JSON.stringify({
         source: "PSI",
+        attempt,
         url,
         httpStatus,
         errorMessage: bodyText.slice(0, 500) || `HTTP ${response.status}`,
         elapsedMs: Date.now() - startedAt,
+        budgetRemainingMs,
         hasApiKey,
       }));
-      return null;
+      return { result: null, timedOut: false };
     }
 
     const data = await response.json().catch(() => null);
     if (!data || typeof data !== "object") {
       console.error(JSON.stringify({
         source: "PSI",
+        attempt,
         url,
         httpStatus,
         errorMessage: "parse failure: empty or invalid JSON",
         elapsedMs: Date.now() - startedAt,
+        budgetRemainingMs,
         hasApiKey,
       }));
-      return null;
+      return { result: null, timedOut: false };
     }
 
     const lighthouse = (data as any).lighthouseResult ?? {};
@@ -121,9 +131,10 @@ async function fetchPageSpeedOnce(url: string, attempt: number): Promise<PageSpe
       attempt,
       score: result.performanceScore,
       elapsedMs: Date.now() - startedAt,
+      budgetRemainingMs,
     }));
 
-    return result;
+    return { result, timedOut: false };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     const isTimeout = msg.includes("aborted") || (err as any)?.name === "AbortError";
@@ -132,25 +143,62 @@ async function fetchPageSpeedOnce(url: string, attempt: number): Promise<PageSpe
       attempt,
       url,
       httpStatus,
-      errorMessage: isTimeout ? `timeout after ${TIMEOUT_MS}ms` : msg,
+      errorMessage: isTimeout ? `timeout after ${timeoutMs}ms` : msg,
+      timeout: isTimeout,
       elapsedMs: Date.now() - startedAt,
+      budgetRemainingMs,
       hasApiKey,
     }));
-    return null;
+    return { result: null, timedOut: isTimeout };
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
-// Runs PSI 3 times sequentially, picks the median-scoring successful run for
-// its full metric set. If only 2 succeed, uses the lower (conservative). If 1,
-// uses it. If 0, returns null so the caller's estimated fallback engages.
+// Runs PSI up to 3 times sequentially under a strict total time budget so PSI
+// can never wall-clock-kill the parent edge function. Picks the median-scoring
+// successful run. If only 2 succeed, uses the lower (conservative). If 1, uses
+// it. If 0, returns null so the caller's estimated fallback engages.
 export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | null> {
   const ATTEMPTS = 3;
+  const TOTAL_BUDGET_MS = 70_000;
+  const PER_ATTEMPT_MS = 25_000;
+  const MIN_ATTEMPT_MS = 10_000;
+  const startedAt = Date.now();
   const results: PageSpeedResult[] = [];
+  let consecutiveTimeouts = 0;
+
   for (let i = 1; i <= ATTEMPTS; i++) {
-    const r = await fetchPageSpeedOnce(url, i);
-    if (r) results.push(r);
+    const budgetRemainingMs = TOTAL_BUDGET_MS - (Date.now() - startedAt);
+    if (budgetRemainingMs < MIN_ATTEMPT_MS) {
+      console.log(JSON.stringify({
+        source: "PSI",
+        summary: "budget-exhausted",
+        skippedAttempt: i,
+        budgetRemainingMs,
+      }));
+      break;
+    }
+    // Skip attempt 3 if attempts 1 and 2 both hung — PSI won't recover.
+    if (i === 3 && consecutiveTimeouts >= 2) {
+      console.log(JSON.stringify({
+        source: "PSI",
+        summary: "bail-consecutive-timeouts",
+        skippedAttempt: i,
+        budgetRemainingMs,
+      }));
+      break;
+    }
+    const timeoutMs = Math.min(PER_ATTEMPT_MS, budgetRemainingMs);
+    const { result, timedOut } = await fetchPageSpeedOnce(url, i, timeoutMs, budgetRemainingMs);
+    if (result) {
+      results.push(result);
+      consecutiveTimeouts = 0;
+    } else if (timedOut) {
+      consecutiveTimeouts += 1;
+    } else {
+      consecutiveTimeouts = 0;
+    }
   }
 
   if (results.length === 0) return null;
@@ -166,6 +214,7 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
     successes: results.length,
     scores: results.map((r) => r.performanceScore),
     chosenScore: chosen.performanceScore,
+    totalElapsedMs: Date.now() - startedAt,
   }));
 
   return chosen;
