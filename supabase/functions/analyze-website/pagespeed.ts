@@ -212,6 +212,7 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
   if (results.length === 1) {
     results[0].attemptScores = attemptScores;
     results[0].scoreSpread = spread;
+    results[0].attemptCount = attemptScores.length;
     return results[0];
   }
 
@@ -220,6 +221,7 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
   const chosen = results.length === 2 ? sorted[0] : sorted[1];
   chosen.attemptScores = attemptScores;
   chosen.scoreSpread = spread;
+  chosen.attemptCount = attemptScores.length;
 
   console.log(JSON.stringify({
     source: "PSI",
