@@ -16,6 +16,10 @@
     <meta name="author" content="OptimizeMySuite" />
     <meta name="robots" content="index, follow" />
 
+    <!-- The data-rh attribute tells react-helmet-async this tag is helmet-managed. On mount, Helmet removes it and substitutes the route-correct canonical from SEO.tsx. Do not remove data-rh or every page will carry two conflicting canonicals. -->
+    <link rel="canonical" href="https://optimizemysuite.com/" data-rh="true" />
+
+
     <!-- Open Graph -->
     <meta property="og:title" content="OptimizeMySuite — White-Label Website Audit Tool for Agencies" />
     <meta property="og:description" content="Generate white-label website audit reports with objective scoring. Built for marketing agencies, SEO consultants, and web design firms." />
