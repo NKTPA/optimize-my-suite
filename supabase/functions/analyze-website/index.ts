@@ -2690,6 +2690,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
             ...scores,
             psiAttemptScores: pageSpeedData?.attemptScores ?? null,
             psiScoreSpread: pageSpeedData?.scoreSpread ?? null,
+            psiAttemptCount: pageSpeedData?.attemptCount ?? null,
             methodologyVersion: METHODOLOGY_VERSION,
           } as unknown as Record<string, unknown>,
 
