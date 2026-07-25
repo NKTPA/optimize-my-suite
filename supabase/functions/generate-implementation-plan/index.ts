@@ -156,11 +156,33 @@ GUIDELINES:
 function normalizeImplementationPlan(plan: any): any {
   const changed: string[] = [];
   const SEPARATORS = new Set([" ", "-", "|", ","]);
+  const TRAILING_FUNCTION_WORDS = new Set([
+    "for", "and", "or", "with", "to", "of", "the", "a", "an",
+    "in", "on", "at", "by", "but", "from", "as", "into", "via",
+    "per", "that", "your", "our", "plus",
+  ]);
 
   const stripTrailingSeparators = (str: string): string => {
     let end = str.length - 1;
     while (end >= 0 && SEPARATORS.has(str[end])) end--;
     return str.slice(0, end + 1);
+  };
+
+  const stripDanglingWords = (str: string): string => {
+    let current = stripTrailingSeparators(str);
+    while (current.length > 0) {
+      const lastSpace = current.lastIndexOf(" ");
+      const lastWord = lastSpace >= 0 ? current.slice(lastSpace + 1) : current;
+      const normalized = lastWord.replace(/[^\p{L}\p{N}]/gu, "").toLowerCase();
+      if (!normalized || TRAILING_FUNCTION_WORDS.has(normalized)) {
+        current = stripTrailingSeparators(
+          lastSpace >= 0 ? current.slice(0, lastSpace) : "",
+        );
+        continue;
+      }
+      break;
+    }
+    return current;
   };
 
   const trimToLimit = (text: string, limit: number): string => {
@@ -181,22 +203,25 @@ function normalizeImplementationPlan(plan: any): any {
 
   const title = plan?.seoSetup?.home?.title;
   if (typeof title === "string" && title.length >= 60) {
-    plan.seoSetup.home.title = stripTrailingSeparators(trimToLimit(title, 59));
-    changed.push("title");
+    const originalLen = title.length;
+    const clamped = stripDanglingWords(trimToLimit(title, 59));
+    plan.seoSetup.home.title = clamped;
+    changed.push(`title: ${originalLen} -> ${clamped.length}`);
   }
 
   const meta = plan?.seoSetup?.home?.metaDescription;
   if (typeof meta === "string" && meta.length >= 160) {
-    let trimmed = stripTrailingSeparators(trimToLimit(meta, 159));
+    const originalLen = meta.length;
+    let trimmed = stripDanglingWords(trimToLimit(meta, 159));
     if (!trimmed.endsWith(".")) {
       if (trimmed.length < 159) {
         trimmed += ".";
       } else {
-        trimmed = stripTrailingSeparators(trimToLimit(trimmed, 158)) + ".";
+        trimmed = stripDanglingWords(trimToLimit(trimmed, 158)) + ".";
       }
     }
     plan.seoSetup.home.metaDescription = trimmed;
-    changed.push("meta");
+    changed.push(`meta: ${originalLen} -> ${trimmed.length}`);
   }
 
   const h1 = plan?.seoSetup?.home?.h1;
