@@ -2240,6 +2240,7 @@ serve(async (req) => {
         aiServicePitch: { paragraph: '', bullets: [] },
         environment,
         analysisSourceUrl: url,
+        methodology: { version: METHODOLOGY_VERSION, effectiveDate: METHODOLOGY_VERSION_DATE },
       };
       
       return new Response(JSON.stringify(notScorableResult), {
