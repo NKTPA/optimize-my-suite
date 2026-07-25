@@ -1855,36 +1855,30 @@ serve(async (req) => {
       }
 
       const usage = await getOrCreateWorkspaceUsage(supabaseAdmin, workspace.id);
-      const currentUsage = usage?.analyses_used || 0;
       const planLimit = PLAN_LIMITS[workspace.plan] || PLAN_LIMITS.starter;
 
-      logStep("Usage check", { currentUsage, planLimit, plan: workspace.plan });
+      logStep("Usage check", { currentUsage: usage?.analyses_used ?? 0, planLimit, plan: workspace.plan });
 
-      if (currentUsage >= planLimit) {
-        logStep("ERROR: Usage limit exceeded");
+      const { data: newCount, error: incrementError } = await supabaseAdmin.rpc(
+        "increment_workspace_analyses",
+        { _workspace_id: workspace.id, _limit: planLimit }
+      );
+
+      if (incrementError) {
+        logStep("WARNING: Failed to atomically increment usage, allowing audit", { error: incrementError.message });
+      } else if (newCount === null || newCount === undefined) {
+        logStep("ERROR: Usage limit exceeded (atomic)");
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             error: `You've used all ${planLimit} analyses for this month. Please upgrade your plan for more analyses.`,
             limitReached: true,
-            currentUsage,
+            currentUsage: planLimit,
             limit: planLimit
           }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
-      }
-
-      const { error: incrementError } = await supabaseAdmin
-        .from("workspace_usage")
-        .update({ 
-          analyses_used: currentUsage + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq("workspace_id", workspace.id);
-
-      if (incrementError) {
-        logStep("WARNING: Failed to increment usage", { error: incrementError.message });
       } else {
-        logStep("Usage incremented", { newUsage: currentUsage + 1 });
+        logStep("Usage incremented", { newUsage: newCount });
       }
     } else if (user && isOwner) {
       logStep("Owner account - bypassing usage limits");
