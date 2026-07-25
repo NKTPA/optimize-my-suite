@@ -249,6 +249,10 @@ export function HomepageAuditWidget() {
           phase === "notScorable" ? null : result?.summary.overallScore ?? null,
       });
       if (error) throw error;
+      track("free_audit_lead_captured", {
+        phase,
+        score: result?.summary?.overallScore ?? null,
+      });
       if (phase === "rateLimited" || phase === "notScorable") {
         toast({
           title: "You're on the list",
@@ -272,6 +276,7 @@ export function HomepageAuditWidget() {
     if (!result) return;
     try {
       await generateAnalysisPdf(result, normalizedUrl);
+      track("free_audit_pdf_downloaded");
     } catch (err) {
       console.error("[HomepageAuditWidget] pdf failed", err);
       toast({ title: "PDF failed", description: "Could not generate the PDF. Try again.", variant: "destructive" });
