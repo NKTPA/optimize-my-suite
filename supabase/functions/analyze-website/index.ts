@@ -1239,7 +1239,7 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "service_page_scroll_depth": "high" if user must scroll more than 2 full viewports to reach CTA or key info on service pages. "low" if CTA is within first viewport.
 - "social_proof_above_fold": true ONLY if review stars, testimonial quotes, or trust badges are visible without scrolling.
 - "button_style_consistent": false if buttons across different pages use different colors, sizes, or border styles.
-- "has_interactive_qualifier": true ONLY if the page offers an interactive tool that qualifies or engages a prospect BEFORE contact — e.g., a treatment planner, quiz, cost/price calculator, or self-assessment. Explicitly EXCLUDED (return false): chat widgets, plain contact forms, newsletter signups, and booking/appointment calendars.
+- "has_interactive_qualifier": true ONLY if the page offers an interactive tool that qualifies or engages a prospect BEFORE contact — e.g., a treatment planner, quiz, cost/price calculator, or self-assessment. Explicitly EXCLUDED (return false): chat widgets, plain contact forms, newsletter signups, booking/appointment calendars, links to sample reports, example PDFs, downloadable brochures or guides, demo videos, screenshots, pricing pages, and any link whose result is static content the visitor only reads. TEST: the visitor must input something and receive a response computed from that input. If the visitor only clicks and reads, the signal is false.
 When uncertain about ANY design signal, return false. Do not guess true.
 
 SIGNAL DETECTION RULES — TRUST SIGNALS:
@@ -1581,10 +1581,8 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   // CONVERSION: Start at 92, apply deductions
   // cta_text_quality: read the actual LLM signal; missing data is treated as generic (conservative default)
   const ctaTextQuality = s.cta_text_quality;
-  // has_lead_magnet is derived from has_interactive_qualifier signal
-  const hasLeadMagnet = s.has_interactive_qualifier ?? false;
   let conversion = 92;
-  // Bonus: treatment planner, quiz, or interactive tool counts as lead magnet AND bonus
+  // Bonus: treatment planner, quiz, or interactive tool
   if (s.has_interactive_qualifier) conversion += 8;
   if (!s.has_sticky_cta) conversion -= 15;
   if (!s.cta_above_fold) conversion -= 10;
@@ -1593,7 +1591,6 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   if (ctaTextQuality === 'generic' || ctaTextQuality === undefined) conversion -= 3;
   if (!s.has_chat_widget) conversion -= 3;
   if (s.cta_consistency !== 'consistent') conversion -= 3;
-  if (!hasLeadMagnet) conversion -= 3;
   conversion = Math.max(Math.min(conversion, 100), 0);
 
   // DESIGN: Start at 100, apply deductions
