@@ -2576,16 +2576,21 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       images_missing_alt: parsedSignals.imagesMissingAlt,
       webp_used: parsedSignals.usesWebP,
       meta_description_present: (parsedSignals.metaDescription ?? "").length > 0,
-      // Only organization-level schema qualifies for the SEO bonus. Generic
-      // WordPress defaults (Breadcrumb / WebSite / WebPage alone) do NOT count.
-      schema_markup_present: parsedSignals.schemaTypes.some((t) => {
-        const s = String(t).toLowerCase();
-        return (
-          s.includes("organization") ||        // Organization, MedicalOrganization, NGO, etc.
-          s.includes("localbusiness") ||       // LocalBusiness + all subtypes
-          s.includes("medicalbusiness")        // MedicalBusiness + subtypes
-        );
-      }),
+      // Denylist approach: any schema.org type earns credit EXCEPT bare
+      // boilerplate (Breadcrumb / WebSite / WebPage / bare Organization, etc.).
+      // Meaningful subtypes like LocalBusiness or MedicalOrganization still
+      // qualify because they are not exact matches for the generic set.
+      schema_markup_present: (() => {
+        const GENERIC_SCHEMA_TYPES = new Set([
+          "breadcrumblist", "website", "webpage", "collectionpage",
+          "itemlist", "listitem", "sitenavigationelement", "imageobject",
+          "searchaction", "wpheader", "wpfooter", "wpsidebar", "organization",
+        ]);
+        const detected = parsedSignals.schemaTypes.map((t) => String(t).trim().toLowerCase());
+        const hasMeaningful = detected.some((s) => s.length > 0 && !GENERIC_SCHEMA_TYPES.has(s));
+        logStep("schema_markup_present decision", { detected, hasMeaningful });
+        return hasMeaningful;
+      })(),
     };
 
     // Capture the raw LLM response (including per-signal evidence strings) before
