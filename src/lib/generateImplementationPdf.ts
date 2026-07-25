@@ -3,6 +3,7 @@ import type jsPDF from "jspdf";
 import { ImplementationPlan } from "@/types/implementation";
 import { isValidAnalysisSourceUrl, sanitizeAnalysisUrl } from "./urlValidation";
 import { CREDIBILITY_STANDARD, CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
+import { formatMethodologyLine } from "@/lib/methodology";
 import { generatePdfFilename, setPdfMetadata } from "./pdfMetadata";
 import { parseHexColor, loadLogoAsDataUrl, detectImageFormat } from "./pdf/brandingHelpers";
 
@@ -1021,6 +1022,12 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
     doc.text(safeStr(line), margin + 5, y + i * 5);
   });
   y += credBodyLines.length * 5 + 12;
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text(safeStr(formatMethodologyLine()), margin + 5, y);
+  y += 8;
   
   // Footer card
   addPageIfNeeded(22);
