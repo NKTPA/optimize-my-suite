@@ -14,6 +14,7 @@ export interface PageSpeedResult {
   fieldClsValue?: number | null;
   attemptScores?: number[];
   scoreSpread?: number;
+  attemptCount?: number;
 }
 
 function log(step: string, details?: unknown) {
