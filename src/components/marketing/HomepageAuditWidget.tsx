@@ -479,6 +479,48 @@ export function HomepageAuditWidget() {
             </div>
           )}
 
+          {/* Not scorable state — lead-only capture, neutral messaging */}
+          {phase === "notScorable" && notScorable && (
+            <div>
+              <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-4 text-sm">
+                <Info className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">
+                    We couldn't read this site automatically
+                  </h3>
+                  {notScorable.reasonDisplay && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {notScorable.reasonDisplay}
+                    </p>
+                  )}
+                  {Array.isArray(notScorable.fixInstructions) &&
+                    notScorable.fixInstructions.length > 0 && (
+                      <ul className="mt-3 list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {notScorable.fixInstructions.map((f, i) => (
+                          <li key={i}>{f}</li>
+                        ))}
+                      </ul>
+                    )}
+                </div>
+              </div>
+              <form onSubmit={handleLeadSubmit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="ns-name" className="text-sm">Your name</Label>
+                  <Input id="ns-name" value={leadName} onChange={(e) => setLeadName(e.target.value)} maxLength={120} autoComplete="name" className="mt-1 h-11" />
+                </div>
+                <div>
+                  <Label htmlFor="ns-email" className="text-sm">Work email</Label>
+                  <Input id="ns-email" type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} maxLength={255} autoComplete="email" className="mt-1 h-11" />
+                </div>
+                {leadError && <p className="sm:col-span-2 text-sm text-destructive">{leadError}</p>}
+                <Button type="submit" size="lg" disabled={leadSubmitting} className="sm:col-span-2 h-12 bg-[#2746C7] text-white hover:bg-[#1f3aa8] gap-2">
+                  {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Email me a manual review
+                </Button>
+              </form>
+            </div>
+          )}
+
           {/* Rate limited state — lead-only capture, no retry */}
           {phase === "rateLimited" && (
             <div>
