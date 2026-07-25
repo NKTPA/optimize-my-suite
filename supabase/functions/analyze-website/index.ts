@@ -1149,7 +1149,12 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "social_proof_numbers": boolean,
     "team_photos_present": boolean,
     "certifications_displayed": boolean,
-    "ssl_present": boolean
+    "ssl_present": boolean,
+    "customer_logos_present": boolean,
+    "case_studies_present": boolean,
+    "named_testimonials_present": boolean,
+    "security_compliance_badges": boolean,
+    "uptime_or_sla_stated": boolean
   },
   "evidence": {
     "value_prop_above_fold": "string (verbatim page fragment, max 12 words) — required when the signal is true",
