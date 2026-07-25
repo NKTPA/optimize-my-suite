@@ -7,18 +7,33 @@
 export const METHODOLOGY_VERSION = "2.1";
 export const METHODOLOGY_VERSION_DATE = "2026-07-25";
 
+/**
+ * METHODOLOGY_VERSION_DATE is a date-only string (e.g. "2026-07-25"). To avoid
+ * timezone shifts moving the calendar date, we anchor the instant at midday UTC
+ * before rendering it in America/New_York, which is the project's canonical
+ * timezone for client-facing artifacts.
+ */
 function formatEffectiveDate(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
+  const trimmed = iso.trim();
+  const match = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return trimmed;
+
+  const year = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const day = parseInt(match[3], 10);
+
+  const d = new Date(Date.UTC(year, month - 1, day, 12));
+  if (isNaN(d.getTime())) return trimmed;
+
   try {
     return new Intl.DateTimeFormat("en-GB", {
       day: "numeric",
       month: "long",
       year: "numeric",
-      timeZone: "UTC",
+      timeZone: "America/New_York",
     }).format(d);
   } catch {
-    return iso;
+    return trimmed;
   }
 }
 
