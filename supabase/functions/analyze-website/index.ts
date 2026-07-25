@@ -5,7 +5,7 @@ import { parseSiteSignals, type ParsedSignals } from "./parseSiteSignals.ts";
 import { fetchPageSpeed, type PageSpeedResult } from "./pagespeed.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
 };
 
 // Owner email from secrets (server-side only)
@@ -16,6 +16,13 @@ const PLAN_LIMITS: Record<string, number> = {
   starter: 25,
   pro: 150,
   scale: 500,
+};
+
+// Only Scale plan can use the programmatic API. Mirrors src/lib/entitlements.ts.
+const PLAN_API_ACCESS: Record<string, boolean> = {
+  starter: false,
+  pro: false,
+  scale: true,
 };
 
 // Bump the version whenever any scoring formula, signal weight, rubric or category weighting changes;
