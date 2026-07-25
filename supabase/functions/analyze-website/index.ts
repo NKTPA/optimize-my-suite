@@ -2647,6 +2647,8 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
     if (!analysisResult.summary) analysisResult.summary = {};
     analysisResult.summary.overallScore = scores.overall;
 
+    enforceVerifiedFacts(analysisResult, parsedSignals);
+
     // Calculate dual scores using the deterministic scores
     const dualScore = calculateDualScores(analysisResult, url, extractedData);
     
