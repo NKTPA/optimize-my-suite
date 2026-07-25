@@ -1,5 +1,6 @@
 import { AnalysisResult, FindingInput } from "@/types/analysis";
 import { CREDIBILITY_BODY, CREDIBILITY_FOOTER } from "@/components/scoring/ScoreCredibilityStatement";
+import { formatMethodologyLine } from "@/lib/methodology";
 import { generatePdfFilename, setPdfMetadata, PdfMetadataOptions, extractDomainFromUrl } from "./pdfMetadata";
 import { parseHexColor, loadLogoAsDataUrl, detectImageFormat } from "./pdf/brandingHelpers";
 import {
@@ -887,6 +888,16 @@ export async function generateAnalysisPdf(results: AnalysisResult, url: string, 
   });
   
   ctx.y += credHeight - 8;
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+  doc.text(
+    formatMethodologyLine(results.methodology?.version, results.methodology?.effectiveDate),
+    margin + 8,
+    ctx.y,
+  );
+  ctx.y += 6;
   
   doc.setFontSize(8);
   doc.setFont("helvetica", "italic");

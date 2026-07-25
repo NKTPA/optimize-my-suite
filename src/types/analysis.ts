@@ -141,6 +141,8 @@ export interface AnalysisResult {
   notScorable?: NotScorableState;
   /** Detected website type with adaptive scoring */
   websiteType?: WebsiteTypeInfo;
+  /** Methodology version metadata stamped by the analyzer */
+  methodology?: { version: string; effectiveDate: string };
 }
 
 /**

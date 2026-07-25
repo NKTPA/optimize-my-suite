@@ -10,6 +10,7 @@ import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { MobileNavSheet } from "@/components/marketing/MobileNavSheet";
+import { CREDIBILITY_BODY } from "@/components/scoring/ScoreCredibilityStatement";
 
 const plans = [
   {
@@ -413,7 +414,7 @@ export default function Pricing() {
             <CollapsibleContent className="mt-4">
               <div className="bg-muted/30 border border-border/40 rounded-lg p-5 text-left">
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  OptimizeMySuite evaluates websites using objective, criteria-based signals across messaging clarity, conversion paths, trust signals, SEO fundamentals, and technical accessibility. The same scoring methodology is applied before and after improvements to ensure fair comparison. Pages that cannot be accessed publicly are marked as Not Scorable rather than penalized. Scores are never guessed or manually adjusted.
+                  {CREDIBILITY_BODY}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-4 pt-3 border-t border-border/30">
                   Built for agencies to justify recommendations with clear, repeatable evidence.
