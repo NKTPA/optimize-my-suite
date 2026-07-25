@@ -1173,7 +1173,12 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "social_proof_numbers": "string",
     "team_photos_present": "string",
     "certifications_displayed": "string",
-    "ssl_present": "string"
+    "ssl_present": "string",
+    "customer_logos_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "case_studies_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "named_testimonials_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "security_compliance_badges": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "uptime_or_sla_stated": "string (verbatim page fragment, max 12 words) — required when the signal is true"
   },
   "summary": {
     "overview": "string",
