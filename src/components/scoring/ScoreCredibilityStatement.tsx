@@ -10,7 +10,7 @@ interface ScoreCredibilityStatementProps {
 
 // Approved Score Credibility language - CANONICAL COPY (used across app, PDFs, and pricing)
 // DO NOT MODIFY without updating all references
-export const CREDIBILITY_BODY = `OptimizeMySuite evaluates websites using objective, criteria-based signals across messaging clarity, conversion paths, trust signals, SEO fundamentals, and technical accessibility. The same scoring methodology is applied before and after improvements to ensure fair comparison. Pages that cannot be accessed publicly are marked as Not Scorable rather than penalized. Scores are never guessed or manually adjusted.`;
+export const CREDIBILITY_BODY = `OptimizeMySuite evaluates websites using objective, criteria-based signals across messaging clarity, conversion paths, trust signals, SEO fundamentals, and technical accessibility. Every report records the methodology version used to produce it, so before-and-after comparisons can be verified as like-for-like. Pages that cannot be accessed publicly are marked as Not Scorable rather than penalized. Scores are never guessed or manually adjusted.`;
 
 export const CREDIBILITY_FOOTER = `Built for agencies to justify recommendations with clear, repeatable evidence.`;
 
