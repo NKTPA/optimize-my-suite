@@ -28,7 +28,7 @@ const PLAN_API_ACCESS: Record<string, boolean> = {
 // Bump the version whenever any scoring formula, signal weight, rubric or category weighting changes;
 // audits produced under different versions are not directly comparable. Audits predating this constant
 // are treated as version 1.0.
-export const METHODOLOGY_VERSION = "2.0";
+export const METHODOLOGY_VERSION = "2.1";
 export const METHODOLOGY_VERSION_DATE = "2026-07-25";
 
 
@@ -1147,6 +1147,7 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "has_short_form": boolean,
     "has_chat_widget": boolean,
     "cta_consistency": "consistent" | "inconsistent",
+    "cta_text_quality": "specific" | "generic",
     "has_interactive_qualifier": boolean,
     "cta_visually_prominent": boolean,
     "clear_visual_hierarchy": boolean,
@@ -1194,6 +1195,8 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "named_testimonials_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
     "security_compliance_badges": "string (verbatim page fragment, max 12 words) — required when the signal is true",
     "uptime_or_sla_stated": "string (verbatim page fragment, max 12 words) — required when the signal is true"
+    ,
+    "cta_text_quality": "string (verbatim primary CTA text, max 12 words) — quote the exact CTA text you judged"
   },
   "summary": {
     "overview": "string",
@@ -1256,6 +1259,11 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "button_style_consistent": false if buttons across different pages use different colors, sizes, or border styles.
 - "has_interactive_qualifier": true ONLY if the page offers an interactive tool that qualifies or engages a prospect BEFORE contact — e.g., a treatment planner, quiz, cost/price calculator, or self-assessment. Explicitly EXCLUDED (return false): chat widgets, plain contact forms, newsletter signups, booking/appointment calendars, links to sample reports, example PDFs, downloadable brochures or guides, demo videos, screenshots, pricing pages, and any link whose result is static content the visitor only reads. TEST: the visitor must input something and receive a response computed from that input. If the visitor only clicks and reads, the signal is false.
 When uncertain about ANY design signal, return false. Do not guess true.
+
+SIGNAL DETECTION RULES — CTA TEXT QUALITY:
+- "cta_text_quality": "specific" ONLY when the primary CTA text names the outcome or the value the visitor receives — e.g. "Get My Free Audit", "Book a Demo", "Start Free Trial", "Download the Guide".
+- "generic" when it is a bare verb or a non-committal label carrying no outcome — "Submit", "Click Here", "Learn More", "Read More", "Contact Us", "Get Started" on its own.
+- When uncertain, return "generic". Also quote the exact primary CTA text in the "evidence.cta_text_quality" field.
 
 SIGNAL DETECTION RULES — TRUST SIGNALS:
 The following five signals must be judged strictly and independently. Return false when uncertain. Do not infer a logo wall from the word "clients" or generic language. Do not count the site's own brand marks as customer logos:
