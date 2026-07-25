@@ -1105,7 +1105,7 @@ IMPORTANT: You do NOT calculate scores. Scores are calculated deterministically 
 3. Return the signals block and the narrative text. Do NOT include any "score" fields.
 
 GROUND TRUTH FACTS:
-The user prompt will include a "Verified facts about this page (do not contradict these)" block with measured values for H1 count, form field counts, external script count, image counts, alt-text coverage, WebP usage, tap-to-call links, meta description, schema types, viewport, and canonical. These are measured deterministically in code — treat them as absolute truth. Do NOT restate a contradicting claim in any finding or recommendation. Do NOT include these factual fields in your signals output; you are only responsible for SUBJECTIVE signals (e.g. cta_visually_prominent, hero_value_prop_specific, clear_visual_hierarchy, cta_consistency, value_prop_above_fold, service_area_stated, subheadline_present, has_sticky_cta, cta_above_fold, has_short_form, has_chat_widget, has_interactive_qualifier, social_proof_above_fold, button_style_consistent, has_mobile_persistent_cta, images_optimized_for_mobile, nav_depth_to_service, body_font_size_adequate, service_page_scroll_depth, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, nav_item_count).
+The user prompt will include a "Verified facts about this page (do not contradict these)" block with measured values for H1 count, form field counts, external script count, image counts, alt-text coverage, WebP usage, tap-to-call links, meta description, schema types, viewport, and canonical. These are measured deterministically in code — treat them as absolute truth. Do NOT restate a contradicting claim in any finding or recommendation. Do NOT include these factual fields in your signals output; you are only responsible for SUBJECTIVE signals (e.g. cta_visually_prominent, hero_value_prop_specific, clear_visual_hierarchy, cta_consistency, value_prop_above_fold, service_area_stated, subheadline_present, has_sticky_cta, cta_above_fold, has_short_form, has_chat_widget, has_interactive_qualifier, social_proof_above_fold, button_style_consistent, has_mobile_persistent_cta, images_optimized_for_mobile, nav_depth_to_service, body_font_size_adequate, service_page_scroll_depth, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, customer_logos_present, case_studies_present, named_testimonials_present, security_compliance_badges, uptime_or_sla_stated, nav_item_count).
 
 PHONE NUMBER RULES:
 - When listing phone number issues, only flag them if the numbers look genuinely malformed or inconsistent. Do not flag numbers that appear to be tracking codes, script values, or non-phone data. If only one clean phone number is detected, treat phone number presence as a positive signal, not a problem.
@@ -1149,7 +1149,12 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "social_proof_numbers": boolean,
     "team_photos_present": boolean,
     "certifications_displayed": boolean,
-    "ssl_present": boolean
+    "ssl_present": boolean,
+    "customer_logos_present": boolean,
+    "case_studies_present": boolean,
+    "named_testimonials_present": boolean,
+    "security_compliance_badges": boolean,
+    "uptime_or_sla_stated": boolean
   },
   "evidence": {
     "value_prop_above_fold": "string (verbatim page fragment, max 12 words) — required when the signal is true",
@@ -1168,7 +1173,12 @@ Return ONLY a valid JSON object with the following shape (no extra commentary):
     "social_proof_numbers": "string",
     "team_photos_present": "string",
     "certifications_displayed": "string",
-    "ssl_present": "string"
+    "ssl_present": "string",
+    "customer_logos_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "case_studies_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "named_testimonials_present": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "security_compliance_badges": "string (verbatim page fragment, max 12 words) — required when the signal is true",
+    "uptime_or_sla_stated": "string (verbatim page fragment, max 12 words) — required when the signal is true"
   },
   "summary": {
     "overview": "string",
@@ -1232,8 +1242,16 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "has_interactive_qualifier": true ONLY if the page offers an interactive tool that qualifies or engages a prospect BEFORE contact — e.g., a treatment planner, quiz, cost/price calculator, or self-assessment. Explicitly EXCLUDED (return false): chat widgets, plain contact forms, newsletter signups, and booking/appointment calendars.
 When uncertain about ANY design signal, return false. Do not guess true.
 
+SIGNAL DETECTION RULES — TRUST SIGNALS:
+The following five signals must be judged strictly and independently. Return false when uncertain. Do not infer a logo wall from the word "clients" or generic language. Do not count the site's own brand marks as customer logos:
+- "customer_logos_present": true ONLY if recognisable client or customer company logos are displayed. Generic "Our clients" text without named logos = false.
+- "case_studies_present": true ONLY if named case studies or detailed customer success stories are shown.
+- "named_testimonials_present": true ONLY if testimonials include a real full name and ideally a company or role. Anonymous quotes = false.
+- "security_compliance_badges": true ONLY if security or compliance markers (SOC 2, ISO 27001, GDPR, HIPAA, PCI, or stated data encryption) are shown.
+- "uptime_or_sla_stated": true ONLY if a specific uptime percentage or service-level commitment is stated.
+
 EVIDENCE REQUIREMENT FOR SUBJECTIVE BOOLEANS:
-For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_interactive_qualifier, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present.
+For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_interactive_qualifier, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, customer_logos_present, case_studies_present, named_testimonials_present, security_compliance_badges, uptime_or_sla_stated.
 When uncertain, return false. A true without quoted evidence will be discarded (treated as false) before scoring. Do NOT fabricate evidence — quote the page verbatim.
 
 IMPORTANT: Do NOT include any "score" or "overallScore" fields. Scores are calculated in code from the signals block. Only return the signals, narrative findings, and recommendations.`;
@@ -1540,6 +1558,11 @@ interface SignalData {
   team_photos_present?: boolean;
   certifications_displayed?: boolean;
   ssl_present?: boolean;
+  customer_logos_present?: boolean;
+  case_studies_present?: boolean;
+  named_testimonials_present?: boolean;
+  security_compliance_badges?: boolean;
+  uptime_or_sla_stated?: boolean;
 }
 
 function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResult | null) {
@@ -2442,6 +2465,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       "team_photos_present",
       "certifications_displayed",
       "ssl_present",
+      "customer_logos_present",
+      "case_studies_present",
+      "named_testimonials_present",
+      "security_compliance_badges",
+      "uptime_or_sla_stated",
     ] as const;
     const discardedForNoEvidence: string[] = [];
     for (const key of EVIDENCE_GATED_KEYS) {
