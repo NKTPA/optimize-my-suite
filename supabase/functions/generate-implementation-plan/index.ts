@@ -42,7 +42,16 @@ function isValidAnalysisSourceUrl(url: string): boolean {
 }
 
 const IMPLEMENTATION_PROMPT = `
-You are an expert web developer and digital marketing specialist who implements websites for small HOME-SERVICES businesses (HVAC, plumbing, roofing, electrical, landscaping, med spa, dental, etc).
+You are a senior conversion strategist and web-implementation expert. You do not assume a fixed industry. Instead, read \`analysisResult.websiteType\` (fields: type, displayName, confidence) and tailor every recommendation to that detected website type.
+
+WEBSITE-TYPE ADAPTATION RULES:
+- For local-service businesses (\`local_service\`, \`restaurant_hospitality\`) and similar location-dependent models, location/service-area messaging, city keywords in the SEO title and H1, a tap-to-call phone number, and \`LocalBusiness\` JSON-LD schema are appropriate.
+- For non-local business types (\`saas_software\`, \`ecommerce\`, \`professional_services\`, \`content_media\`, \`portfolio_personal\`, \`nonprofit\`, and any type not clearly \`local_service\` or \`restaurant_hospitality\`), you MUST NOT:
+  - Recommend a phone number as the primary CTA.
+  - Recommend service-area or city/location messaging.
+  - Put location keywords in the SEO title or H1.
+  - Suggest LocalBusiness schema.
+  Use the appropriate CTA and schema for the detected type instead (e.g., product-focused CTAs for ecommerce, signup/demo CTAs for SaaS, portfolio/contact CTAs for portfolio/personal).
 
 You receive:
 1) A comprehensive website analysis (JSON) with scores and findings across messaging, conversion, design, mobile, performance, SEO, trust, and technical sections.
@@ -100,9 +109,9 @@ Return ONLY a valid JSON object with this exact shape (no extra commentary):
   },
   "seoSetup": {
     "home": {
-      "title": "SEO-optimized page title (under 60 chars)",
-      "metaDescription": "Meta description (under 160 chars)",
-      "h1": "Main H1 heading"
+      "title": "SEO-optimized page title (strictly under 60 characters)",
+      "metaDescription": "Meta description (strictly under 160 characters)",
+      "h1": "Main H1 heading (must be identical to heroSection.headline)"
     },
     "otherSuggestions": ["SEO tip 1", "SEO tip 2"],
     "imageAltTextExamples": [
@@ -136,10 +145,12 @@ GUIDELINES:
 - Keep headlines punchy and benefit-focused.
 - All CTAs should be action-oriented (verbs).
 - Make services specific to the business type detected from the analysis.
-- SEO titles should include location and service keywords if available.
 - Execution checklist should be in priority order.
 - Be concise but complete.
 - For colorPaletteSuggestion, only suggest colors if you can infer the brand palette from the extracted data or analysis. If you cannot determine actual brand colors, return null for all three values and add a note field saying 'Extract colors from existing brand assets.'
+- NEVER invent social proof, statistics, credentials, media mentions, or customer counts. Do not output claims like "Trusted by hundreds of agencies", "Featured in [Industry Publication]", uptime or compliance guarantees, or any specific numbers unless that exact claim appears in the extracted website data or analysis findings. \`trustElements\` must only list claims the site already substantiates, or describe the type of proof to gather (e.g., "Add 3 named client testimonials with full names and locations"), never a pre-written unverifiable claim. Never emit bracketed placeholders like [Industry Publication 1].
+- \`seoSetup.home.h1\` MUST be identical to \`heroSection.headline\`. They are the same on-page H1 element. If an SEO-optimal H1 genuinely differs from the hero headline, update \`heroSection.headline\` to match it so the plan recommends only one H1.
+- Character limits are HARD CONSTRAINTS: the SEO title must be strictly under 60 characters and the meta description must be strictly under 160 characters. Count every character, including spaces, and rewrite shorter if over, because values longer than those limits truncate in search results.
 `;
 
 serve(async (req) => {
