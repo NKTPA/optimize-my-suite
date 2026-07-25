@@ -1781,9 +1781,66 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // ========================================
+    // API KEY AUTHENTICATION (x-api-key header)
+    // ========================================
+    // deno-lint-ignore no-explicit-any
+    let apiKeyWorkspace: any = null;
+    let viaApiKey = false;
+    const apiKeyHeader = req.headers.get("x-api-key");
+    if (apiKeyHeader && apiKeyHeader.trim().length > 0) {
+      const { data: validationRows, error: validateError } = await supabaseAdmin.rpc(
+        "validate_api_key",
+        { p_plaintext_key: apiKeyHeader },
+      );
+      const row = Array.isArray(validationRows) ? validationRows[0] : validationRows;
+      if (validateError || !row || row.valid !== true) {
+        if (validateError) logStep("WARNING: validate_api_key failed", { error: validateError.message });
+        return new Response(
+          JSON.stringify({ error: "Invalid or revoked API key." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const { data: wsRow, error: wsError } = await supabaseAdmin
+        .from("workspaces")
+        .select("id, plan, subscription_status, trial_ends_at, owner_id")
+        .eq("id", row.workspace_id)
+        .maybeSingle();
+
+      if (wsError || !wsRow) {
+        if (wsError) logStep("WARNING: API key workspace load failed", { error: wsError.message });
+        return new Response(
+          JSON.stringify({ error: "Invalid or revoked API key." }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      if (PLAN_API_ACCESS[wsRow.plan] !== true) {
+        logStep("API key rejected: plan lacks API access", { workspaceId: wsRow.id, plan: wsRow.plan });
+        return new Response(
+          JSON.stringify({ error: "API access requires the Scale plan.", upgradeRequired: true }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Fire-and-forget last_used_at update
+      supabaseAdmin
+        .from("api_keys")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", row.api_key_id)
+        .then(({ error: touchErr }) => {
+          if (touchErr) logStep("WARNING: failed to update api_keys.last_used_at", { error: touchErr.message });
+        });
+
+      apiKeyWorkspace = wsRow;
+      viaApiKey = true;
+      logStep("Authenticated via API key", { workspaceId: wsRow.id, plan: wsRow.plan });
+    }
+
+    // ========================================
     // AUTHENTICATION CHECK
     // ========================================
-    const authHeader = req.headers.get("Authorization");
+    const authHeader = viaApiKey ? null : req.headers.get("Authorization");
     // deno-lint-ignore no-explicit-any
     let user: any = null;
     if (authHeader && authHeader.startsWith("Bearer ")) {
@@ -1804,7 +1861,7 @@ serve(async (req) => {
     // PUBLIC AUDIT RATE LIMIT (unauthenticated only)
     // ========================================
     let publicRateLimitRowId: string | null = null;
-    if (!user) {
+    if (!user && !viaApiKey) {
       const ipHash = await hashIp(getCallerIp(req));
       const outcome = await enforcePublicRateLimit(supabaseAdmin, ipHash, null);
       if (!outcome.ok) {
@@ -1821,20 +1878,25 @@ serve(async (req) => {
     // USAGE LIMIT CHECK
     // ========================================
     const ownerEmail = getOwnerEmail();
-    const isOwner = !!user && !!ownerEmail && user.email?.toLowerCase() === ownerEmail;
+    const isOwner = !viaApiKey && !!user && !!ownerEmail && user.email?.toLowerCase() === ownerEmail;
 
-    if (user && !isOwner) {
-      const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
-      
-      if (isWorkspaceError(workspaceResult)) {
-        logStep("ERROR: Workspace error", { error: workspaceResult.error });
-        return new Response(
-          JSON.stringify({ error: workspaceResult.error }),
-          { status: workspaceResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+    if (viaApiKey || (user && !isOwner)) {
+      // deno-lint-ignore no-explicit-any
+      let workspace: any;
+      if (viaApiKey) {
+        workspace = apiKeyWorkspace;
+      } else {
+        const workspaceResult = await getOrCreateWorkspaceForUser(supabaseAdmin, user.id, user.email);
+        if (isWorkspaceError(workspaceResult)) {
+          logStep("ERROR: Workspace error", { error: workspaceResult.error });
+          return new Response(
+            JSON.stringify({ error: workspaceResult.error }),
+            { status: workspaceResult.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        workspace = workspaceResult.workspace;
       }
 
-      const { workspace } = workspaceResult;
       logStep("Workspace loaded", { 
         workspaceId: workspace.id, 
         plan: workspace.plan,
