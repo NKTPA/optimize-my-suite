@@ -2722,7 +2722,9 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       isPreview: environment.isPreview,
       websiteType: websiteType.type,
       signalCount: Object.keys(signals).length,
+      methodologyVersion: METHODOLOGY_VERSION,
     });
+
 
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
