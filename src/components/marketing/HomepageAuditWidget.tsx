@@ -66,6 +66,16 @@ function normalizeAndValidateUrl(input: string): { valid: boolean; url?: string;
   }
 }
 
+function track(event: string, params?: Record<string, unknown>) {
+  try {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      window.gtag("event", event, params ?? {});
+    }
+  } catch {
+    /* never throw */
+  }
+}
+
 function ScoreRing({ score }: { score: number }) {
   const s = Math.max(0, Math.min(100, Math.round(score)));
   const radius = 54;
@@ -155,6 +165,7 @@ export function HomepageAuditWidget() {
     setErrorMsg(null);
     setRateLimitMsg(null);
     setPhase("analyzing");
+    track("free_audit_started", { host: new URL(v.url).hostname });
 
     try {
       const { data, error } = await supabase.functions.invoke("analyze-website", {
@@ -173,6 +184,7 @@ export function HomepageAuditWidget() {
         }
         console.error("[HomepageAuditWidget] analyze-website non-2xx", { status, error });
         if (status === 429) {
+          track("free_audit_rate_limited");
           setRateLimitMsg(
             "We've hit today's free audit limit — leave your email and we'll run yours tomorrow.",
           );
@@ -180,6 +192,7 @@ export function HomepageAuditWidget() {
           return;
         }
         if (status === 503) {
+          track("free_audit_paused");
           setRateLimitMsg(
             "Audits are temporarily paused. Leave your email and we'll run yours as soon as we're back online.",
           );
@@ -187,6 +200,7 @@ export function HomepageAuditWidget() {
           return;
         }
         // Any 5xx / unknown failure — never surface the raw error string.
+        track("free_audit_failed");
         setErrorMsg("We couldn't complete this audit — please try again in a moment.");
         setPhase("error");
         return;
@@ -197,11 +211,16 @@ export function HomepageAuditWidget() {
       if (ns?.isNotScorable) {
         setNotScorable(ns);
         setPhase("notScorable");
+        track("free_audit_not_scorable", { reason: ns.reason ?? "unknown" });
       } else {
         setPhase("preview");
+        track("free_audit_completed", {
+          score: (data as AnalysisResult)?.summary?.overallScore ?? null,
+        });
       }
     } catch (err) {
       console.error("[HomepageAuditWidget] analyze failed", err);
+      track("free_audit_failed");
       setErrorMsg("We couldn't complete this audit — please try again in a moment.");
       setPhase("error");
     }
@@ -230,6 +249,10 @@ export function HomepageAuditWidget() {
           phase === "notScorable" ? null : result?.summary.overallScore ?? null,
       });
       if (error) throw error;
+      track("free_audit_lead_captured", {
+        phase,
+        score: result?.summary?.overallScore ?? null,
+      });
       if (phase === "rateLimited" || phase === "notScorable") {
         toast({
           title: "You're on the list",
@@ -253,6 +276,7 @@ export function HomepageAuditWidget() {
     if (!result) return;
     try {
       await generateAnalysisPdf(result, normalizedUrl);
+      track("free_audit_pdf_downloaded");
     } catch (err) {
       console.error("[HomepageAuditWidget] pdf failed", err);
       toast({ title: "PDF failed", description: "Could not generate the PDF. Try again.", variant: "destructive" });
