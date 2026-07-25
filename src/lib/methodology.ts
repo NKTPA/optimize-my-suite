@@ -15,6 +15,7 @@ function formatEffectiveDate(iso: string): string {
       day: "numeric",
       month: "long",
       year: "numeric",
+      timeZone: "UTC",
     }).format(d);
   } catch {
     return iso;
