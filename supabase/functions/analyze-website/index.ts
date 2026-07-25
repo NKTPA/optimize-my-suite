@@ -2690,6 +2690,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
             ...scores,
             psiAttemptScores: pageSpeedData?.attemptScores ?? null,
             psiScoreSpread: pageSpeedData?.scoreSpread ?? null,
+            psiAttemptCount: pageSpeedData?.attemptCount ?? null,
             methodologyVersion: METHODOLOGY_VERSION,
           } as unknown as Record<string, unknown>,
 
@@ -2727,10 +2728,15 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       analysisResult.performance.tbtMs = pageSpeedData?.tbtMs ?? null;
       analysisResult.performance.fieldDataAvailable = pageSpeedData?.fieldDataAvailable ?? false;
       analysisResult.performance.measurementSpread = pageSpeedData?.scoreSpread ?? null;
-      if (typeof pageSpeedData?.scoreSpread === "number" && pageSpeedData.scoreSpread > 15) {
-        if (!Array.isArray(analysisResult.performance.findings)) {
-          analysisResult.performance.findings = [];
-        }
+      analysisResult.performance.measurementCount = pageSpeedData?.attemptCount ?? null;
+      if (!Array.isArray(analysisResult.performance.findings)) {
+        analysisResult.performance.findings = [];
+      }
+      if (pageSpeedData?.attemptCount === 1) {
+        analysisResult.performance.findings.push(
+          "This page's performance score is based on a single Google PageSpeed measurement rather than the usual three, so it carries more uncertainty than normal; treat it as indicative."
+        );
+      } else if (typeof pageSpeedData?.scoreSpread === "number" && pageSpeedData.scoreSpread > 15) {
         analysisResult.performance.findings.push(
           "Google PageSpeed returned a wide range across repeated measurements for this page, so the performance score should be treated as approximate; the median run was used."
         );
