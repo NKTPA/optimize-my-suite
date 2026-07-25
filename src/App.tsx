@@ -9,6 +9,7 @@ import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { SubscriptionGate } from "@/components/auth/SubscriptionGate";
+import { useAnalytics } from "@/hooks/use-analytics";
 
 // Eagerly loaded - needed for initial render
 import Index from "./pages/Index";
@@ -37,6 +38,37 @@ const PageLoader = () => (
   </div>
 );
 
+const AppRoutes = () => {
+  useAnalytics();
+  return (
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/update-password" element={<UpdatePassword />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/terms" element={<Terms />} />
+
+        {/* Protected dashboard routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGate><Dashboard /></SubscriptionGate></ProtectedRoute>} />
+        <Route path="/dashboard/analyze" element={<ProtectedRoute><SubscriptionGate><DashboardAnalyze /></SubscriptionGate></ProtectedRoute>} />
+        <Route path="/dashboard/batch" element={<ProtectedRoute><SubscriptionGate><DashboardBatch /></SubscriptionGate></ProtectedRoute>} />
+        <Route path="/dashboard/history" element={<ProtectedRoute><SubscriptionGate><DashboardHistory /></SubscriptionGate></ProtectedRoute>} />
+        <Route path="/dashboard/account" element={<ProtectedRoute><DashboardAccount /></ProtectedRoute>} />
+
+        {/* Other protected routes */}
+        <Route path="/preview" element={<ProtectedRoute><SubscriptionGate><GeneratedSitePreview /></SubscriptionGate></ProtectedRoute>} />
+        <Route path="/logo-preview" element={<LogoPreview />} />
+
+        {/* Catch-all */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -46,31 +78,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/terms" element={<Terms />} />
-                
-                {/* Protected dashboard routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><SubscriptionGate><Dashboard /></SubscriptionGate></ProtectedRoute>} />
-                <Route path="/dashboard/analyze" element={<ProtectedRoute><SubscriptionGate><DashboardAnalyze /></SubscriptionGate></ProtectedRoute>} />
-                <Route path="/dashboard/batch" element={<ProtectedRoute><SubscriptionGate><DashboardBatch /></SubscriptionGate></ProtectedRoute>} />
-                <Route path="/dashboard/history" element={<ProtectedRoute><SubscriptionGate><DashboardHistory /></SubscriptionGate></ProtectedRoute>} />
-                <Route path="/dashboard/account" element={<ProtectedRoute><DashboardAccount /></ProtectedRoute>} />
-                
-                {/* Other protected routes */}
-                <Route path="/preview" element={<ProtectedRoute><SubscriptionGate><GeneratedSitePreview /></SubscriptionGate></ProtectedRoute>} />
-                <Route path="/logo-preview" element={<LogoPreview />} />
-                
-                {/* Catch-all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <AppRoutes />
           </BrowserRouter>
           </TooltipProvider>
         </WorkspaceProvider>
