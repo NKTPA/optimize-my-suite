@@ -229,18 +229,6 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
   // Three key sections in cards
   const summaryCards = [
     {
-      title: "What Was Holding This Website Back",
-      icon: "!",
-      color: colors.warning,
-      bgColor: colors.warningLight,
-      points: [
-        "Unclear value proposition failing to differentiate from competitors",
-        "Missing trust signals reducing visitor confidence",
-        "Weak call-to-action placement reducing conversion opportunities",
-        "SEO gaps limiting organic visibility and traffic potential"
-      ]
-    },
-    {
       title: "What This Strategy Changes",
       icon: "+",
       color: colors.success,
