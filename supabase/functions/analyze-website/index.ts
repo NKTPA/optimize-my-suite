@@ -18,6 +18,13 @@ const PLAN_LIMITS: Record<string, number> = {
   scale: 500,
 };
 
+// Bump the version whenever any scoring formula, signal weight, rubric or category weighting changes;
+// audits produced under different versions are not directly comparable. Audits predating this constant
+// are treated as version 1.0.
+export const METHODOLOGY_VERSION = "2.0";
+export const METHODOLOGY_VERSION_DATE = "2026-07-25";
+
+
 // Redact sensitive fields from log details
 function redactSensitive(details?: unknown): unknown {
   if (!details || typeof details !== 'object') return details;
