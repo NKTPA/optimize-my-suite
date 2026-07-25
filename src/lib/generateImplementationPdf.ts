@@ -226,7 +226,7 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
   });
   y += introLines.length * 6 + 12;
   
-  // Three key sections in cards
+  // Key sections in cards
   const summaryCards = [
     {
       title: "What This Strategy Changes",
@@ -804,59 +804,75 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
   );
   
   // Color palette
-  addPageIfNeeded(45);
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-  doc.text("Recommended Color Palette", margin + 4, y);
-  y += 10;
-  
-  // Color swatches - vertical stacking layout (no truncation)
-  const colorValues = [
-    { label: "Primary", value: plan.designAndLayout?.colorPaletteSuggestion?.primary },
-    { label: "Secondary", value: plan.designAndLayout?.colorPaletteSuggestion?.secondary },
-    { label: "Accent", value: plan.designAndLayout?.colorPaletteSuggestion?.accent },
-  ];
-  
-  colorValues.forEach((color, i) => {
-    if (!color.value) return; // skip null/undefined/empty color entries
-    addPageIfNeeded(38);
-    
-    // Parse hex and description from value (format: "#HEXCODE - Description")
-    const parts = safeStr(color.value).split(" - ");
-    const hexCode = parts[0] || color.value;
-    const description = parts[1] || "";
-    
-    // Card background
-    doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
-    doc.roundedRect(margin, y, contentWidth, 32, 3, 3, "F");
-    
-    // Color circle (placeholder - actual hex would need parsing)
-    doc.setFillColor(colors.primaryMid[0], colors.primaryMid[1], colors.primaryMid[2]);
-    doc.circle(margin + 18, y + 16, 10, "F");
-    
-    // Label
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
-    doc.text(color.label.toUpperCase(), margin + 35, y + 10);
-    
-    // Hex code
-    doc.setFontSize(10);
+  const palette = plan.designAndLayout?.colorPaletteSuggestion;
+  const hasAnyColor = [palette?.primary, palette?.secondary, palette?.accent].some(
+    (v) => typeof v === "string" && v.trim() !== ""
+  );
+
+  if (hasAnyColor) {
+    addPageIfNeeded(45);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
-    doc.text(hexCode, margin + 35, y + 19);
-    
-    // Description - full text (no truncation)
-    if (description) {
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
-      doc.text(description, margin + 35, y + 27);
-    }
-    
-    y += 38;
-  });
+    doc.text("Recommended Color Palette", margin + 4, y);
+    y += 10;
+
+    // Color swatches - vertical stacking layout (no truncation)
+    const colorValues = [
+      { label: "Primary", value: palette?.primary },
+      { label: "Secondary", value: palette?.secondary },
+      { label: "Accent", value: palette?.accent },
+    ];
+
+    colorValues.forEach((color) => {
+      if (!color.value) return; // skip null/undefined/empty color entries
+      addPageIfNeeded(38);
+
+      // Parse hex and description from value (format: "#HEXCODE - Description")
+      const parts = safeStr(color.value).split(" - ");
+      const hexCode = parts[0] || color.value;
+      const description = parts[1] || "";
+
+      // Card background
+      doc.setFillColor(colors.cardBg[0], colors.cardBg[1], colors.cardBg[2]);
+      doc.roundedRect(margin, y, contentWidth, 32, 3, 3, "F");
+
+      // Color circle (placeholder - actual hex would need parsing)
+      doc.setFillColor(colors.primaryMid[0], colors.primaryMid[1], colors.primaryMid[2]);
+      doc.circle(margin + 18, y + 16, 10, "F");
+
+      // Label
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.textMuted[0], colors.textMuted[1], colors.textMuted[2]);
+      doc.text(color.label.toUpperCase(), margin + 35, y + 10);
+
+      // Hex code
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(colors.textPrimary[0], colors.textPrimary[1], colors.textPrimary[2]);
+      doc.text(hexCode, margin + 35, y + 19);
+
+      // Description - full text (no truncation)
+      if (description) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(colors.textSecondary[0], colors.textSecondary[1], colors.textSecondary[2]);
+        doc.text(description, margin + 35, y + 27);
+      }
+
+      y += 38;
+    });
+  } else {
+    const paletteNote = (palette as any)?.note;
+    const noteText =
+      typeof paletteNote === "string" && paletteNote.trim() !== ""
+        ? paletteNote
+        : "Extract brand colours from existing brand assets before implementation.";
+    addPageIfNeeded(15);
+    addConsultantBullet(noteText);
+    y += 8;
+  }
   
   // Layout changes
   addPageIfNeeded(15);
