@@ -1565,7 +1565,7 @@ interface SignalData {
   uptime_or_sla_stated?: boolean;
 }
 
-function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResult | null) {
+function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResult | null, websiteTypeKey?: string) {
   // MESSAGING: Start at 50
   let messaging = 50;
   if (s.h1_present) messaging += 10;
@@ -1649,20 +1649,33 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
   if (s.schema_markup_present) seo += 10;
   seo = Math.max(Math.min(seo, 100), 0);
 
-  // TRUST: Start at 40
+  // TRUST: Start at 40, rubric depends on website type
+  const isLocal = websiteTypeKey === "local_service" || websiteTypeKey === "restaurant_hospitality";
+  const trustRubric: "local" | "general" = isLocal ? "local" : "general";
   let trust = 40;
-  if (s.bbb_present) trust += 10;
-  if (s.license_displayed) trust += 10;
-  if (s.social_proof_numbers) trust += 15;
-  if (s.team_photos_present) trust += 10;
-  if (s.certifications_displayed) trust += 15;
-  if (s.bbb_present && s.license_displayed && s.social_proof_numbers) trust = Math.max(trust, 50);
+  if (isLocal) {
+    if (s.bbb_present) trust += 10;
+    if (s.license_displayed) trust += 10;
+    if (s.social_proof_numbers) trust += 15;
+    if (s.team_photos_present) trust += 10;
+    if (s.certifications_displayed) trust += 15;
+    if (s.bbb_present && s.license_displayed && s.social_proof_numbers) trust = Math.max(trust, 50);
+  } else {
+    if (s.named_testimonials_present) trust += 15;
+    if (s.customer_logos_present) trust += 15;
+    if (s.case_studies_present) trust += 15;
+    if (s.security_compliance_badges) trust += 10;
+    if (s.social_proof_numbers) trust += 10;
+    if (s.uptime_or_sla_stated) trust += 5;
+    if (s.team_photos_present) trust += 5;
+    if (s.certifications_displayed) trust += 5;
+  }
   trust = Math.min(trust, 100);
 
   // OVERALL: simple average
   const overall = Math.round((messaging + conversion + design + mobile + performance + seo + trust) / 7);
 
-  return { messaging, conversion, design, mobile, performance, seo, trust, overall, performanceDataSource };
+  return { messaging, conversion, design, mobile, performance, seo, trust, overall, performanceDataSource, trustRubric };
 }
 
 
@@ -2402,7 +2415,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         ssl_present: Boolean(extractedData?.technical?.hasSSL),
       };
 
-      const fallbackScores = calculateScoresFromSignals(fallbackSignals, pageSpeedData);
+      const fallbackScores = calculateScoresFromSignals(fallbackSignals, pageSpeedData, websiteType.type);
 
       analysisResult = {
         signals: fallbackSignals,
@@ -2520,7 +2533,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
 
     analysisResult.signals = signals;
 
-    const scores = calculateScoresFromSignals(signals, pageSpeedData);
+    const scores = calculateScoresFromSignals(signals, pageSpeedData, websiteType.type);
 
     // Persist raw signals + computed scores for QA. Never fail the audit on log error.
     try {
