@@ -18,6 +18,13 @@ const PLAN_LIMITS: Record<string, number> = {
   scale: 500,
 };
 
+// Bump the version whenever any scoring formula, signal weight, rubric or category weighting changes;
+// audits produced under different versions are not directly comparable. Audits predating this constant
+// are treated as version 1.0.
+export const METHODOLOGY_VERSION = "2.0";
+export const METHODOLOGY_VERSION_DATE = "2026-07-25";
+
+
 // Redact sensitive fields from log details
 function redactSensitive(details?: unknown): unknown {
   if (!details || typeof details !== 'object') return details;
@@ -2114,6 +2121,7 @@ serve(async (req) => {
             finalUrl: url,
             httpStatus: 0,
             htmlSizeKb: 0,
+
             fixInstructions: [
               'Verify the URL is correct and publicly accessible',
               'Try accessing the URL in an incognito browser window',
@@ -2133,6 +2141,7 @@ serve(async (req) => {
           aiServicePitch: { paragraph: '', bullets: [] },
           environment,
           analysisSourceUrl: url,
+          methodology: { version: METHODOLOGY_VERSION, effectiveDate: METHODOLOGY_VERSION_DATE },
         };
         
         return new Response(JSON.stringify(notScorableResult), {
@@ -2231,6 +2240,7 @@ serve(async (req) => {
         aiServicePitch: { paragraph: '', bullets: [] },
         environment,
         analysisSourceUrl: url,
+        methodology: { version: METHODOLOGY_VERSION, effectiveDate: METHODOLOGY_VERSION_DATE },
       };
       
       return new Response(JSON.stringify(notScorableResult), {
@@ -2617,7 +2627,9 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
             ...scores,
             psiAttemptScores: pageSpeedData?.attemptScores ?? null,
             psiScoreSpread: pageSpeedData?.scoreSpread ?? null,
+            methodologyVersion: METHODOLOGY_VERSION,
           } as unknown as Record<string, unknown>,
+
           llm_evidence: rawLlmResponse as unknown as Record<string, unknown>,
           website_type: {
             type: websiteType.type,
@@ -2700,6 +2712,10 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       analysisResult.renderingLimited = true;
     }
 
+    // Stamp methodology version into every result so PDFs and historical comparisons can reason about it
+    analysisResult.methodology = { version: METHODOLOGY_VERSION, effectiveDate: METHODOLOGY_VERSION_DATE };
+
+
     logStep("Analysis complete", { 
       url, 
       overallScore: dualScore.overallScore,
@@ -2708,7 +2724,9 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       isPreview: environment.isPreview,
       websiteType: websiteType.type,
       signalCount: Object.keys(signals).length,
+      methodologyVersion: METHODOLOGY_VERSION,
     });
+
 
     return new Response(JSON.stringify(analysisResult), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
