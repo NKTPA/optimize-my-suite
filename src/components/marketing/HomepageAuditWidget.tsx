@@ -66,6 +66,16 @@ function normalizeAndValidateUrl(input: string): { valid: boolean; url?: string;
   }
 }
 
+function track(event: string, params?: Record<string, unknown>) {
+  try {
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      window.gtag("event", event, params ?? {});
+    }
+  } catch {
+    /* never throw */
+  }
+}
+
 function ScoreRing({ score }: { score: number }) {
   const s = Math.max(0, Math.min(100, Math.round(score)));
   const radius = 54;
