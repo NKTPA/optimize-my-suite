@@ -278,12 +278,13 @@ function calculateDualScores(
   const seoScore = getScore('seo.score');
   const performanceScore = getScore('performance.score');
 
-  // Calculate quality score (60% conversion, 25% messaging, 15% trust/UX)
-  const trustUxCombined = (designScore + trustScore + mobileScore) / 3;
+  // Calculate quality score (45% conversion, 20% messaging, 20% trust, 15% design/mobile)
+  const designMobileCombined = (designScore + mobileScore) / 2;
   const websiteQualityScore = Math.round(
-    conversionScore * 0.60 +
-    messagingScore * 0.25 +
-    trustUxCombined * 0.15
+    conversionScore * 0.45 +
+    messagingScore * 0.20 +
+    trustScore * 0.20 +
+    designMobileCombined * 0.15
   );
 
   // Calculate readiness score
