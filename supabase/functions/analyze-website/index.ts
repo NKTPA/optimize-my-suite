@@ -2121,6 +2121,7 @@ serve(async (req) => {
             finalUrl: url,
             httpStatus: 0,
             htmlSizeKb: 0,
+
             fixInstructions: [
               'Verify the URL is correct and publicly accessible',
               'Try accessing the URL in an incognito browser window',
