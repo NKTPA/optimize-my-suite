@@ -2627,7 +2627,9 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
             ...scores,
             psiAttemptScores: pageSpeedData?.attemptScores ?? null,
             psiScoreSpread: pageSpeedData?.scoreSpread ?? null,
+            methodologyVersion: METHODOLOGY_VERSION,
           } as unknown as Record<string, unknown>,
+
           llm_evidence: rawLlmResponse as unknown as Record<string, unknown>,
           website_type: {
             type: websiteType.type,
