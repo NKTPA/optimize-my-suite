@@ -1677,6 +1677,8 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
 
 
 serve(async (req) => {
+  // placeholder
+  void 0;
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
