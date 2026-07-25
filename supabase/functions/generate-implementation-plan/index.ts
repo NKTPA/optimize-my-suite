@@ -109,9 +109,9 @@ Return ONLY a valid JSON object with this exact shape (no extra commentary):
   },
   "seoSetup": {
     "home": {
-      "title": "SEO-optimized page title (under 60 chars)",
-      "metaDescription": "Meta description (under 160 chars)",
-      "h1": "Main H1 heading"
+      "title": "SEO-optimized page title (strictly under 60 characters)",
+      "metaDescription": "Meta description (strictly under 160 characters)",
+      "h1": "Main H1 heading (must be identical to heroSection.headline)"
     },
     "otherSuggestions": ["SEO tip 1", "SEO tip 2"],
     "imageAltTextExamples": [
