@@ -1676,9 +1676,72 @@ function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResu
 }
 
 
+function enforceVerifiedFacts(analysisResult: any, parsedSignals: any): void {
+  try {
+    if (!analysisResult.technical || typeof analysisResult.technical !== 'object') {
+      analysisResult.technical = {};
+    }
+    if (!analysisResult.seo || typeof analysisResult.seo !== 'object') {
+      analysisResult.seo = {};
+    }
+    if (!Array.isArray(analysisResult.technical.findings)) {
+      analysisResult.technical.findings = [];
+    }
+    if (!Array.isArray(analysisResult.seo.findings)) {
+      analysisResult.seo.findings = [];
+    }
+
+    const findingText = (f: any): string => {
+      if (typeof f === 'string') return f;
+      if (f && typeof f === 'object') {
+        return [f.title, f.description, f.text, f.finding, f.message]
+          .filter((v) => typeof v === 'string')
+          .join(' ');
+      }
+      return '';
+    };
+
+    const stripAcross = (pattern: RegExp) => {
+      analysisResult.technical.findings = analysisResult.technical.findings.filter(
+        (f: any) => !pattern.test(findingText(f))
+      );
+      analysisResult.seo.findings = analysisResult.seo.findings.filter(
+        (f: any) => !pattern.test(findingText(f))
+      );
+    };
+
+    // 1. CANONICAL
+    stripAcross(/canonical/i);
+    const canonical = parsedSignals?.canonicalHref;
+    const canonicalSentence = typeof canonical === 'string' && canonical.trim().length > 0
+      ? "The page declares a canonical URL, which tells search engines which version to index."
+      : "No canonical tag was found on the page, which can cause duplicate-content ambiguity if the page is reachable at more than one URL.";
+    analysisResult.technical.findings.push(canonicalSentence);
+    console.log("[enforceVerifiedFacts] canonical rule fired");
+
+    // 2. VIEWPORT
+    stripAcross(/viewport/i);
+    const viewportSentence = parsedSignals?.hasViewportMeta === true
+      ? "A viewport meta tag is present, so the page can adapt to mobile screen sizes."
+      : "No viewport meta tag was found, so the page will not scale correctly on mobile devices.";
+    analysisResult.technical.findings.push(viewportSentence);
+    console.log("[enforceVerifiedFacts] viewport rule fired");
+
+    // 3. META DESCRIPTION
+    stripAcross(/meta description/i);
+    const md = parsedSignals?.metaDescription;
+    const mdSentence = typeof md === 'string' && md.length > 0
+      ? `A meta description is present, at ${md.length} characters.`
+      : "No meta description was found, so search engines will generate their own snippet.";
+    analysisResult.seo.findings.push(mdSentence);
+    console.log("[enforceVerifiedFacts] meta description rule fired");
+  } catch (err) {
+    console.warn("[enforceVerifiedFacts] failed:", err);
+  }
+}
+
+
 serve(async (req) => {
-  // placeholder
-  void 0;
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
