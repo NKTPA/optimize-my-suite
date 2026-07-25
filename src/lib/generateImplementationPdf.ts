@@ -226,7 +226,7 @@ export async function generateImplementationPdf(plan: ImplementationPlan, url: s
   });
   y += introLines.length * 6 + 12;
   
-  // Three key sections in cards
+  // Key sections in cards
   const summaryCards = [
     {
       title: "What This Strategy Changes",
