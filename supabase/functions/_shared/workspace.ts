@@ -21,6 +21,17 @@ interface WorkspaceError {
   status: number;
 }
 
+// Add one calendar month to an ISO date string, preserving day-of-month when possible.
+function addOneMonthISO(iso: string): string {
+  const d = new Date(iso);
+  const day = d.getUTCDate();
+  const next = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1, d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds(), d.getUTCMilliseconds()));
+  // Clamp day to the last day of the target month
+  const lastDayOfTargetMonth = new Date(Date.UTC(next.getUTCFullYear(), next.getUTCMonth() + 1, 0)).getUTCDate();
+  next.setUTCDate(Math.min(day, lastDayOfTargetMonth));
+  return next.toISOString();
+}
+
 /**
  * Get or create a workspace for an authenticated user.
  * This helper ensures that no edge function ever returns "Workspace not found" for a valid user.
@@ -150,6 +161,8 @@ export async function getOrCreateWorkspaceForUser(
         workspace_id: newWorkspace.id,
         analyses_used: 0,
         packs_used: 0,
+        period_start: new Date().toISOString(),
+        period_end: addOneMonthISO(new Date().toISOString()),
       });
 
     if (usageError) {
@@ -196,37 +209,131 @@ export function isWorkspaceError(result: WorkspaceResult | WorkspaceError): resu
 export async function getOrCreateWorkspaceUsage(
   supabaseAdmin: any,
   workspaceId: string
-): Promise<{ analyses_used: number; packs_used: number } | null> {
+): Promise<{ analyses_used: number; packs_used: number; period_end: string | null } | null> {
   const { data: usage, error: usageError } = await supabaseAdmin
     .from("workspace_usage")
-    .select("analyses_used, packs_used")
+    .select("analyses_used, packs_used, period_start, period_end")
     .eq("workspace_id", workspaceId)
     .maybeSingle();
 
   if (usage) {
-    return usage;
+    try {
+      const nowIso = new Date().toISOString();
+      const now = Date.now();
+
+      // Case: period_end missing — initialize a fresh period without touching counters.
+      if (!usage.period_end) {
+        const newStart = nowIso;
+        const newEnd = addOneMonthISO(nowIso);
+        const { error: initError } = await supabaseAdmin
+          .from("workspace_usage")
+          .update({
+            period_start: newStart,
+            period_end: newEnd,
+            updated_at: nowIso,
+          })
+          .eq("workspace_id", workspaceId);
+        if (initError) {
+          console.error("[workspace-helper] Failed to initialize period:", initError.message);
+        } else {
+          console.log("[workspace-helper] Initialized usage period for workspace:", workspaceId, "period_end:", newEnd);
+        }
+        return {
+          analyses_used: usage.analyses_used,
+          packs_used: usage.packs_used,
+          period_end: newEnd,
+        };
+      }
+
+      // Case: period_end in the past — advance in whole one-month steps and reset counters.
+      const periodEndMs = new Date(usage.period_end).getTime();
+      if (Number.isFinite(periodEndMs) && periodEndMs <= now) {
+        let newStart = usage.period_end as string;
+        let newEnd = addOneMonthISO(newStart);
+        let iterations = 0;
+        while (new Date(newEnd).getTime() <= now && iterations < 120) {
+          newStart = newEnd;
+          newEnd = addOneMonthISO(newEnd);
+          iterations++;
+        }
+
+        const oldEnd = usage.period_end;
+        const { error: resetError } = await supabaseAdmin
+          .from("workspace_usage")
+          .update({
+            analyses_used: 0,
+            packs_used: 0,
+            period_start: newStart,
+            period_end: newEnd,
+            updated_at: nowIso,
+          })
+          .eq("workspace_id", workspaceId);
+
+        if (resetError) {
+          console.error("[workspace-helper] Failed to reset usage period:", resetError.message);
+          return {
+            analyses_used: usage.analyses_used,
+            packs_used: usage.packs_used,
+            period_end: usage.period_end,
+          };
+        }
+
+        console.log(
+          "[workspace-helper] Reset usage period for workspace:",
+          workspaceId,
+          "old period_end:",
+          oldEnd,
+          "new period_end:",
+          newEnd,
+        );
+
+        return {
+          analyses_used: 0,
+          packs_used: 0,
+          period_end: newEnd,
+        };
+      }
+
+      return {
+        analyses_used: usage.analyses_used,
+        packs_used: usage.packs_used,
+        period_end: usage.period_end,
+      };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("[workspace-helper] Unexpected error during period check:", msg);
+      return {
+        analyses_used: usage.analyses_used,
+        packs_used: usage.packs_used,
+        period_end: usage.period_end ?? null,
+      };
+    }
   }
 
   // Create usage record if it doesn't exist
   if (usageError || !usage) {
     console.log("[workspace-helper] Creating missing usage record for workspace:", workspaceId);
+    const nowIso = new Date().toISOString();
+    const newEnd = addOneMonthISO(nowIso);
     const { data: newUsage, error: createError } = await supabaseAdmin
       .from("workspace_usage")
       .insert({
         workspace_id: workspaceId,
         analyses_used: 0,
         packs_used: 0,
+        period_start: nowIso,
+        period_end: newEnd,
       })
-      .select("analyses_used, packs_used")
+      .select("analyses_used, packs_used, period_end")
       .single();
 
     if (createError) {
       console.error("[workspace-helper] Failed to create usage record:", createError.message);
-      return { analyses_used: 0, packs_used: 0 };
+      return { analyses_used: 0, packs_used: 0, period_end: newEnd };
     }
 
     return newUsage;
   }
 
-  return { analyses_used: 0, packs_used: 0 };
+  return { analyses_used: 0, packs_used: 0, period_end: null };
 }
