@@ -2442,6 +2442,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       "team_photos_present",
       "certifications_displayed",
       "ssl_present",
+      "customer_logos_present",
+      "case_studies_present",
+      "named_testimonials_present",
+      "security_compliance_badges",
+      "uptime_or_sla_stated",
     ] as const;
     const discardedForNoEvidence: string[] = [];
     for (const key of EVIDENCE_GATED_KEYS) {
