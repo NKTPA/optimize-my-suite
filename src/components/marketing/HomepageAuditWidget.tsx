@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Loader2, Lock, Download, AlertTriangle } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Download, AlertTriangle, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +15,15 @@ type Phase =
   | "preview"
   | "unlocked"
   | "rateLimited"
+  | "notScorable"
   | "error";
+
+interface NotScorableInfo {
+  isNotScorable: true;
+  reason?: string;
+  reasonDisplay?: string;
+  fixInstructions?: string[];
+}
 
 const STATUS_LINES = [
   "Parsing your site...",
@@ -105,6 +113,7 @@ export function HomepageAuditWidget() {
   const [honeypot, setHoneypot] = useState("");
   const [statusIdx, setStatusIdx] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [notScorable, setNotScorable] = useState<NotScorableInfo | null>(null);
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadError, setLeadError] = useState<string | null>(null);
@@ -184,7 +193,13 @@ export function HomepageAuditWidget() {
       }
 
       setResult(data as AnalysisResult);
-      setPhase("preview");
+      const ns = (data as unknown as { notScorable?: NotScorableInfo })?.notScorable;
+      if (ns?.isNotScorable) {
+        setNotScorable(ns);
+        setPhase("notScorable");
+      } else {
+        setPhase("preview");
+      }
     } catch (err) {
       console.error("[HomepageAuditWidget] analyze failed", err);
       setErrorMsg("We couldn't complete this audit — please try again in a moment.");
@@ -211,13 +226,17 @@ export function HomepageAuditWidget() {
         name,
         email,
         url: normalizedUrl,
-        overall_score: result?.summary.overallScore ?? null,
+        overall_score:
+          phase === "notScorable" ? null : result?.summary.overallScore ?? null,
       });
       if (error) throw error;
-      if (phase === "rateLimited") {
+      if (phase === "rateLimited" || phase === "notScorable") {
         toast({
           title: "You're on the list",
-          description: "We'll email your audit report as soon as tomorrow's quota resets.",
+          description:
+            phase === "notScorable"
+              ? "We'll run a manual review and email your report shortly."
+              : "We'll email your audit report as soon as tomorrow's quota resets.",
         });
       } else {
         setPhase("unlocked");
@@ -457,6 +476,48 @@ export function HomepageAuditWidget() {
                   <p className="text-sm text-muted-foreground leading-relaxed">{result.summary.overview}</p>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Not scorable state — lead-only capture, neutral messaging */}
+          {phase === "notScorable" && notScorable && (
+            <div>
+              <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-muted/30 p-4 text-sm">
+                <Info className="w-5 h-5 mt-0.5 flex-shrink-0 text-primary" />
+                <div>
+                  <h3 className="text-base font-semibold text-foreground mb-1">
+                    We couldn't read this site automatically
+                  </h3>
+                  {notScorable.reasonDisplay && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {notScorable.reasonDisplay}
+                    </p>
+                  )}
+                  {Array.isArray(notScorable.fixInstructions) &&
+                    notScorable.fixInstructions.length > 0 && (
+                      <ul className="mt-3 list-disc pl-5 space-y-1 text-sm text-muted-foreground">
+                        {notScorable.fixInstructions.map((f, i) => (
+                          <li key={i}>{f}</li>
+                        ))}
+                      </ul>
+                    )}
+                </div>
+              </div>
+              <form onSubmit={handleLeadSubmit} className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="ns-name" className="text-sm">Your name</Label>
+                  <Input id="ns-name" value={leadName} onChange={(e) => setLeadName(e.target.value)} maxLength={120} autoComplete="name" className="mt-1 h-11" />
+                </div>
+                <div>
+                  <Label htmlFor="ns-email" className="text-sm">Work email</Label>
+                  <Input id="ns-email" type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} maxLength={255} autoComplete="email" className="mt-1 h-11" />
+                </div>
+                {leadError && <p className="sm:col-span-2 text-sm text-destructive">{leadError}</p>}
+                <Button type="submit" size="lg" disabled={leadSubmitting} className="sm:col-span-2 h-12 bg-[#2746C7] text-white hover:bg-[#1f3aa8] gap-2">
+                  {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Email me a manual review
+                </Button>
+              </form>
             </div>
           )}
 
