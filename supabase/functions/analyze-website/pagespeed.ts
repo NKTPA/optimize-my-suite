@@ -12,6 +12,8 @@ export interface PageSpeedResult {
   fieldLcpMs?: number | null;
   fieldInpMs?: number | null;
   fieldClsValue?: number | null;
+  attemptScores?: number[];
+  scoreSpread?: number;
 }
 
 function log(step: string, details?: unknown) {
@@ -202,11 +204,21 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
   }
 
   if (results.length === 0) return null;
-  if (results.length === 1) return results[0];
+  const attemptScores = results.map((r) => r.performanceScore);
+  const spread = attemptScores.length > 1
+    ? Math.max(...attemptScores) - Math.min(...attemptScores)
+    : 0;
+  if (results.length === 1) {
+    results[0].attemptScores = attemptScores;
+    results[0].scoreSpread = spread;
+    return results[0];
+  }
 
   // Pick the run whose score is the median (2 successes → lower of the two).
   const sorted = [...results].sort((a, b) => a.performanceScore - b.performanceScore);
   const chosen = results.length === 2 ? sorted[0] : sorted[1];
+  chosen.attemptScores = attemptScores;
+  chosen.scoreSpread = spread;
 
   console.log(JSON.stringify({
     source: "PSI",
@@ -214,6 +226,7 @@ export async function fetchPageSpeed(url: string): Promise<PageSpeedResult | nul
     successes: results.length,
     scores: results.map((r) => r.performanceScore),
     chosenScore: chosen.performanceScore,
+    scoreSpread: spread,
     totalElapsedMs: Date.now() - startedAt,
   }));
 

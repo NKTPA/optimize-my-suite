@@ -2607,7 +2607,11 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
         .insert({
           url,
           raw_signals: signals as unknown as Record<string, unknown>,
-          computed_scores: scores as unknown as Record<string, unknown>,
+          computed_scores: {
+            ...scores,
+            psiAttemptScores: pageSpeedData?.attemptScores ?? null,
+            psiScoreSpread: pageSpeedData?.scoreSpread ?? null,
+          } as unknown as Record<string, unknown>,
           llm_evidence: rawLlmResponse as unknown as Record<string, unknown>,
           website_type: {
             type: websiteType.type,
@@ -2641,6 +2645,15 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       analysisResult.performance.clsValue = pageSpeedData?.clsValue ?? null;
       analysisResult.performance.tbtMs = pageSpeedData?.tbtMs ?? null;
       analysisResult.performance.fieldDataAvailable = pageSpeedData?.fieldDataAvailable ?? false;
+      analysisResult.performance.measurementSpread = pageSpeedData?.scoreSpread ?? null;
+      if (typeof pageSpeedData?.scoreSpread === "number" && pageSpeedData.scoreSpread > 15) {
+        if (!Array.isArray(analysisResult.performance.findings)) {
+          analysisResult.performance.findings = [];
+        }
+        analysisResult.performance.findings.push(
+          "Google PageSpeed returned a wide range across repeated measurements for this page, so the performance score should be treated as approximate; the median run was used."
+        );
+      }
     }
     if (analysisResult.seo) analysisResult.seo.score = scores.seo;
     if (analysisResult.trust) analysisResult.trust.score = scores.trust;
