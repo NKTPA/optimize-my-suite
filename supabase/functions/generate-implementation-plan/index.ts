@@ -153,6 +153,90 @@ GUIDELINES:
 - Character limits are HARD CONSTRAINTS: the SEO title must be strictly under 60 characters and the meta description must be strictly under 160 characters. Count every character, including spaces, and rewrite shorter if over, because values longer than those limits truncate in search results.
 `;
 
+function normalizeImplementationPlan(plan: any): any {
+  const changed: string[] = [];
+  const SEPARATORS = new Set([" ", "-", "|", ","]);
+
+  const stripTrailingSeparators = (str: string): string => {
+    let end = str.length - 1;
+    while (end >= 0 && SEPARATORS.has(str[end])) end--;
+    return str.slice(0, end + 1);
+  };
+
+  const trimToLimit = (text: string, limit: number): string => {
+    if (text.length <= limit) return text;
+    let base = text.slice(0, limit);
+    let cutIndex = -1;
+    for (let i = base.length - 1; i >= 0; i--) {
+      if (SEPARATORS.has(base[i])) {
+        cutIndex = i;
+        break;
+      }
+    }
+    if (cutIndex >= 0) {
+      base = base.slice(0, cutIndex);
+    }
+    return stripTrailingSeparators(base);
+  };
+
+  const title = plan?.seoSetup?.home?.title;
+  if (typeof title === "string" && title.length >= 60) {
+    plan.seoSetup.home.title = stripTrailingSeparators(trimToLimit(title, 59));
+    changed.push("title");
+  }
+
+  const meta = plan?.seoSetup?.home?.metaDescription;
+  if (typeof meta === "string" && meta.length >= 160) {
+    let trimmed = stripTrailingSeparators(trimToLimit(meta, 159));
+    if (!trimmed.endsWith(".")) {
+      if (trimmed.length < 159) {
+        trimmed += ".";
+      } else {
+        trimmed = stripTrailingSeparators(trimToLimit(trimmed, 158)) + ".";
+      }
+    }
+    plan.seoSetup.home.metaDescription = trimmed;
+    changed.push("meta");
+  }
+
+  const h1 = plan?.seoSetup?.home?.h1;
+  const headline = plan?.heroSection?.headline;
+  if (
+    typeof h1 === "string" &&
+    typeof headline === "string" &&
+    h1.trim() &&
+    headline.trim() &&
+    h1 !== headline
+  ) {
+    plan.seoSetup.home.h1 = headline;
+    changed.push("h1");
+  }
+
+  const arrays = [
+    plan?.keyPages?.home?.trustElements,
+    plan?.keyPages?.home?.whyChooseUs,
+    plan?.seoSetup?.otherSuggestions,
+    plan?.designAndLayout?.layoutChanges,
+    plan?.technicalFixes?.tasks,
+  ];
+  const placeholderRegex = /\[[^\]]+\]/;
+  let removedPlaceholders = false;
+  for (const arr of arrays) {
+    if (Array.isArray(arr)) {
+      for (let i = arr.length - 1; i >= 0; i--) {
+        if (typeof arr[i] === "string" && placeholderRegex.test(arr[i])) {
+          arr.splice(i, 1);
+          removedPlaceholders = true;
+        }
+      }
+    }
+  }
+  if (removedPlaceholders) changed.push("placeholders");
+
+  console.log("[normalizeImplementationPlan] normalized:", changed.join(", ") || "none");
+  return plan;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -335,6 +419,9 @@ Based on the analysis findings, create a concrete, ready-to-implement plan with 
       console.error("Raw content:", content.slice(0, 500));
       throw new Error("Failed to parse implementation plan");
     }
+
+    // Normalize the generated plan defensively before returning or counting usage
+    implementationPlan = normalizeImplementationPlan(implementationPlan);
 
     // Increment usage counter server-side (skip for owner)
     if (!isOwner) {
