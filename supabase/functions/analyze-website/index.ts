@@ -1540,6 +1540,11 @@ interface SignalData {
   team_photos_present?: boolean;
   certifications_displayed?: boolean;
   ssl_present?: boolean;
+  customer_logos_present?: boolean;
+  case_studies_present?: boolean;
+  named_testimonials_present?: boolean;
+  security_compliance_badges?: boolean;
+  uptime_or_sla_stated?: boolean;
 }
 
 function calculateScoresFromSignals(s: SignalData, pageSpeedData?: PageSpeedResult | null) {
