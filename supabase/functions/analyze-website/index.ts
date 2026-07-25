@@ -2737,12 +2737,10 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       analysisResult.performance.fieldDataAvailable = pageSpeedData?.fieldDataAvailable ?? false;
       analysisResult.performance.measurementSpread = pageSpeedData?.scoreSpread ?? null;
       analysisResult.performance.measurementCount = pageSpeedData?.attemptCount ?? null;
-      analysisResult.performance.measurementSamples = pageSpeedData?.attemptScores?.length ?? 0;
       if (Array.isArray(analysisResult.performance.findings)) {
-        const sampleCount = pageSpeedData?.attemptScores?.length ?? 0;
-        if (sampleCount === 1) {
+        if (pageSpeedData?.attemptCount === 1) {
           analysisResult.performance.findings.push(
-            "Performance was measured a single time — Google PageSpeed did not return a second successful measurement for this page, so treat this score as indicative rather than precise."
+            "This page's performance score is based on a single Google PageSpeed measurement rather than the usual three, so it carries more uncertainty than normal; treat it as indicative."
           );
         } else if (typeof pageSpeedData?.scoreSpread === "number" && pageSpeedData.scoreSpread > 15) {
           analysisResult.performance.findings.push(
