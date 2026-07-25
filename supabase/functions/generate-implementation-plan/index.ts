@@ -420,6 +420,9 @@ Based on the analysis findings, create a concrete, ready-to-implement plan with 
       throw new Error("Failed to parse implementation plan");
     }
 
+    // Normalize the generated plan defensively before returning or counting usage
+    implementationPlan = normalizeImplementationPlan(implementationPlan);
+
     // Increment usage counter server-side (skip for owner)
     if (!isOwner) {
       const { error: updateError } = await supabaseAdmin
