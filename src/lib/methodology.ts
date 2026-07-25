@@ -4,7 +4,7 @@
 // scoring formula, signal weight, rubric, or category weighting changes.
 // Audits produced under different versions are not directly comparable.
 // Audits predating this constant are treated as version 1.0.
-export const METHODOLOGY_VERSION = "2.0";
+export const METHODOLOGY_VERSION = "2.1";
 export const METHODOLOGY_VERSION_DATE = "2026-07-25";
 
 function formatEffectiveDate(iso: string): string {
