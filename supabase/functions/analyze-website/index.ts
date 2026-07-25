@@ -2710,6 +2710,10 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       analysisResult.renderingLimited = true;
     }
 
+    // Stamp methodology version into every result so PDFs and historical comparisons can reason about it
+    analysisResult.methodology = { version: METHODOLOGY_VERSION, effectiveDate: METHODOLOGY_VERSION_DATE };
+
+
     logStep("Analysis complete", { 
       url, 
       overallScore: dualScore.overallScore,
