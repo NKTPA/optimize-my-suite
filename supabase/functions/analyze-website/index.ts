@@ -2699,6 +2699,7 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
             psiAttemptScores: pageSpeedData?.attemptScores ?? null,
             psiScoreSpread: pageSpeedData?.scoreSpread ?? null,
             psiAttemptCount: pageSpeedData?.attemptCount ?? null,
+            psiSampleCount: pageSpeedData?.attemptScores?.length ?? 0,
             methodologyVersion: METHODOLOGY_VERSION,
           } as unknown as Record<string, unknown>,
 
@@ -2737,17 +2738,18 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       analysisResult.performance.fieldDataAvailable = pageSpeedData?.fieldDataAvailable ?? false;
       analysisResult.performance.measurementSpread = pageSpeedData?.scoreSpread ?? null;
       analysisResult.performance.measurementCount = pageSpeedData?.attemptCount ?? null;
-      if (!Array.isArray(analysisResult.performance.findings)) {
-        analysisResult.performance.findings = [];
-      }
-      if (pageSpeedData?.attemptCount === 1) {
-        analysisResult.performance.findings.push(
-          "This page's performance score is based on a single Google PageSpeed measurement rather than the usual three, so it carries more uncertainty than normal; treat it as indicative."
-        );
-      } else if (typeof pageSpeedData?.scoreSpread === "number" && pageSpeedData.scoreSpread > 15) {
-        analysisResult.performance.findings.push(
-          "Google PageSpeed returned a wide range across repeated measurements for this page, so the performance score should be treated as approximate; the median run was used."
-        );
+      analysisResult.performance.measurementSamples = pageSpeedData?.attemptScores?.length ?? 0;
+      if (Array.isArray(analysisResult.performance.findings)) {
+        const sampleCount = pageSpeedData?.attemptScores?.length ?? 0;
+        if (sampleCount === 1) {
+          analysisResult.performance.findings.push(
+            "Performance was measured a single time — Google PageSpeed did not return a second successful measurement for this page, so treat this score as indicative rather than precise."
+          );
+        } else if (typeof pageSpeedData?.scoreSpread === "number" && pageSpeedData.scoreSpread > 15) {
+          analysisResult.performance.findings.push(
+            "Google PageSpeed returned a wide range across repeated measurements for this page, so the performance score should be treated as approximate; the median run was used."
+          );
+        }
       }
     }
     if (analysisResult.seo) analysisResult.seo.score = scores.seo;
