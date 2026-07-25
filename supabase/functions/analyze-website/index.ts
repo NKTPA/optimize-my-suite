@@ -1232,6 +1232,14 @@ Each Design signal must be evaluated independently using strict, objective crite
 - "has_interactive_qualifier": true ONLY if the page offers an interactive tool that qualifies or engages a prospect BEFORE contact — e.g., a treatment planner, quiz, cost/price calculator, or self-assessment. Explicitly EXCLUDED (return false): chat widgets, plain contact forms, newsletter signups, and booking/appointment calendars.
 When uncertain about ANY design signal, return false. Do not guess true.
 
+SIGNAL DETECTION RULES — TRUST SIGNALS:
+The following five signals must be judged strictly and independently. Return false when uncertain. Do not infer a logo wall from the word "clients" or generic language. Do not count the site's own brand marks as customer logos:
+- "customer_logos_present": true ONLY if recognisable client or customer company logos are displayed. Generic "Our clients" text without named logos = false.
+- "case_studies_present": true ONLY if named case studies or detailed customer success stories are shown.
+- "named_testimonials_present": true ONLY if testimonials include a real full name and ideally a company or role. Anonymous quotes = false.
+- "security_compliance_badges": true ONLY if security or compliance markers (SOC 2, ISO 27001, GDPR, HIPAA, PCI, or stated data encryption) are shown.
+- "uptime_or_sla_stated": true ONLY if a specific uptime percentage or service-level commitment is stated.
+
 EVIDENCE REQUIREMENT FOR SUBJECTIVE BOOLEANS:
 For every one of these booleans, if you return true you MUST also return a short verbatim quoted fragment (max 12 words) from the page in the "evidence" object under the same key, proving the claim: value_prop_above_fold, service_area_stated, subheadline_present, hero_value_prop_specific, social_proof_above_fold, has_interactive_qualifier, has_mobile_persistent_cta, button_style_consistent, cta_visually_prominent, clear_visual_hierarchy, images_optimized_for_mobile, bbb_present, license_displayed, social_proof_numbers, team_photos_present, certifications_displayed, ssl_present, customer_logos_present, case_studies_present, named_testimonials_present, security_compliance_badges, uptime_or_sla_stated.
 When uncertain, return false. A true without quoted evidence will be discarded (treated as false) before scoring. Do NOT fabricate evidence — quote the page verbatim.
