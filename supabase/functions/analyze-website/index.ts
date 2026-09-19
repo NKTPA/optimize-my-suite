@@ -56,6 +56,30 @@ function logStep(step: string, details?: unknown) {
   console.log(`[analyze-website] ${step}${detailsStr}`);
 }
 
+// Bound page processing before any content checks or signal extraction.
+function sanitizeAuditHtml(html: string): string {
+  const encoder = new TextEncoder();
+  const bytesBefore = encoder.encode(html).byteLength;
+  let strippedCount = 0;
+  let sanitized = html.replace(/data:[^"')\s]{100,}/g, () => {
+    strippedCount++;
+    return "data:stripped";
+  });
+  logStep("HTML data URIs sanitized", {
+    strippedCount,
+    bytesBefore,
+    bytesAfter: encoder.encode(sanitized).byteLength,
+  });
+  if (sanitized.length > 1_500_000) {
+    logStep("WARNING: Sanitized HTML truncated", {
+      originalSize: sanitized.length,
+      maxCharacters: 1_500_000,
+    });
+    sanitized = sanitized.slice(0, 1_500_000);
+  }
+  return sanitized;
+}
+
 // ============================================
 // RATE LIMITING (public/unauthenticated audits)
 // ============================================
@@ -1769,6 +1793,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let failureReason = "analysis_failed";
   try {
     // ========================================
     // KILL SWITCH
@@ -2010,6 +2035,7 @@ serve(async (req) => {
     // ========================================
     // FETCH AND ANALYZE WEBSITE
     // ========================================
+    failureReason = "fetch_failed";
     let html: string | undefined;
 
     // Kick off PageSpeed Insights fetch in parallel with HTML fetch.
@@ -2107,11 +2133,7 @@ serve(async (req) => {
 
           if (response.ok) {
             html = await response.text();
-            
-            if (html.length > 5000000) {
-              html = html.slice(0, 5000000);
-              logStep("WARNING: HTML truncated to 5MB");
-            }
+
             
             logStep("Fetched HTML", { length: html.length, userAgent: userAgent.slice(0, 30) });
             break;
@@ -2155,10 +2177,6 @@ serve(async (req) => {
               const fcHtml = fcData.data?.html || fcData.html;
               if (typeof fcHtml === 'string' && fcHtml.length > 500) {
                 html = fcHtml;
-                if (html.length > 5000000) {
-                  html = html.slice(0, 5000000);
-                  logStep("WARNING: Firecrawl HTML truncated to 5MB");
-                }
                 logStep("Firecrawl fallback successful", { length: html.length });
               } else {
                 logStep("Firecrawl fallback returned insufficient HTML", { length: typeof fcHtml === 'string' ? fcHtml.length : 0 });
@@ -2225,6 +2243,8 @@ serve(async (req) => {
     // ========================================
     // CHECK CONTENT SUFFICIENCY (NOT SCORABLE detection)
     // ========================================
+    failureReason = "parse_failed";
+    html = sanitizeAuditHtml(html);
     const isManualHtml = !!(manualHtml && typeof manualHtml === 'string' && manualHtml.length > 0);
     let contentCheck = checkContentSufficiency(html, url);
     
@@ -2258,12 +2278,7 @@ serve(async (req) => {
             const fcData = await fcResponse.json();
             const fcHtml = fcData.data?.html || fcData.html;
             if (typeof fcHtml === 'string' && fcHtml.length > 500) {
-              if (fcHtml.length > 5000000) {
-                html = fcHtml.slice(0, 5000000);
-                logStep("WARNING: Firecrawl JS-shell fallback HTML truncated to 5MB");
-              } else {
-                html = fcHtml;
-              }
+              html = sanitizeAuditHtml(fcHtml);
               logStep("Firecrawl JS-shell fallback successful", { length: html.length });
               
               // Re-check content sufficiency with the new HTML
@@ -2377,6 +2392,7 @@ serve(async (req) => {
     });
 
     // Call AI for analysis
+    failureReason = "ai_request_failed";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("AI service not configured");
@@ -2414,7 +2430,9 @@ ${JSON.stringify({
   isLikelySPA: parsedSignals.isLikelySPA,
 }, null, 2)}`;
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    let aiResponse: Response;
+    try {
+      aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -2442,30 +2460,33 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       }),
     });
 
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      logStep("ERROR: AI API failed", { status: aiResponse.status, error: errorText.slice(0, 200) });
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Service quota exceeded. Please try again later." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      throw new Error("AI analysis failed");
+    } catch (error) {
+      logStep("ERROR: AI request failed", {
+        reason: "ai_request_failed",
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      return new Response(
+        JSON.stringify({ error: "The analysis engine could not process this page.", reason: "ai_request_failed", detail: "network_error" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text().catch(() => "");
+      logStep("ERROR: AI API failed", { status: aiResponse.status, error: errorText.slice(0, 200) });
+      return new Response(
+        JSON.stringify({ error: "The analysis engine could not process this page.", reason: "ai_request_failed", detail: aiResponse.status }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    failureReason = "parse_failed";
     const aiData = await aiResponse.json();
     const content = aiData.choices?.[0]?.message?.content;
 
     if (!content) {
+      failureReason = "ai_request_failed";
       throw new Error("No analysis generated");
     }
 
@@ -2808,9 +2829,9 @@ Provide a comprehensive analysis with specific, actionable recommendations appro
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    logStep("ERROR: Unexpected error", { error: error instanceof Error ? error.message : String(error) });
+    logStep("ERROR: Unexpected error", { reason: failureReason, error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed. Please try again." }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Analysis failed. Please try again.", reason: failureReason }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
