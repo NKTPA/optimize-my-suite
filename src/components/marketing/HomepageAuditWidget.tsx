@@ -115,7 +115,7 @@ function verdictFor(score: number): string {
   return "Critical issues on the fundamentals. Start with the top-priority items.";
 }
 
-export function HomepageAuditWidget() {
+export function HomepageAuditWidget({ compact = false }: { compact?: boolean } = {}) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [urlInput, setUrlInput] = useState("");
   const [normalizedUrl, setNormalizedUrl] = useState("");
@@ -285,30 +285,13 @@ export function HomepageAuditWidget() {
 
   const overallScore = result?.summary.overallScore ?? 0;
 
-  return (
-    <section
-      id="free-audit"
-      aria-labelledby="free-audit-heading"
-      className="relative border-t border-border/50 bg-gradient-to-b from-background via-background to-secondary/20 py-16 sm:py-20"
-    >
-      <div className="container px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
-            Free · No credit card
-          </div>
-          <h2 id="free-audit-heading" className="text-3xl sm:text-4xl font-extrabold font-display tracking-tight mb-3">
-            Run a free audit in <span className="text-gradient">under 3 minutes</span>
-          </h2>
-          <p className="text-muted-foreground text-base sm:text-lg">
-            Objective, criteria-based scoring across 7 categories. See exactly where your site is winning — and where it's leaking clients.
-          </p>
-        </div>
-
-        <div className="max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card shadow-lg p-5 sm:p-7">
+  const body = (
+    <>
+        <div className={compact ? "" : "max-w-2xl mx-auto rounded-2xl border border-border/60 bg-card shadow-lg p-5 sm:p-7"}>
           {/* URL form — always visible until preview/unlocked */}
           {(phase === "idle" || phase === "analyzing" || phase === "error") && (
             <form onSubmit={handleSubmit} noValidate>
-              <Label htmlFor="audit-url" className="text-sm font-medium">Your website URL</Label>
+              <Label htmlFor="audit-url" className={compact ? "sr-only" : "text-sm font-medium"}>Your website URL</Label>
               <div className="mt-2 flex flex-col sm:flex-row gap-2">
                 <Input
                   id="audit-url"
@@ -341,7 +324,7 @@ export function HomepageAuditWidget() {
                   type="submit"
                   size="lg"
                   disabled={phase === "analyzing"}
-                  className="h-12 bg-[#2746C7] text-white hover:bg-[#1f3aa8] gap-2 sm:min-w-[200px]"
+                  className="h-12 bg-primary text-primary-foreground hover:bg-primary/90 gap-2 sm:min-w-[200px]"
                 >
                   {phase === "analyzing" ? (
                     <>
@@ -349,7 +332,7 @@ export function HomepageAuditWidget() {
                     </>
                   ) : (
                     <>
-                      Run My Free Audit <ArrowRight className="w-4 h-4" />
+                      Run my free audit <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </Button>
@@ -452,7 +435,7 @@ export function HomepageAuditWidget() {
                   type="submit"
                   size="lg"
                   disabled={leadSubmitting}
-                  className="sm:col-span-2 h-12 bg-[#2746C7] text-white hover:bg-[#1f3aa8] gap-2"
+                  className="sm:col-span-2 h-12 bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
                 >
                   {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Show my full report
@@ -537,7 +520,7 @@ export function HomepageAuditWidget() {
                   <Input id="ns-email" type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} maxLength={255} autoComplete="email" className="mt-1 h-11" />
                 </div>
                 {leadError && <p className="sm:col-span-2 text-sm text-destructive">{leadError}</p>}
-                <Button type="submit" size="lg" disabled={leadSubmitting} className="sm:col-span-2 h-12 bg-[#2746C7] text-white hover:bg-[#1f3aa8] gap-2">
+                <Button type="submit" size="lg" disabled={leadSubmitting} className="sm:col-span-2 h-12 bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                   {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Email me a manual review
                 </Button>
@@ -562,7 +545,7 @@ export function HomepageAuditWidget() {
                   <Input id="rl-email" type="email" value={leadEmail} onChange={(e) => setLeadEmail(e.target.value)} maxLength={255} autoComplete="email" className="mt-1 h-11" />
                 </div>
                 {leadError && <p className="sm:col-span-2 text-sm text-destructive">{leadError}</p>}
-                <Button type="submit" size="lg" disabled={leadSubmitting} className="sm:col-span-2 h-12 bg-[#2746C7] text-white hover:bg-[#1f3aa8] gap-2">
+                <Button type="submit" size="lg" disabled={leadSubmitting} className="sm:col-span-2 h-12 bg-primary text-primary-foreground hover:bg-primary/90 gap-2">
                   {leadSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   Notify me when my audit is ready
                 </Button>
@@ -571,9 +554,33 @@ export function HomepageAuditWidget() {
           )}
         </div>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className={compact ? "mt-3 text-xs text-muted-foreground" : "mt-4 text-center text-xs text-muted-foreground"}>
           Free audits are limited to 3 per visitor per day and 50 site-wide per day.
         </p>
+    </>
+  );
+
+  if (compact) {
+    return (
+      <div id="free-audit" className="scroll-mt-24">
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <section
+      id="free-audit"
+      aria-labelledby="free-audit-heading"
+      className="relative border-t border-border/50 py-16 sm:py-20"
+    >
+      <div className="container px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto text-center mb-8">
+          <h2 id="free-audit-heading" className="text-3xl sm:text-4xl tracking-tight mb-3">
+            Run a free audit
+          </h2>
+        </div>
+        {body}
       </div>
     </section>
   );

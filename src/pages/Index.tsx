@@ -29,7 +29,6 @@ import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
 import { HomepageAuditWidget } from "@/components/marketing/HomepageAuditWidget";
 import { MobileNavSheet } from "@/components/marketing/MobileNavSheet";
-import productScreenshot from "@/assets/product-screenshot.png";
 
 // FAQ Item component with accordion behavior
 function FaqItem({ question, answer }: { question: string; answer: string }) {
@@ -106,22 +105,56 @@ const plans = [
   { name: "Scale", price: 399, analyses: "500", features: ["500 analyses/month", "Unlimited batch mode", "API access — coming soon", "Priority email support", "Team seats — coming soon"], forWho: "High-volume agencies and white-label resellers" },
 ];
 
+
+const SAMPLE_CATEGORIES = [
+  { name: "Messaging & Clarity", score: 71 },
+  { name: "Conversion & Lead Capture", score: 48 },
+  { name: "Design & UX", score: 66 },
+  { name: "Mobile Experience", score: 74 },
+  { name: "Performance", score: 42 },
+  { name: "SEO Fundamentals", score: 69 },
+  { name: "Trust & Credibility", score: 58 },
+];
+
+function SampleAuditCard() {
+  return (
+    <figure className="min-w-0 rounded-lg border border-border bg-card p-6 shadow-card-elevated">
+      <div className="flex items-start justify-between gap-4 border-b border-border pb-5">
+        <div className="min-w-0">
+          <p className="text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground">Sample audit</p>
+          <p className="mt-1 truncate text-sm font-medium text-foreground">acme-dental.com</p>
+        </div>
+        <p className="shrink-0 text-right">
+          <span className="text-4xl font-semibold tracking-[-0.02em] text-foreground">62</span>
+          <span className="text-sm text-muted-foreground">/100</span>
+        </p>
+      </div>
+      <ul className="mt-5 space-y-4">
+        {SAMPLE_CATEGORIES.map((c) => {
+          const low = c.score < 50;
+          return (
+            <li key={c.name}>
+              <div className="mb-1.5 flex items-center justify-between gap-3 text-sm">
+                <span className="truncate text-foreground">{c.name}</span>
+                <span className={`tabular-nums font-medium ${low ? "text-warning" : "text-foreground"}`}>{c.score}</span>
+              </div>
+              <div className="h-1 w-full rounded-full bg-secondary">
+                <div className={`h-1 rounded-full ${low ? "bg-warning" : "bg-primary"}`} style={{ width: `${c.score}%` }} />
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <figcaption className="mt-5 text-xs text-muted-foreground">Sample data.</figcaption>
+    </figure>
+  );
+}
+
 export default function Index() {
   const currentYear = new Date().getFullYear();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showPlanModal, setShowPlanModal] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-
-  // Pin sticky header after scrolling past the hero region
-  useEffect(() => {
-    const onScroll = () => {
-      setIsPinned(window.scrollY > 480);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   // Redirect logged-in users to dashboard
   useEffect(() => {
@@ -137,38 +170,27 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Sticky pinned header — appears after scrolling past hero */}
-      <div
-        aria-hidden={!isPinned}
-        className={`fixed top-0 inset-x-0 z-50 border-b border-border/60 bg-background/85 backdrop-blur-md shadow-sm motion-safe:transition-all motion-safe:duration-300 ${
-          isPinned
-            ? "opacity-100 translate-y-0 pointer-events-auto"
-            : "opacity-0 -translate-y-full pointer-events-none"
-        }`}
-      >
-        <div className="container px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-            <HeaderBrand textFallback />
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Link to="/pricing" className="hidden sm:inline-flex">
-                <Button variant="ghost" size="sm">Pricing</Button>
-              </Link>
-              <Link to="/auth" className="hidden sm:inline-flex">
-                <Button variant="ghost" size="sm">Login</Button>
-              </Link>
-              <a href="#free-audit">
-                <Button
-                  size="sm"
-                  className="text-xs sm:text-sm px-3 sm:px-4 bg-[#2746C7] text-white hover:bg-[#1f3aa8]"
-                >
-                  Get Your Free Audit
-                </Button>
-              </a>
-              <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
-            </div>
+      {/* Top navigation */}
+      <nav className="sticky top-0 z-50 border-b border-border bg-background">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
+          <HeaderBrand textFallback />
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Link to="/pricing" className="hidden md:inline-flex">
+              <Button variant="ghost" size="sm">Pricing</Button>
+            </Link>
+            <a href="/sample-audit-report.pdf" target="_blank" rel="noopener noreferrer" className="hidden md:inline-flex">
+              <Button variant="ghost" size="sm">Sample report</Button>
+            </a>
+            <Link to="/auth" className="hidden md:inline-flex">
+              <Button variant="ghost" size="sm">Log in</Button>
+            </Link>
+            <a href="#free-audit">
+              <Button size="sm" className="px-2.5 text-xs sm:px-4 sm:text-sm">Run a free audit</Button>
+            </a>
+            <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
           </div>
         </div>
-      </div>
+      </nav>
 
       <SEO
         title="OptimizeMySuite — White-Label Website Audit Tool for Agencies"
@@ -187,126 +209,45 @@ export default function Index() {
           },
         }}
       />
-      {/* Hero Section */}
-      <header className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-hero opacity-[0.08]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_hsl(221_83%_53%_/_0.15),_transparent)]" />
-        <div className="absolute inset-0 hero-dot-pattern" />
 
-        <nav className="container relative pt-6 px-4 sm:px-6">
-          <div className="flex items-center justify-between">
-            <HeaderBrand textFallback />
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Link to="/pricing" className="hidden sm:inline-flex"><Button variant="ghost" size="sm" className="px-2 sm:px-3">Pricing</Button></Link>
-              <Link to="/auth"><Button variant="ghost" size="sm" className="px-2 sm:px-3 hidden sm:inline-flex">Login</Button></Link>
-              <Button variant="default" size="sm" className="text-xs sm:text-sm px-2 sm:px-4 hidden sm:inline-flex" onClick={() => setShowPlanModal(true)}>
-                Start Free Trial
-              </Button>
-              <a href="#free-audit">
-                <Button
-                  size="sm"
-                  className="text-xs sm:text-sm px-3 sm:px-4 bg-[#2746C7] text-white hover:bg-[#1f3aa8]"
-                >
-                  Get Your Free Audit
-                </Button>
-              </a>
-              <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
-            </div>
-          </div>
-        </nav>
-
-        <div className="container relative py-16 sm:py-24 lg:py-32 px-4 sm:px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-6 max-w-full">
-              <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-              <span className="break-words">White-Label Website Audit Software for Agencies & Consultants</span>
-            </div>
-            
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 tracking-tight leading-tight break-words font-display">
-              Paste Your Website.{" "}
-              <span className="text-gradient">Get a Free Expert Audit in Minutes.</span>
+      {/* Hero */}
+      <header className="bg-background">
+        <div className="mx-auto grid max-w-[1200px] gap-12 px-4 pt-16 pb-16 sm:px-6 md:pt-28 md:pb-20 lg:grid-cols-[minmax(0,1fr)_440px] lg:items-center lg:gap-16">
+          <div className="min-w-0">
+            <p className="mb-5 text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground">
+              White-label website audits for agencies &amp; consultants
+            </p>
+            <h1 className="mb-6 text-4xl sm:text-5xl md:text-6xl leading-[1.05] font-semibold tracking-[-0.02em] text-foreground">
+              Show clients exactly what their website is costing them.
             </h1>
-
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed px-2 sm:px-0">
+            <p className="mb-8 max-w-[560px] text-lg text-muted-foreground">
               Objective scores across 7 categories, powered by real Google data. Agencies white-label the report and close clients with before/after proof.
             </p>
 
-            {/* Free audit widget — moved into hero */}
-            <div className="mb-8">
-              <HomepageAuditWidget />
+            <div className="max-w-[600px]">
+              <HomepageAuditWidget compact />
             </div>
 
-            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center sm:gap-4 w-full max-w-lg sm:max-w-none mx-auto">
-              <Button
-                variant="outline"
-                size="default"
-                className="gap-2 w-full sm:w-auto"
-                onClick={() => setShowPlanModal(true)}
-              >
-                Start Your 3-Day Free Trial
-              </Button>
+            <div className="mt-5 flex flex-col gap-2 text-sm sm:flex-row sm:gap-6">
               <a
                 href="/sample-audit-report.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="font-medium text-primary hover:underline underline-offset-4"
               >
-                <FileText className="w-4 h-4 flex-shrink-0" />
-                See a Sample Report
+                See a sample report →
               </a>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
-                No credit card required
-              </span>
-              <span className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
-                Cancel anytime
-              </span>
-              <span className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
-                One closed client pays for itself
-              </span>
-            </div>
-
-            {/* Browser Mockup Placeholder */}
-            <div className="relative mt-16 sm:mt-20 max-w-3xl mx-auto">
-              {/* Glow effect behind mockup */}
-              <div className="absolute inset-0 -inset-x-8 -inset-y-8 bg-[radial-gradient(ellipse_at_center,_hsl(221_83%_53%_/_0.12),_transparent_70%)] blur-2xl" />
-              
-              {/* Browser window mockup */}
-              <div className="relative transform -rotate-1 hover:rotate-0 transition-transform duration-500">
-                <div className="rounded-xl border border-border/60 bg-card shadow-xl overflow-hidden">
-                  {/* Browser chrome bar */}
-                  <div className="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border/50">
-                    <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-[hsl(var(--chrome-close)/0.8)]" />
-                      <div className="w-3 h-3 rounded-full bg-[hsl(var(--chrome-minimize)/0.8)]" />
-                      <div className="w-3 h-3 rounded-full bg-[hsl(var(--chrome-maximize)/0.8)]" />
-                    </div>
-                    <div className="flex-1 mx-4">
-                      <div className="h-6 bg-background/60 rounded-md flex items-center justify-center">
-                        <span className="text-xs text-muted-foreground/60">optimizemysuite.com/dashboard</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Product screenshot */}
-                  <div className="relative rounded-b-xl overflow-hidden">
-                    <img 
-                      src={productScreenshot} 
-                      alt="OptimizeMySuite dashboard showing website analysis with score and recommendations" 
-                      className="w-full"
-                    />
-                    {/* Subtle top gradient overlay for browser chrome blend */}
-                    <div className="absolute inset-x-0 top-0 h-5 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-                  </div>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(true)}
+                className="text-left font-medium text-primary hover:underline underline-offset-4"
+              >
+                Start a 3-day free trial
+              </button>
             </div>
           </div>
+
+          <SampleAuditCard />
         </div>
       </header>
 

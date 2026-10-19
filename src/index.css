@@ -1,15 +1,16 @@
+@import '@fontsource/geist-sans/400.css';
+@import '@fontsource/geist-sans/500.css';
+@import '@fontsource/geist-sans/600.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&display=swap');
 
 @layer base {
   :root {
     /* Core palette - Deep blue professional theme */
-    --background: 220 20% 98%;
+    --background: 0 0% 100%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -19,15 +20,15 @@
     --popover-foreground: 222 47% 11%;
 
     /* Primary - Deep trustworthy blue */
-    --primary: 221 83% 53%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 228 69% 51%;
+    --primary-foreground: 0 0% 100%;
 
     /* Secondary - Soft slate */
-    --secondary: 215 25% 93%;
-    --secondary-foreground: 222 47% 20%;
+    --secondary: 220 20% 97%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 13% 38%;
+    --muted: 220 20% 97%;
+    --muted-foreground: 216 14% 39%;
 
     /* Accent - Vibrant teal for CTAs */
     --accent: 172 66% 45%;
@@ -36,11 +37,13 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 90%;
-    --input: 220 13% 90%;
-    --ring: 221 83% 53%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 228 69% 51%;
 
-    --radius: 0.75rem;
+    --radius: 0.625rem;
+    --brand-soft: 226 100% 97%;
+    --shadow-card-elevated: 0 12px 32px rgba(15, 23, 42, 0.06);
 
     /* Custom semantic tokens */
     --success: 152 82% 36%;
@@ -76,7 +79,7 @@
     --shadow-xl: 0 20px 25px -5px hsl(220 13% 91% / 0.35), 0 8px 10px -6px hsl(220 13% 91% / 0.35);
     --shadow-card: 0 1px 3px hsl(221 83% 53% / 0.04), 0 4px 16px -2px hsl(221 83% 53% / 0.08);
     --shadow-card-hover: 0 4px 12px hsl(221 83% 53% / 0.08), 0 12px 32px -4px hsl(221 83% 53% / 0.14);
-    --shadow-glow: 0 0 24px -4px hsl(221 83% 53% / 0.25);
+    --shadow-glow: none;
     --shadow-inner: inset 0 2px 4px 0 hsl(220 13% 91% / 0.3);
 
     --sidebar-background: 0 0% 98%;
@@ -140,26 +143,19 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: 'Geist Sans', system-ui, sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-family: 'Geist Sans', system-ui, sans-serif;
   }
 
   h1, h2 {
-    font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Geist Sans', system-ui, sans-serif;
   }
 
-  h1 {
-    font-weight: 800;
-  }
-
-  h2 {
-    font-weight: 700;
-  }
 
   h1 {
     @apply text-4xl md:text-5xl lg:text-6xl leading-[1.1];
@@ -206,11 +202,13 @@
     box-shadow: var(--shadow-glow);
   }
 
+  /* Gradient text retired in the redesign: renders as solid ink. */
   .text-gradient {
-    background: var(--gradient-hero-text);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: inherit;
+  }
+
+  .shadow-card-elevated {
+    box-shadow: var(--shadow-card-elevated);
   }
 
   .hero-dot-pattern {
