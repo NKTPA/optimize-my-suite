@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['Bricolage Grotesque', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        sans: ['Geist Sans', 'system-ui', 'sans-serif'],
+        display: ['Geist Sans', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1.5' }],
@@ -63,6 +63,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "brand-soft": "hsl(var(--brand-soft))",
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
@@ -138,8 +139,8 @@ export default {
         "slide-up": "slide-up 0.5s ease-out forwards",
       },
       boxShadow: {
-        'glow': '0 0 24px -4px hsl(221 83% 53% / 0.25)',
-        'glow-lg': '0 0 40px -8px hsl(221 83% 53% / 0.3)',
+        'glow': 'none',
+        'glow-lg': 'none',
       },
     },
   },
