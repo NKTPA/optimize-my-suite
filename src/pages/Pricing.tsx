@@ -92,12 +92,12 @@ const comparisonFeatures = [
 const valueProps = [
   {
     icon: TrendingUp,
-    title: "One Closed Deal Pays for Months",
-    description: "A single website project you close with OptimizeMySuite covers 3-12 months of subscription costs. The math works.",
+    title: "Proof You Can Show Clients",
+    description: "Objective, repeatable scores give you evidence to justify website projects instead of promises.",
   },
   {
     icon: ShieldCheck,
-    title: "Client-Facing Quality Guaranteed",
+    title: "Client-Facing by Design",
     description: "Every report is designed to be shared directly with clients. No system logs, no technical jargon — just professional deliverables.",
   },
   {
@@ -289,35 +289,6 @@ export default function Pricing() {
               </p>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* ROI Justification */}
-      <section className="container pb-16">
-        <div className="max-w-3xl mx-auto p-6 sm:p-8 rounded-2xl bg-card border border-border/50 shadow-card">
-          <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-foreground mb-2">The Math Makes Sense</h2>
-            <p className="text-muted-foreground">Here's why agencies keep paying for OptimizeMySuite:</p>
-          </div>
-          
-          <div className="grid sm:grid-cols-3 gap-6 text-center">
-            <div className="p-4 rounded-xl bg-secondary/50">
-              <p className="text-3xl font-bold text-primary mb-1">$49-$399</p>
-              <p className="text-sm text-muted-foreground">Monthly cost</p>
-            </div>
-            <div className="p-4 rounded-xl bg-secondary/50">
-              <p className="text-3xl font-bold text-foreground mb-1">$2,000+</p>
-              <p className="text-sm text-muted-foreground">Avg. website project value</p>
-            </div>
-            <div className="p-4 rounded-xl bg-primary/10">
-              <p className="text-3xl font-bold text-primary mb-1">10-40x</p>
-              <p className="text-sm text-muted-foreground">ROI per closed deal</p>
-            </div>
-          </div>
-          
-          <p className="text-sm text-center text-foreground/70 mt-6">
-            One website project you close with OptimizeMySuite pays for 5-40 months of subscription. Most agencies see ROI within their first week.
-          </p>
         </div>
       </section>
 

@@ -636,7 +636,7 @@ export default function Index() {
                 Ready to Prove Your Value?
               </h2>
               <p className="text-muted-foreground text-lg mb-4">
-                Join agencies using OptimizeMySuite to close more deals and defend their retainers with objective proof.
+                Use OptimizeMySuite to back your recommendations and retainers with objective proof.
               </p>
               <p className="text-sm text-foreground/70 font-medium mb-8">
                 One closed website project pays for months of OptimizeMySuite.
