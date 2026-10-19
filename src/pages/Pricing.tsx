@@ -6,10 +6,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { STRIPE_PRICE_IDS } from "@/lib/entitlements";
-import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { MobileNavSheet } from "@/components/marketing/MobileNavSheet";
+import { MarketingNav, MarketingFooter, Section, SectionHeader, PlainCard } from "@/components/marketing/MarketingLayout";
 import { CREDIBILITY_BODY } from "@/components/scoring/ScoreCredibilityStatement";
 
 const plans = [
@@ -157,282 +156,164 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       <SEO
         title="Pricing — OptimizeMySuite"
         description="Simple pricing for agencies. Generate unlimited white-label website audit reports with objective scoring. Start free."
         canonicalPath="/pricing"
       />
-      {/* Navigation */}
-      <nav className="container pt-6">
-        <div className="flex items-center justify-between">
-          <HeaderBrand textFallback />
-          <div className="flex items-center gap-1 sm:gap-2">
-            {user ? (
-              <>
-                <Link to="/">
-                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">Dashboard</Button>
-                </Link>
-                <Link to="/history">
-                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">History</Button>
-                </Link>
-                <Link to="/account">
-                  <Button variant="ghost" size="sm" className="hidden sm:inline-flex">Account</Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/auth" className="hidden sm:inline-flex">
-                  <Button variant="ghost" size="sm">Login</Button>
-                </Link>
-                <Link to="/auth?tab=signup" className="hidden sm:inline-flex">
-                  <Button variant="default" size="sm">Create Agency Account</Button>
-                </Link>
-              </>
-            )}
-            <MobileNavSheet onStartFreeTrial={() => navigate("/auth?tab=signup")} />
-          </div>
-        </div>
-      </nav>
+      <MarketingNav auditHref="/#free-audit" onStartFreeTrial={() => navigate("/auth?tab=signup")} />
 
-      {/* Hero */}
-      <section className="container py-16 lg:py-20 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-          <Sparkles className="w-4 h-4" />
-          Pricing That Pays for Itself
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
-          Invest in Proof. Close More Deals.
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-4">
-          Choose a plan that matches your agency's volume. Every tier includes the same professional-grade features — just more capacity.
-        </p>
-        <p className="text-sm text-foreground/70 font-medium max-w-xl mx-auto">
-          Start with a 3-day free trial. No credit card required. Cancel anytime.
-        </p>
-      </section>
+      <header className="mx-auto max-w-[1200px] px-4 pt-16 pb-4 sm:px-6 md:pt-28">
+        <SectionHeader
+          as="h1"
+          eyebrow="Pricing"
+          title="Invest in proof. Close more deals."
+          description="Choose a plan that matches your agency's volume. Every tier includes the same professional-grade features — just more capacity. Start with a 3-day free trial. No credit card required. Cancel anytime."
+        />
+      </header>
 
-      {/* Value Props */}
-      <section className="container pb-12">
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {valueProps.map((prop, index) => {
-            const Icon = prop.icon;
-            return (
-              <div key={index} className="p-5 rounded-xl bg-card border border-border/50 text-center">
-                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mx-auto mb-3">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{prop.title}</h3>
-                <p className="text-sm text-muted-foreground">{prop.description}</p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Pricing Cards */}
-      <section className="container pb-16">
-        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="mx-auto max-w-[1200px] px-4 pb-20 sm:px-6 md:pb-24">
+        <div className="grid gap-6 md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
-                plan.popular 
-                  ? "border-primary border-2 shadow-xl md:scale-[1.02] ring-4 ring-primary/10" 
-                  : "border-border/50 hover:border-border hover:shadow-card-hover"
-              }`}
+              className={`flex flex-col rounded-lg bg-card p-6 ${plan.popular ? "border-2 border-primary" : "border border-border"}`}
             >
-              {plan.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md">
-                  Most Popular
-                </div>
-              )}
-              <div className="mb-6 mt-2">
-                <h3 className="text-xl font-bold text-foreground mb-1">{plan.name}</h3>
-                <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
-                <div className="flex items-baseline gap-1 mb-3">
-                  <span className={`text-4xl font-bold ${plan.popular ? "text-primary" : "text-foreground"}`}>${plan.price}</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-                  <p className="text-xs text-muted-foreground mb-1">Who this is for:</p>
-                  <p className="text-sm text-foreground/80">{plan.whoIsFor}</p>
-                </div>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+                {plan.popular && <span className="text-xs font-medium text-primary">Most popular</span>}
               </div>
-
-              <div className="mb-4 p-3 rounded-lg bg-secondary/50">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  {plan.businessOutcome}
-                </div>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                {plan.features.map((feature, idx) => (
-                  <li key={idx} className="flex items-start gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-muted-foreground">{feature}</span>
+              <p className="mt-1 text-sm text-muted-foreground">{plan.description}</p>
+              <p className="my-6">
+                <span className="text-4xl font-semibold tracking-[-0.02em] text-foreground">${plan.price}</span>
+                <span className="text-muted-foreground">/month</span>
+              </p>
+              <p className="mb-2 text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground">Who this is for</p>
+              <p className="mb-4 text-sm text-foreground">{plan.whoIsFor}</p>
+              <p className="mb-6 border-t border-border pt-4 text-sm font-medium text-foreground">{plan.businessOutcome}</p>
+              <ul className="mb-8 space-y-3">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                    {feature}
                   </li>
                 ))}
               </ul>
-
-              <Button
-                variant={plan.popular ? "hero" : "outline"}
-                className={`w-full ${plan.popular ? "shadow-lg" : ""}`}
-                onClick={() => handleSelectPlan(plan.priceId, plan.name)}
-                disabled={loadingPlan === plan.name}
-              >
-                {loadingPlan === plan.name ? "Loading..." : plan.cta}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground mt-3">
-                3-day free trial • No credit card required
-              </p>
+              <div className="mt-auto">
+                <Button
+                  variant={plan.popular ? "default" : "outline"}
+                  className="w-full"
+                  onClick={() => handleSelectPlan(plan.priceId, plan.name)}
+                  disabled={loadingPlan === plan.name}
+                >
+                  {loadingPlan === plan.name ? "Loading..." : plan.cta}
+                </Button>
+                <p className="mt-3 text-center text-xs text-muted-foreground">3-day free trial · No credit card required</p>
+              </div>
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
-      {/* Feature Comparison Table */}
-      <section className="container pb-16">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-foreground text-center mb-8">
-            Compare All Features
-          </h2>
-          <div className="overflow-x-auto rounded-xl border border-border/50 bg-card -mx-4 sm:mx-0">
-            <table className="w-full min-w-[560px] border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-4 px-4 font-medium text-muted-foreground">Feature</th>
-                  <th className="text-center py-4 px-4 font-medium text-foreground">Starter</th>
-                  <th className="text-center py-4 px-4 font-medium text-foreground bg-primary/5">Pro</th>
-                  <th className="text-center py-4 px-4 font-medium text-foreground">Scale</th>
+      <Section>
+        <SectionHeader eyebrow="Why agencies choose a plan" title="Built for client-facing work." />
+        <div className="grid gap-6 md:grid-cols-3">
+          {valueProps.map(({ icon: Icon, title, description }) => (
+            <PlainCard key={title}>
+              <Icon className="mb-4 h-5 w-5 text-primary" />
+              <h3 className="mb-2 text-base font-semibold text-foreground">{title}</h3>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </PlainCard>
+          ))}
+        </div>
+      </Section>
+
+      <Section>
+        <SectionHeader eyebrow="Compare" title="Compare all features." />
+        <div className="-mx-4 overflow-x-auto sm:mx-0">
+          <table className="w-full min-w-[560px] border-collapse">
+            <thead>
+              <tr className="border-b border-foreground text-sm">
+                <th className="py-4 pr-4 text-left font-medium text-muted-foreground pl-4 sm:pl-0">Feature</th>
+                <th className="px-4 py-4 text-center font-medium text-foreground">Starter</th>
+                <th className="px-4 py-4 text-center font-medium text-primary">Pro</th>
+                <th className="px-4 py-4 text-center font-medium text-foreground">Scale</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparisonFeatures.map((row) => (
+                <tr key={row.feature} className="border-b border-border text-sm">
+                  <td className="py-4 pr-4 pl-4 text-muted-foreground sm:pl-0">{row.feature}</td>
+                  {[row.starter, row.pro, row.scale].map((v, i) => (
+                    <td key={i} className="px-4 py-4 text-center">
+                      {typeof v === "boolean" ? (
+                        v ? <Check className="mx-auto h-4 w-4 text-primary" /> : <span className="text-muted-foreground">—</span>
+                      ) : (
+                        <span className="text-foreground">{v}</span>
+                      )}
+                    </td>
+                  ))}
                 </tr>
-              </thead>
-              <tbody>
-                {comparisonFeatures.map((row, idx) => (
-                  <tr key={idx} className="border-b border-border/50">
-                    <td className="py-4 px-4 text-sm text-muted-foreground">{row.feature}</td>
-                    <td className="py-4 px-4 text-center text-sm">
-                      {typeof row.starter === "boolean" ? (
-                        row.starter ? <Check className="w-4 h-4 text-primary mx-auto" /> : <span className="text-muted-foreground">—</span>
-                      ) : (
-                        <span className="text-foreground">{row.starter}</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 text-center text-sm bg-primary/5">
-                      {typeof row.pro === "boolean" ? (
-                        row.pro ? <Check className="w-4 h-4 text-primary mx-auto" /> : <span className="text-muted-foreground">—</span>
-                      ) : (
-                        <span className="text-foreground">{row.pro}</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-4 text-center text-sm">
-                      {typeof row.scale === "boolean" ? (
-                        row.scale ? <Check className="w-4 h-4 text-primary mx-auto" /> : <span className="text-muted-foreground">—</span>
-                      ) : (
-                        <span className="text-foreground">{row.scale}</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      </Section>
 
-      {/* Trust Section */}
-      <section className="container pb-16">
-        <div className="max-w-3xl mx-auto">
-          <div className="p-6 rounded-2xl bg-secondary/30 border border-border/50">
-            <div className="flex items-start gap-4">
-              <div className="p-3 rounded-xl bg-primary/10 text-primary flex-shrink-0">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-2">Designed to Be Client-Facing</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Every report, score, and PDF is built to be shared directly with your clients. No technical jargon, no system logs — just professional deliverables that make your agency look good.
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BadgeCheck className="w-4 h-4 text-primary" />
-                    Criteria-based scoring you can explain
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BadgeCheck className="w-4 h-4 text-primary" />
-                    Consistent methodology across all audits
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <BadgeCheck className="w-4 h-4 text-primary" />
-                    White-label ready out of the box
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Scoring Credibility Explainer */}
-      <section className="container pb-16">
-        <div className="max-w-3xl mx-auto">
-          <Collapsible>
-            <CollapsibleTrigger className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full group">
-              <span>How scoring credibility works</span>
-              <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4">
-              <div className="bg-muted/30 border border-border/40 rounded-lg p-5 text-left">
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {CREDIBILITY_BODY}
-                </p>
-                <p className="text-xs text-muted-foreground/70 mt-4 pt-3 border-t border-border/30">
+      <Section>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <PlainCard>
+            <ShieldCheck className="mb-4 h-5 w-5 text-primary" />
+            <h3 className="mb-2 text-base font-semibold text-foreground">Designed to be client-facing</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Every report, score, and PDF is built to be shared directly with your clients. No technical jargon, no system logs — just professional deliverables that make your agency look good.
+            </p>
+            <ul className="space-y-2">
+              {["Criteria-based scoring you can explain", "Consistent methodology across all audits", "White-label ready out of the box"].map((t) => (
+                <li key={t} className="flex items-start gap-2 text-sm text-foreground">
+                  <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </PlainCard>
+          <PlainCard>
+            <Collapsible>
+              <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 text-left text-base font-semibold text-foreground">
+                How scoring credibility works
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4">
+                <p className="text-sm text-muted-foreground">{CREDIBILITY_BODY}</p>
+                <p className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
                   Built for agencies to justify recommendations with clear, repeatable evidence.
                 </p>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+              </CollapsibleContent>
+            </Collapsible>
+          </PlainCard>
         </div>
-      </section>
+      </Section>
 
-      {/* Book a Demo CTA */}
-      <section className="container pb-20">
-        <div className="max-w-3xl mx-auto text-center p-8 rounded-2xl bg-primary/5 border border-primary/20">
-          <Building2 className="w-10 h-10 text-primary mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">
-            Need a Custom Solution?
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Talk to us about high-volume or white-label reseller needs.
-          </p>
-          <Button asChild variant="outline" size="lg" className="gap-2">
-            <a href="mailto:support@optimizemysuite.com?subject=Demo%20request%20%E2%80%94%20OptimizeMySuite">
-              Book a Demo
-              <ArrowRight className="w-4 h-4" />
-            </a>
-          </Button>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-10">
-        <div className="container">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-semibold text-foreground">OptimizeMySuite</span> — Proof-based website audits for marketing agencies
+      <section className="border-t border-border">
+        <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-6 md:py-24">
+          <div className="rounded-lg bg-foreground px-6 py-14 text-background sm:px-12">
+            <h2 className="max-w-[620px] text-3xl md:text-[40px] leading-[1.1] font-semibold tracking-[-0.02em]">
+              Need a custom solution?
+            </h2>
+            <p className="mt-4 max-w-[620px] text-lg text-background/70">
+              Talk to us about high-volume or white-label reseller needs.
             </p>
-            <div className="flex items-center gap-4">
-              <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Home
-              </Link>
-              <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                Login
-              </Link>
-            </div>
+            <Button asChild size="lg" className="mt-8 bg-background text-foreground hover:bg-background/90">
+              <a href="mailto:support@optimizemysuite.com?subject=Demo%20request%20%E2%80%94%20OptimizeMySuite">
+                Book a demo <ArrowRight className="h-4 w-4" />
+              </a>
+            </Button>
           </div>
         </div>
-      </footer>
+      </section>
+
+      <MarketingFooter />
     </div>
   );
 }
