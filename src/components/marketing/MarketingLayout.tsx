@@ -127,7 +127,6 @@ export function MarketingFooter() {
       <div className="border-t border-border">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:justify-between sm:px-6">
           <p>© {year} OptimizeMySuite</p>
-          <p>256-bit SSL · GDPR Compliant</p>
         </div>
       </div>
     </footer>

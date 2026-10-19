@@ -18,7 +18,6 @@ const plans = [
     priceId: STRIPE_PRICE_IDS.starter,
     description: "For solo consultants testing the waters",
     whoIsFor: "Perfect if you're a freelancer or solo consultant who wants to add website audits to your service offering.",
-    businessOutcome: "Close 1-2 additional website projects per month",
     features: [
       "25 analyses per month",
       "25 implementation packs",
@@ -37,7 +36,6 @@ const plans = [
     priceId: STRIPE_PRICE_IDS.pro,
     description: "For growing agencies scaling client work",
     whoIsFor: "Built for agencies with 5-20 clients who need consistent, branded deliverables and team collaboration.",
-    businessOutcome: "Systematically prove value to retain more accounts",
     features: [
       "150 analyses per month",
       "150 implementation packs",
@@ -57,7 +55,6 @@ const plans = [
     priceId: STRIPE_PRICE_IDS.scale,
     description: "For high-volume agencies and white-label resellers",
     whoIsFor: "Designed for agencies running 50+ audits per month, or those reselling audits to other agencies.",
-    businessOutcome: "Build recurring revenue with productized audit services",
     features: [
       "500 analyses per month",
       "500 implementation packs",
@@ -168,7 +165,7 @@ export default function Pricing() {
         <SectionHeader
           as="h1"
           eyebrow="Pricing"
-          title="Invest in proof. Close more deals."
+          title="Plans for solo consultants to full agencies."
           description="Choose a plan that matches your agency's volume. Every tier includes the same professional-grade features — just more capacity. Start with a 3-day free trial. No credit card required. Cancel anytime."
         />
       </header>
@@ -190,8 +187,7 @@ export default function Pricing() {
                 <span className="text-muted-foreground">/month</span>
               </p>
               <p className="mb-2 text-xs font-medium uppercase tracking-[0.06em] text-muted-foreground">Who this is for</p>
-              <p className="mb-4 text-sm text-foreground">{plan.whoIsFor}</p>
-              <p className="mb-6 border-t border-border pt-4 text-sm font-medium text-foreground">{plan.businessOutcome}</p>
+              <p className="mb-6 text-sm text-foreground">{plan.whoIsFor}</p>
               <ul className="mb-8 space-y-3">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
