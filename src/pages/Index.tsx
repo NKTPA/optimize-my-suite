@@ -172,7 +172,7 @@ export default function Index() {
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Top navigation */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
           <HeaderBrand textFallback />
           <div className="flex items-center gap-1 sm:gap-2">
             <Link to="/pricing" className="hidden md:inline-flex">
@@ -185,7 +185,7 @@ export default function Index() {
               <Button variant="ghost" size="sm">Log in</Button>
             </Link>
             <a href="#free-audit">
-              <Button size="sm" className="px-3 sm:px-4">Run a free audit</Button>
+              <Button size="sm" className="px-2.5 text-xs sm:px-4 sm:text-sm">Run a free audit</Button>
             </a>
             <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
           </div>
