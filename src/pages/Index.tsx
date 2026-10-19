@@ -25,32 +25,36 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { PlanSelectionModal } from "@/components/modals/PlanSelectionModal";
-import { HeaderBrand } from "@/components/layout/HeaderBrand";
 import { SEO } from "@/components/SEO";
 import { HomepageAuditWidget } from "@/components/marketing/HomepageAuditWidget";
-import { MobileNavSheet } from "@/components/marketing/MobileNavSheet";
+import { MarketingNav, MarketingFooter, Section, SectionHeader, PlainCard } from "@/components/marketing/MarketingLayout";
 
 // FAQ Item component with accordion behavior
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
-  
   return (
-    <div className="border border-border/50 rounded-xl overflow-hidden">
-      <button 
+    <div className="border-b border-border">
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between p-4 text-left bg-card hover:bg-muted/30 transition-colors"
+        aria-expanded={isOpen}
+        className="flex w-full items-center justify-between gap-4 py-5 text-left"
       >
-        <span className="font-medium text-foreground pr-4">{question}</span>
-        <ChevronDown className={`w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="font-medium text-foreground">{question}</span>
+        <ChevronDown className={`h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
       </button>
-      {isOpen && (
-        <div className="px-4 pb-4 bg-card">
-          <p className="text-sm text-muted-foreground leading-relaxed">{answer}</p>
-        </div>
-      )}
+      {isOpen && <p className="pb-5 pr-9 text-sm text-muted-foreground">{answer}</p>}
     </div>
   );
 }
+
+const faqs = [
+  { q: "How is this different from running a Lighthouse audit?", a: "Lighthouse checks technical performance. OptimizeMySuite evaluates what actually wins clients: messaging clarity, conversion elements, trust signals, mobile UX, and design credibility — all scored with criteria you can explain in a client meeting." },
+  { q: "What does the white-label PDF look like?", a: "A polished, branded report with your logo, your colors, and your agency name. Clients see your brand, not ours. It includes scores, specific findings, and prioritized recommendations." },
+  { q: "Can I try it before committing?", a: "Yes. Every plan starts with a 3-day free trial. Run audits, generate PDFs, test batch mode — no credit card required." },
+  { q: "How does the scoring work?", a: "Every score is based on transparent, repeatable criteria — not AI opinions. We check for specific elements (like whether a CTA exists above the fold, whether trust signals are present, whether mobile tap targets are sized correctly) and score based on what we find. If we can't access something, it's marked NOT SCORABLE rather than penalized." },
+  { q: "Can my team use this too?", a: "Team seats are coming soon on Pro and Scale. Today each subscription is single-user — one login per workspace. We'll email existing subscribers when invites go live." },
+  { q: "What if I need more analyses than my plan allows?", a: "You can upgrade anytime. Overages are handled gracefully — we'll let you know when you're approaching your limit so there are no surprises." },
+];
 
 const featureCards = [
   { icon: MessageSquare, title: "Messaging & Clarity Analysis", description: "Prove whether your client's value proposition actually lands — with objective criteria, not opinions." },
@@ -62,33 +66,6 @@ const featureCards = [
   { icon: Shield, title: "Trust & Credibility Signals", description: "Check if reviews, certifications, and guarantees are properly showcased." },
   { icon: Wrench, title: "Technical Foundations", description: "SSL, structured data, and essential technical elements that affect rankings." },
   { icon: Sparkles, title: "Actionable Implementation Pack", description: "Done-for-you copy, layout suggestions, and rebuild prompts your team can execute." },
-];
-
-const revenueLevers = [
-  { 
-    icon: TrendingUp, 
-    title: "Close More Deals", 
-    description: "Use objective before/after scores to justify website rebuilds. Stop selling on promises — sell on proof.",
-    outcome: "Higher close rates on website projects"
-  },
-  { 
-    icon: Target, 
-    title: "Defend Your Retainers", 
-    description: "Show measurable improvement month-over-month. Give clients a reason to stay beyond 'trust us.'",
-    outcome: "Reduced churn on recurring accounts"
-  },
-  { 
-    icon: Users, 
-    title: "Scale Without Hiring", 
-    description: "Analyze 10-200 websites at once with Batch Mode. Turn prospect lists into qualified leads in minutes.",
-    outcome: "More prospects touched per hour"
-  },
-  { 
-    icon: FileText, 
-    title: "Look Like a $10K Agency", 
-    description: "Export polished, white-label PDF reports your clients will actually share with their teams and boards.",
-    outcome: "Premium positioning without premium effort"
-  },
 ];
 
 const trustPoints = [
@@ -151,7 +128,6 @@ function SampleAuditCard() {
 }
 
 export default function Index() {
-  const currentYear = new Date().getFullYear();
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -170,27 +146,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Top navigation */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background">
-        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
-          <HeaderBrand textFallback />
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Link to="/pricing" className="hidden md:inline-flex">
-              <Button variant="ghost" size="sm">Pricing</Button>
-            </Link>
-            <a href="/sample-audit-report.pdf" target="_blank" rel="noopener noreferrer" className="hidden md:inline-flex">
-              <Button variant="ghost" size="sm">Sample report</Button>
-            </a>
-            <Link to="/auth" className="hidden md:inline-flex">
-              <Button variant="ghost" size="sm">Log in</Button>
-            </Link>
-            <a href="#free-audit">
-              <Button size="sm" className="px-2.5 text-xs sm:px-4 sm:text-sm">Run a free audit</Button>
-            </a>
-            <MobileNavSheet onStartFreeTrial={() => setShowPlanModal(true)} />
-          </div>
-        </div>
-      </nav>
+      <MarketingNav auditHref="#free-audit" onStartFreeTrial={() => setShowPlanModal(true)} />
 
       <SEO
         title="OptimizeMySuite — White-Label Website Audit Tool for Agencies"
@@ -252,469 +208,205 @@ export default function Index() {
       </header>
 
       <main>
-        {/* Built to Justify Your Recommendations */}
-        <section className="py-16 lg:py-20 border-t border-border/50 bg-secondary/20">
-          <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-                Stop Selling Promises. Start Selling Proof.
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Every score is backed by something clients can verify — not opinion dressed as analysis.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
-                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
-                  <RefreshCw className="w-6 h-6" />
-                </div>
-                <h3 className="font-semibold text-foreground text-lg mb-2">Deterministic scoring</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Same site, same score, every run. Binary facts are parsed from the DOM, never guessed by AI.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
-                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
-                  <Gauge className="w-6 h-6" />
-                </div>
-                <h3 className="font-semibold text-foreground text-lg mb-2">Real Google data</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Performance is measured via Google PageSpeed Insights (median of 3 runs), the same data Google uses in ranking.
-                </p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-card border border-border/50 shadow-card">
-                <div className="p-3 rounded-xl bg-primary/10 text-primary w-fit mb-4">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <h3 className="font-semibold text-foreground text-lg mb-2">Evidence-gated AI</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Every subjective judgment must cite verbatim page text or it's discarded before scoring.
-                </p>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <a
-                href="/sample-audit-report.pdf"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex"
-              >
-                <Button variant="outline" size="lg" className="gap-2">
-                  <FileText className="w-4 h-4" />
-                  See a real report
-                </Button>
-              </a>
-            </div>
+        <Section>
+          <SectionHeader
+            eyebrow="Why it works"
+            title="Stop selling promises. Start selling proof."
+            description="Every score is backed by something clients can verify — not opinion dressed as analysis."
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {[
+              { icon: RefreshCw, title: "Deterministic scoring", body: "Same site, same score, every run. Binary facts are parsed from the DOM, never guessed by AI." },
+              { icon: Gauge, title: "Real Google data", body: "Performance is measured via Google PageSpeed Insights (median of 3 runs), the same data Google uses in ranking." },
+              { icon: ShieldCheck, title: "Evidence-gated AI", body: "Every subjective judgment must cite verbatim page text or it's discarded before scoring." },
+            ].map(({ icon: Icon, title, body }) => (
+              <PlainCard key={title}>
+                <Icon className="mb-4 h-5 w-5 text-primary" />
+                <h3 className="mb-2 text-base font-semibold text-foreground">{title}</h3>
+                <p className="text-sm text-muted-foreground">{body}</p>
+              </PlainCard>
+            ))}
           </div>
-        </section>
+          <a
+            href="/sample-audit-report.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-8 inline-flex text-sm font-medium text-primary hover:underline underline-offset-4"
+          >
+            See a real report →
+          </a>
+        </Section>
 
-        {/* Why Agencies Risk Section */}
-        <section className="py-16 lg:py-20 border-t border-border/50">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-                  Why Agencies Trust OptimizeMySuite
-                </h2>
-                <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                  Your reputation is on the line with every client report. We built this for agencies who need to look professional, not experimental.
-                </p>
-              </div>
-              
-              <div className="bg-card border border-border/50 rounded-2xl p-6 sm:p-8 shadow-card">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="p-3 rounded-xl bg-primary/10 text-primary flex-shrink-0">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground text-lg mb-2">Scoring You Can Defend in Client Meetings</h3>
-                    <p className="text-muted-foreground">
-                      Every score is based on transparent, repeatable criteria — not AI guesses or subjective opinions. When clients ask "why did my site score a 67?", you can explain it.
-                    </p>
-                  </div>
+        <Section>
+          <SectionHeader
+            eyebrow="Built for agencies"
+            title="What makes the report client-ready."
+            description="Your reputation is on the line with every client report. We built this for agencies who need to look professional, not experimental."
+          />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <PlainCard>
+              <ShieldCheck className="mb-4 h-5 w-5 text-primary" />
+              <h3 className="mb-2 text-base font-semibold text-foreground">Scoring you can defend in client meetings</h3>
+              <p className="text-sm text-muted-foreground">
+                Every score is based on transparent, repeatable criteria — not AI guesses or subjective opinions. When clients ask "why did my site score a 67?", you can explain it.
+              </p>
+              <p className="mt-6 border-t border-border pt-6 text-sm text-muted-foreground">
+                "NOT SCORABLE" means we couldn't access the page — it's never a negative judgment. We don't guess when we can't see the content. This protects your credibility.
+              </p>
+            </PlainCard>
+            <PlainCard>
+              <ul className="space-y-4">
+                {trustPoints.map((point) => (
+                  <li key={point} className="flex items-start gap-3 text-sm text-foreground">
+                    <Check className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary" />
+                    {point}
+                  </li>
+                ))}
+              </ul>
+            </PlainCard>
+          </div>
+        </Section>
+
+        <Section id="revenue">
+          <SectionHeader
+            eyebrow="How it works"
+            title="From URL to signed project in three steps."
+            description="Every feature is designed to help agencies close deals, retain clients, and scale services."
+          />
+          <ol className="grid gap-10 md:grid-cols-3 md:gap-8">
+            {[
+              { n: "01", title: "Audit the site", body: "Paste a prospect's or client's URL — or up to hundreds at once with Batch Mode. Get objective scores across 7 categories." },
+              { n: "02", title: "Show the gaps", body: "Use the scores and the Implementation Pack to justify the rebuild with proof instead of promises." },
+              { n: "03", title: "Send your report", body: "Export a polished, white-label PDF under your agency's name, then re-run later to show before/after improvement." },
+            ].map((s) => (
+              <li key={s.n} className="border-t-2 border-foreground pt-5">
+                <p className="mb-3 text-sm font-semibold text-primary tabular-nums">{s.n}</p>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">{s.title}</h3>
+                <p className="text-sm text-muted-foreground">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        <Section id="features">
+          <SectionHeader
+            eyebrow="What's scored"
+            title="Seven categories, scored the same way every time."
+            description="White-labeled insights covering everything that matters — formatted for client presentations, not technical deep-dives."
+          />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featureCards.map(({ icon: Icon, title, description }) => (
+              <PlainCard key={title}>
+                <Icon className="mb-4 h-5 w-5 text-primary" />
+                <h3 className="mb-2 text-base font-semibold text-foreground">{title}</h3>
+                <p className="text-sm text-muted-foreground">{description}</p>
+              </PlainCard>
+            ))}
+          </div>
+        </Section>
+
+        <Section id="pricing">
+          <SectionHeader
+            eyebrow="Pricing"
+            title="Plans for solo consultants to full agencies."
+            description="Start with a 3-day free trial. No credit card required."
+          />
+          <div className="grid gap-6 md:grid-cols-3">
+            {plans.map((plan) => (
+              <div
+                key={plan.name}
+                className={`flex flex-col rounded-lg bg-card p-6 ${plan.popular ? "border-2 border-primary" : "border border-border"}`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-lg font-semibold text-foreground">{plan.name}</h3>
+                  {plan.popular && <span className="text-xs font-medium text-primary">Most popular</span>}
                 </div>
-                
-                <ul className="space-y-3">
-                  {trustPoints.map((point, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm text-muted-foreground">
-                      <BadgeCheck className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      {point}
+                <p className="mt-1 text-sm text-muted-foreground">{plan.forWho}</p>
+                <p className="my-6">
+                  <span className="text-4xl font-semibold tracking-[-0.02em] text-foreground">${plan.price}</span>
+                  <span className="text-muted-foreground">/mo</span>
+                </p>
+                <ul className="mb-8 space-y-3">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary" />
+                      {f}
                     </li>
                   ))}
                 </ul>
-                
-                <div className="mt-6 pt-6 border-t border-border/50">
-                  <p className="text-sm text-foreground/80 italic">
-                    "NOT SCORABLE" means we couldn't access the page — it's never a negative judgment. We don't guess when we can't see the content. This protects your credibility.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Revenue Levers Section */}
-        <section id="revenue" className="py-16 lg:py-20 bg-secondary/30">
-          <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">How Agencies Turn Audits Into Revenue</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Every feature is designed to help agencies close deals, retain clients, and scale services.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-6 max-w-5xl mx-auto">
-              {revenueLevers.map((lever, index) => {
-                const Icon = lever.icon;
-                return (
-                  <div key={index} className="p-6 rounded-2xl bg-card border border-border/50 border-l-[3px] border-l-primary/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 rounded-xl bg-primary/10 text-primary flex-shrink-0">
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-foreground mb-2">{lever.title}</h3>
-                        <p className="text-sm text-muted-foreground leading-relaxed mb-3">{lever.description}</p>
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                          <TrendingUp className="w-3 h-3" />
-                          {lever.outcome}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* What You Get Section */}
-        <section id="features" className="py-16 lg:py-20">
-          <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">Comprehensive, Client-Ready Analysis</h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                White-labeled insights covering everything that matters — formatted for client presentations, not technical deep-dives.
-              </p>
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
-              {featureCards.map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div key={index} className="group relative p-4 rounded-xl bg-card border border-border/50 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:to-transparent before:opacity-0 before:transition-opacity before:duration-300 hover:before:opacity-100">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex-shrink-0">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-foreground text-sm mb-0.5">{item.title}</h3>
-                        <p className="text-xs text-muted-foreground leading-relaxed">{item.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Pricing Preview */}
-        <section className="py-16 lg:py-20 bg-primary/5">
-          <div className="container">
-            <div className="text-center mb-4">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">Pricing That Pays for Itself</h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                One closed website project covers months of OptimizeMySuite. Built for agencies who measure ROI.
-              </p>
-            </div>
-            <p className="text-center text-sm text-foreground/70 mb-8 font-medium">
-              Start with a 3-day free trial. No credit card required.
-            </p>
-            <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {plans.map((plan) => (
-                <div 
-                  key={plan.name} 
-                  className={`relative p-6 rounded-2xl bg-card border transition-all duration-300 ${
-                    plan.popular 
-                      ? "border-primary border-2 shadow-xl md:scale-[1.02] ring-4 ring-primary/10" 
-                      : "border-border/50 hover:border-primary/30 hover:shadow-md"
-                  }`}
+                <Button
+                  variant={plan.popular ? "default" : "outline"}
+                  className="mt-auto w-full"
+                  onClick={() => setShowPlanModal(true)}
                 >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold shadow-md">
-                      Most Popular
-                    </div>
-                  )}
-                  <h3 className="text-xl font-bold text-foreground mt-2">{plan.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 mb-4">{plan.forWho}</p>
-                  <div className="my-4">
-                    <span className={`text-4xl font-bold ${plan.popular ? "text-primary" : ""}`}>${plan.price}</span>
-                    <span className="text-muted-foreground">/mo</span>
-                  </div>
-                  <ul className="space-y-2 mb-6">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Check className={`w-4 h-4 ${plan.popular ? "text-primary" : "text-emerald-500"}`} />{f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    variant={plan.popular ? "hero" : "outline"} 
-                    className={`w-full ${plan.popular ? "shadow-lg" : ""}`} 
-                    onClick={() => setShowPlanModal(true)}
-                  >
-                    Start Free Trial
-                  </Button>
-                </div>
+                  Start Free Trial
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Link to="/pricing" className="mt-8 inline-flex text-sm font-medium text-primary hover:underline underline-offset-4">
+            View full pricing details →
+          </Link>
+        </Section>
+
+        <Section>
+          <SectionHeader
+            eyebrow="Your trial"
+            title="What success looks like during your trial."
+            description="Here's how to evaluate OptimizeMySuite in your first 3 days:"
+          />
+          <ol className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+            {[
+              { title: "Run an audit on a prospect's website", body: "See how the scoring works and what the PDF looks like." },
+              { title: "Generate an Implementation Pack", body: "Get actionable copy and layout recommendations you can actually use." },
+              { title: "Export a white-label PDF", body: "Send it to a client or use it in a proposal to see how it lands." },
+              { title: "Decide if it helps you close or retain clients", body: "If it does, the subscription pays for itself many times over." },
+            ].map((s, i) => (
+              <li key={s.title} className="border-t border-border pt-5">
+                <p className="mb-3 text-sm font-semibold text-primary tabular-nums">0{i + 1}</p>
+                <h3 className="mb-2 text-base font-semibold text-foreground">{s.title}</h3>
+                <p className="text-sm text-muted-foreground">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </Section>
+
+        <Section id="faq">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] lg:gap-16">
+            <SectionHeader eyebrow="FAQ" title="Common questions." />
+            <div className="border-t border-border">
+              {faqs.map((f) => (
+                <FaqItem key={f.q} question={f.q} answer={f.a} />
               ))}
             </div>
-            <div className="text-center mt-8">
-              <Link to="/pricing"><Button variant="ghost">View Full Pricing Details →</Button></Link>
-            </div>
           </div>
-        </section>
+        </Section>
 
-        {/* Trial Success Section */}
-        <section className="py-16 lg:py-20 border-t border-border/50">
-          <div className="container">
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-                  What Success Looks Like During Your Trial
-                </h2>
-                <p className="text-muted-foreground">
-                  Here's how agencies typically evaluate OptimizeMySuite in their first 3 days:
-                </p>
-              </div>
-              
-              <div className="relative">
-                {/* Vertical timeline line */}
-                <div className="absolute left-[19px] top-[52px] bottom-[52px] w-px bg-border" />
-                
-                <div className="space-y-4 relative">
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">1</div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-1">Run an audit on a prospect's website</h4>
-                      <p className="text-sm text-muted-foreground">See how the scoring works and what the PDF looks like.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">2</div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-1">Generate an Implementation Pack</h4>
-                      <p className="text-sm text-muted-foreground">Get actionable copy and layout recommendations you can actually use.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">3</div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-1">Export a white-label PDF</h4>
-                      <p className="text-sm text-muted-foreground">Send it to a client or use it in a proposal to see how it lands.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-card border border-border/50">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm flex-shrink-0 relative z-10">4</div>
-                    <div>
-                      <h4 className="font-semibold text-foreground mb-1">Decide if it helps you close or retain clients</h4>
-                      <p className="text-sm text-muted-foreground">If it does, the subscription pays for itself many times over.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ Section */}
-        <section id="faq" className="py-16 lg:py-20">
-          <div className="container">
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-                  Common Questions From Agencies
-                </h2>
-              </div>
-              
-              <div className="space-y-3">
-                <FaqItem 
-                  question="How is this different from running a Lighthouse audit?"
-                  answer="Lighthouse checks technical performance. OptimizeMySuite evaluates what actually wins clients: messaging clarity, conversion elements, trust signals, mobile UX, and design credibility — all scored with criteria you can explain in a client meeting."
-                />
-                <FaqItem 
-                  question="What does the white-label PDF look like?"
-                  answer="A polished, branded report with your logo, your colors, and your agency name. Clients see your brand, not ours. It includes scores, specific findings, and prioritized recommendations."
-                />
-                <FaqItem 
-                  question="Can I try it before committing?"
-                  answer="Yes. Every plan starts with a 3-day free trial. Run audits, generate PDFs, test batch mode — no credit card required."
-                />
-                <FaqItem 
-                  question="How does the scoring work?"
-                  answer="Every score is based on transparent, repeatable criteria — not AI opinions. We check for specific elements (like whether a CTA exists above the fold, whether trust signals are present, whether mobile tap targets are sized correctly) and score based on what we find. If we can't access something, it's marked NOT SCORABLE rather than penalized."
-                />
-                <FaqItem 
-                  question="Can my team use this too?"
-                  answer="Team seats are coming soon on Pro and Scale. Today each subscription is single-user — one login per workspace. We'll email existing subscribers when invites go live."
-                />
-                <FaqItem 
-                  question="What if I need more analyses than my plan allows?"
-                  answer="You can upgrade anytime. Overages are handled gracefully — we'll let you know when you're approaching your limit so there are no surprises."
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Final CTA */}
-        <section className="py-16 lg:py-20 bg-primary/5">
-          <div className="container">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-                Ready to Prove Your Value?
+        <section className="border-t border-border">
+          <div className="mx-auto max-w-[1200px] px-4 py-20 sm:px-6 md:py-24">
+            <div className="rounded-lg bg-foreground px-6 py-14 text-background sm:px-12">
+              <h2 className="max-w-[620px] text-3xl md:text-[40px] leading-[1.1] font-semibold tracking-[-0.02em]">
+                Run your first audit in a few minutes.
               </h2>
-              <p className="text-muted-foreground text-lg mb-4">
+              <p className="mt-4 max-w-[620px] text-lg text-background/70">
                 Use OptimizeMySuite to back your recommendations and retainers with objective proof.
               </p>
-              <p className="text-sm text-foreground/70 font-medium mb-8">
-                One closed website project pays for months of OptimizeMySuite.
-              </p>
-              <Button variant="hero" size="lg" className="gap-2 shadow-hero-button" onClick={() => setShowPlanModal(true)}>
-                Start Your Free Trial
-                <ArrowRight className="w-5 h-5" />
-              </Button>
+              <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                <a href="#free-audit">
+                  <Button size="lg" className="w-full bg-background text-foreground hover:bg-background/90 sm:w-auto">
+                    Run a free audit
+                  </Button>
+                </a>
+                <Link to="/pricing" className="text-sm font-medium text-background hover:underline underline-offset-4">
+                  See pricing →
+                </Link>
+              </div>
             </div>
           </div>
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 py-12 bg-muted/30">
-        <div className="container">
-          <div className="grid md:grid-cols-4 gap-8">
-            {/* Brand column */}
-            <div>
-              <p className="font-semibold text-foreground text-lg mb-2">OptimizeMySuite</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Website audit tool for agencies. White-label website reports. Agency SEO audit tool.
-              </p>
-              <p className="text-xs text-muted-foreground">
-                © {currentYear} OptimizeMySuite
-              </p>
-              <p className="text-xs text-muted-foreground/70 mt-1">
-                Made by{" "}
-                <a
-                  href="https://vibingsolutions.ai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-muted-foreground transition-colors underline-offset-2 hover:underline"
-                >
-                  VibingSolutions.ai
-                </a>
-              </p>
-            </div>
-            
-            {/* Product column */}
-            <div>
-              <p className="font-semibold text-foreground text-sm mb-4">Product</p>
-              <ul className="space-y-2">
-                <li>
-                  <Link to="/pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#revenue" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    For Agencies
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/sample-audit-report.pdf" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Sample Report
-                  </a>
-                </li>
-              </ul>
-            </div>
-            
-            {/* Support column */}
-            <div>
-              <p className="font-semibold text-foreground text-sm mb-4">Support</p>
-              <ul className="space-y-2">
-                <li>
-                  <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Login
-                  </Link>
-                </li>
-                <li>
-                  <a href="mailto:support@optimizemysuite.com" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Contact Support
-                  </a>
-                </li>
-                <li>
-                  <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    FAQ
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Company column */}
-            <div>
-              <p className="font-semibold text-foreground text-sm mb-4">Company</p>
-              <ul className="space-y-2">
-                <li>
-                  <a
-                    href="https://vibingsolutions.ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Built by VibingSolutions.ai
-                  </a>
-                </li>
-                <li>
-                  <Link to="/privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          
-          {/* Bottom bar with additional trust signal */}
-          <div className="mt-8 pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-            <p>Built for marketing agencies, SEO consultants, and web design firms.</p>
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1">
-                <Shield className="w-3 h-3" />
-                256-bit SSL
-              </span>
-              <span className="flex items-center gap-1">
-                <BadgeCheck className="w-3 h-3" />
-                GDPR Compliant
-              </span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <MarketingFooter />
 
       <PlanSelectionModal open={showPlanModal} onOpenChange={setShowPlanModal} />
     </div>
