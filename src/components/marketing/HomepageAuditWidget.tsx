@@ -291,7 +291,7 @@ export function HomepageAuditWidget({ compact = false }: { compact?: boolean } =
           {/* URL form — always visible until preview/unlocked */}
           {(phase === "idle" || phase === "analyzing" || phase === "error") && (
             <form onSubmit={handleSubmit} noValidate>
-              <Label htmlFor="audit-url" className="text-sm font-medium">Your website URL</Label>
+              <Label htmlFor="audit-url" className={compact ? "sr-only" : "text-sm font-medium"}>Your website URL</Label>
               <div className="mt-2 flex flex-col sm:flex-row gap-2">
                 <Input
                   id="audit-url"
@@ -332,7 +332,7 @@ export function HomepageAuditWidget({ compact = false }: { compact?: boolean } =
                     </>
                   ) : (
                     <>
-                      Run My Free Audit <ArrowRight className="w-4 h-4" />
+                      Run my free audit <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </Button>
