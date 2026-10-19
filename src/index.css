@@ -156,13 +156,6 @@
     font-family: 'Geist Sans', system-ui, sans-serif;
   }
 
-  h1 {
-    font-weight: 800;
-  }
-
-  h2 {
-    font-weight: 700;
-  }
 
   h1 {
     @apply text-4xl md:text-5xl lg:text-6xl leading-[1.1];
